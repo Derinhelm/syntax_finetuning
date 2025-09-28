@@ -4,7 +4,6 @@ import csv
 import random
 from typing import List
 import json
-import argparse
 
 random.seed(23)
 
@@ -26,32 +25,19 @@ import pandas as pd
 #               PARAMETERS
 #============================================
 
+with open('/src/configs/config.yaml', 'r') as file:
+    configs = yaml.safe_load(file)
 
-parser = argparse.ArgumentParser(description='Train')
+print(configs)
 
-parser.add_argument('-t','--train_file_path', help='Input Train File Path',required=True)
-parser.add_argument('-d','--dev_file_path', help='Input Dev File Path',required=True)
-parser.add_argument('-m','--model_name', help='Model name', default="yahma/llama-7b-hf")
-parser.add_argument('-o','--output_dir_path', help='Model name', default="model")
-parser.add_argument('-e','--epochs', help='epochs', type=int, default=1)
-parser.add_argument('-lr','--learning_rate', help='Learning Rate', type=float, default=3e-4)
-parser.add_argument('-bs','--batch_size', help='batch size', type=int, default=32)
-parser.add_argument('-mbs','--micro_batch_size', help='micro batch size', type=int, default=8)
-parser.add_argument('--group_by_length', action="store_true", default=False)
-parser.add_argument('-dq','--disable_qlora', action="store_true", default=False)
+input_train_path = configs["train_file_path"]
+input_dev_path = configs["dev_file_path"]
+model_name = configs["model_name"]
+output_dir_path = configs["output_dir_path"]
+epochs = configs.get("epochs", 1)
+group_by_length = configs.get("group_by_length", False)
 
-args = parser.parse_args()
-
-print(args)
-
-input_train_path=args.train_file_path
-input_dev_path = args.dev_file_path
-model_name = args.model_name
-output_dir_path = args.output_dir_path
-epochs = args.epochs
-group_by_length = args.group_by_length
-
-disable_qlora=args.disable_qlora
+disable_qlora = configs.get("disable_qlora", False)
 
 TOKENIZER_MODEL = model_name
 BASE_MODEL = model_name
@@ -71,10 +57,10 @@ CUTOFF_LEN = 512
 TRIM_LEN = 100000
 
 EPOCHS = epochs
-BATCH_SIZE = args.batch_size 
-MICRO_BATCH_SIZE = args.micro_batch_size
+BATCH_SIZE = configs.get("batch_size", 32) 
+MICRO_BATCH_SIZE = configs.get("micro_batch_size", 8)
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
-LEARNING_RATE = args.learning_rate
+LEARNING_RATE = configs.get("learning_rate", 3e-4)
 WARMUP_RATIO=0.1
 
 print("LEARNING_RATE:\t" + str(LEARNING_RATE))
@@ -197,8 +183,6 @@ with open(tmp_dev_file_name, "w") as f:
 
 json_train = load_dataset("json", data_files=tmp_train_file_name)
 json_dev = load_dataset("json", data_files=tmp_dev_file_name)
-
-
 
 #-------------------
 #    LOAD MODEL

@@ -25,7 +25,7 @@ import pandas as pd
 #               PARAMETERS
 #============================================
 
-with open('/src/configs/config.yaml', 'r') as file:
+with open('/src/src/configs/config.yaml', 'r') as file:
     configs = yaml.safe_load(file)
 
 print(configs)

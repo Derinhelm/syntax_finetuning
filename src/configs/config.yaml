@@ -1,4 +1,4 @@
-train_file_path: /src/data/grct_ru_gsd-ud-train.csv
-dev_file_path: /src/data/grct_ru_gsd-ud-dev.csv
+train_file_path: /src/src/data/grct_ru_gsd-ud-train.csv
+dev_file_path: /src/src/data/grct_ru_gsd-ud-dev.csv
 model_name: TinyLlama/TinyLlama_v1.1
-output_dir_path: /src/results
+output_dir_path: /src/src/results

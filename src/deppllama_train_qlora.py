@@ -4,6 +4,7 @@ import csv
 import random
 from typing import List
 import json
+import time
 import yaml
 
 random.seed(23)
@@ -318,7 +319,8 @@ if torch.__version__ >= "2":
 #-------------------
 #    LOAD MODEL
 #-------------------
-
+ts = time.time()
 trainer.train()
+print(f"Training time:{time.time() - ts}")
 
 model.save_pretrained(OUTPUT_DIR)

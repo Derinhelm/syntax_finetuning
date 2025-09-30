@@ -1,3 +1,4 @@
+import argparse
 import transformers
 from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer
 import csv
@@ -27,7 +28,12 @@ import pandas as pd
 #               PARAMETERS
 #============================================
 
-with open('/src/src/configs/config.yaml', 'r') as file:
+parser = argparse.ArgumentParser()
+parser.add_argument("--config_name", nargs='?', default='/src/src/configs/config.yaml')
+parser_args = parser.parse_args()
+config_name = parser_args.config_name
+
+with open(config_name, 'r') as file:
     configs = yaml.safe_load(file)
 
 print(configs)

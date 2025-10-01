@@ -5,6 +5,7 @@ import csv
 import random
 from typing import List
 import json
+import os
 import time
 import yaml
 
@@ -53,6 +54,7 @@ group_by_length = configs.get("group_by_length", False)
 disable_qlora = configs.get("disable_qlora", False)
 IS_INSTRUCT = configs.get("is_instruct", False)
 
+os.makedirs(output_dir_path)
 with open(output_dir_path + config_name.split('/')[-1], 'w') as file:
     yaml.dump(configs, file, default_flow_style=False)
 

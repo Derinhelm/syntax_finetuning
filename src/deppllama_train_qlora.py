@@ -41,7 +41,12 @@ print(configs)
 input_train_path = configs["train_file_path"]
 input_dev_path = configs["dev_file_path"]
 model_name = configs["model_name"]
-output_dir_path = configs["output_dir_path"]
+root_output_dir_path = configs["output_dir_path"]
+
+treebank = configs.get("treebank", "gsd")
+clear_model_name = model_name.replace("-", "_").replace("/", "_").replace(".", "_")
+output_dir_path = f"{root_output_dir_path}/{clear_model_name}_{treebank}"
+
 epochs = configs.get("epochs", 1)
 group_by_length = configs.get("group_by_length", False)
 

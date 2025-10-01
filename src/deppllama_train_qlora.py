@@ -46,6 +46,7 @@ epochs = configs.get("epochs", 1)
 group_by_length = configs.get("group_by_length", False)
 
 disable_qlora = configs.get("disable_qlora", False)
+IS_INSTRUCT = configs.get("is_instruct", False)
 
 TOKENIZER_MODEL = model_name
 BASE_MODEL = model_name

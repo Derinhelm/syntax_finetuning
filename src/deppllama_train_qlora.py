@@ -93,7 +93,7 @@ def load(input_file_path):
 
  
 # Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
-def tokenize(prompt, cutoff_len, add_eos_token=True):
+def tokenize_base(prompt, cutoff_len, add_eos_token=True):
     result = tokenizer(
         prompt,
         truncation=True,
@@ -113,6 +113,9 @@ def tokenize(prompt, cutoff_len, add_eos_token=True):
  
     return result
 
+# Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
+def tokenize(prompt, cutoff_len, add_eos_token=True):
+    return tokenize_base(prompt, cutoff_len, add_eos_token)
  
 # Notice: result["labels"] is rewritten so that only the output is considered
 def generate_and_tokenize_prompt(data_point, add_eos_token=True):

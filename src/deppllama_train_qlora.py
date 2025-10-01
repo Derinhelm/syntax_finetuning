@@ -333,4 +333,6 @@ ts = time.time()
 trainer.train()
 print(f"Training time:{time.time() - ts}")
 
+tokenizer.save_pretrained(OUTPUT_DIR)
 model.save_pretrained(OUTPUT_DIR)
+

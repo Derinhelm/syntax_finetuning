@@ -48,6 +48,10 @@ group_by_length = configs.get("group_by_length", False)
 disable_qlora = configs.get("disable_qlora", False)
 IS_INSTRUCT = configs.get("is_instruct", False)
 
+with open(output_dir_path + config_name.split('/')[-1], 'w') as file:
+    yaml.dump(data, file, default_flow_style=False)
+
+
 TOKENIZER_MODEL = model_name
 BASE_MODEL = model_name
 OUTPUT_DIR = output_dir_path

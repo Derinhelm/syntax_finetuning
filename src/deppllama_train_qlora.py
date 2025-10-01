@@ -44,8 +44,8 @@ model_name = configs["model_name"]
 root_output_dir_path = configs["output_dir_path"]
 
 treebank = configs.get("treebank", "gsd")
-clear_model_name = model_name.replace("-", "_").replace("/", "_").replace(".", "_")
-output_dir_path = f"{root_output_dir_path}/{clear_model_name}_{treebank}"
+clear_model_name = model_name.split('/')[-1].replace("-", "_").replace(".", "_")
+output_dir_path = f"{root_output_dir_path}/{clear_model_name}_{treebank}/"
 
 epochs = configs.get("epochs", 1)
 group_by_length = configs.get("group_by_length", False)

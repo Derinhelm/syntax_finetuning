@@ -1,6 +1,5 @@
 import argparse
 import transformers
-from transformers import AutoTokenizer
 import random
 import os
 import time
@@ -9,10 +8,10 @@ import yaml
 random.seed(23)
 
 from constants import CUTOFF_LEN, WARMUP_RATIO
-from deppllama_utils import *
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
 from parameters import Parameters
+from tokenize_functions import Tokenizer
 
 import torch
 
@@ -45,58 +44,6 @@ print("LEARNING_RATE:\t" + str(parameters.learning_rate))
 #============================================
 
 
- 
-# Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
-def tokenize_base(prompt, cutoff_len, add_eos_token=True):
-    result = tokenizer(
-        prompt,
-        truncation=True,
-        max_length=cutoff_len,
-        padding=False,
-        return_tensors=None,
-    )
-    if (
-        result["input_ids"][-1] != tokenizer.eos_token_id
-        and len(result["input_ids"]) < cutoff_len
-        and add_eos_token
-    ):
-        result["input_ids"].append(tokenizer.eos_token_id)
-        result["attention_mask"].append(1)
- 
-    result["labels"] = result["input_ids"].copy()
- 
-    return result
-
-# Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
-def tokenize(prompt, cutoff_len, add_eos_token=True):
-    return tokenize_base(prompt, cutoff_len, add_eos_token)
- 
-# Notice: result["labels"] is rewritten so that only the output is considered
-def generate_and_tokenize_prompt(data_point, add_eos_token=True):
-    full_prompt = generate_prompt(data_point)
-    tokenized_full_prompt = tokenize(full_prompt, CUTOFF_LEN)
-
-    user_prompt = generate_prompt_str(
-        data_point["input"]
-    )
-    tokenized_user_prompt = tokenize(
-        user_prompt, CUTOFF_LEN, add_eos_token=add_eos_token
-    )
-    user_prompt_len = len(tokenized_user_prompt["input_ids"])
-
-    if add_eos_token:
-        user_prompt_len -= 1
-
-    tokenized_full_prompt["labels"] = [
-        -100
-    ] * user_prompt_len + tokenized_full_prompt["labels"][
-        user_prompt_len:
-    ]  # could be sped up, probably
-    return tokenized_full_prompt
-
-    
-
-
 def remove_example_by_length(lst, target_length):
     result = []
     for item in lst:
@@ -113,24 +60,15 @@ json_train, json_dev = creating_data(parameters)
 #-------------------
 #    LOAD MODEL
 #-------------------
-tokenizer = AutoTokenizer.from_pretrained(parameters.model_name, trust_remote_code=True)
+t = Tokenizer(parameters)
 
 # PREPARE DATA
-train_data = ( json_train["train"].shuffle().map(generate_and_tokenize_prompt) )
-val_data = ( json_dev["train"].shuffle().map(generate_and_tokenize_prompt) )
+train_data = ( json_train["train"].shuffle().map(t.generate_and_tokenize_prompt) )
+val_data = ( json_dev["train"].shuffle().map(t.generate_and_tokenize_prompt) )
 
-if "falcon" in parameters.model_name:
-    tokenizer.pad_token = tokenizer.eos_token
-else:
-    tokenizer.pad_token_id = 0
-    tokenizer.bos_token_id = 1
-    tokenizer.eos_token_id = 2
-    tokenizer.padding_side = "left"
-
-print("padding_side\t" + str(tokenizer.padding_side))
+t.set_tokens(parameters)
 
 original_train_length = len(train_data)
-
 train_data = remove_example_by_length(train_data, CUTOFF_LEN)
 
 if(len(train_data)!=original_train_length):
@@ -160,7 +98,7 @@ training_arguments = transformers.TrainingArguments(
 )
 
 data_collator = transformers.DataCollatorForSeq2Seq(
-    tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
+    t.tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
 )
 
 trainer = transformers.Trainer(
@@ -187,7 +125,7 @@ else:
 if torch.__version__ >= "2":
     print("YES! I AM 2.0 :-)")
     model = torch.compile(model)
-
+print("after compile")
 #-------------------
 #    LOAD MODEL
 #-------------------
@@ -195,5 +133,5 @@ ts = time.time()
 trainer.train()
 print(f"Training time:{time.time() - ts}")
 
-tokenizer.save_pretrained(parameters.output_dir_path)
+t.tokenizer.save_pretrained(parameters.output_dir_path)
 model.save_pretrained(parameters.output_dir_path)

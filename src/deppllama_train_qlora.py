@@ -11,7 +11,7 @@ import yaml
 
 random.seed(23)
 
-
+from constants import LORA_R, LORA_ALPHA, LORA_DROPOUT, LORA_TARGET_MODULES, CUTOFF_LEN, TRIM_LEN, WARMUP_RATIO
 from deppllama_utils import *
  
 from peft import (
@@ -63,25 +63,11 @@ TOKENIZER_MODEL = model_name
 BASE_MODEL = model_name
 OUTPUT_DIR = output_dir_path
 
-
-task = "*"
-
-LORA_R = 8
-LORA_ALPHA = 16
-LORA_DROPOUT= 0.05
-LORA_TARGET_MODULES = ['q_proj','k_proj','v_proj','o_proj','gate_proj','down_proj','up_proj','lm_head']
-
-
  
-CUTOFF_LEN = 512
-TRIM_LEN = 100000
-
-EPOCHS = epochs
 BATCH_SIZE = configs.get("batch_size", 32) 
 MICRO_BATCH_SIZE = configs.get("micro_batch_size", 8)
 GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
 LEARNING_RATE = configs.get("learning_rate", 3e-4)
-WARMUP_RATIO=0.1
 
 print("LEARNING_RATE:\t" + str(LEARNING_RATE))
 
@@ -241,14 +227,14 @@ if not disable_qlora:
         #torch_dtype=torch.bfloat16,
         torch_dtype=torch.float16,
         trust_remote_code=True,
-        device_map={"": 0},
+        device_map="auto",
     )
 else:
     model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL,
         trust_remote_code=True,
         torch_dtype=torch.bfloat16,
-        device_map={"": 0},
+        device_map="auto",
     )
     model.half()
 
@@ -293,7 +279,7 @@ training_arguments = transformers.TrainingArguments(
     per_device_train_batch_size=MICRO_BATCH_SIZE,
     gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
     warmup_ratio=WARMUP_RATIO,
-    num_train_epochs=EPOCHS,
+    num_train_epochs=epochs,
     learning_rate=LEARNING_RATE,
     fp16=True,
     logging_strategy = "steps",

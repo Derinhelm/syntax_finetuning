@@ -13,6 +13,7 @@ random.seed(23)
 
 from constants import LORA_R, LORA_ALPHA, LORA_DROPOUT, LORA_TARGET_MODULES, CUTOFF_LEN, TRIM_LEN, WARMUP_RATIO
 from deppllama_utils import *
+from parameters import Parameters
  
 from peft import (
     LoraConfig,
@@ -39,8 +40,7 @@ with open(config_name, 'r') as file:
 
 print(configs)
 
-input_train_path = configs["train_file_path"]
-input_dev_path = configs["dev_file_path"]
+parameters = Parameters(configs)
 model_name = configs["model_name"]
 root_output_dir_path = configs["output_dir_path"]
 
@@ -181,8 +181,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 #-------------------
 #    LOAD DATA 
 #-------------------
-train_data = load_and_prepare_data(input_train_path, TRIM_LEN)
-dev_data = load_and_prepare_data(input_dev_path, TRIM_LEN)
+train_data = load_and_prepare_data(parameters.input_train_path, TRIM_LEN)
+dev_data = load_and_prepare_data(parameters.input_dev_path, TRIM_LEN)
 
 
 with open(tmp_train_file_name, "w") as f:

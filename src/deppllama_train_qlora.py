@@ -1,47 +1,12 @@
-import argparse
 import transformers
-import random
-import os
 import time
-import yaml
-
-random.seed(23)
 
 from constants import CUTOFF_LEN, WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
-from parameters import Parameters
 from tokenize_functions import Tokenizer
 
 import torch
-
-#============================================
-#               PARAMETERS
-#============================================
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--config_name", nargs='?', default='/src/src/configs/config.yaml')
-parser_args = parser.parse_args()
-config_name = parser_args.config_name
-
-with open(config_name, 'r') as file:
-    configs = yaml.safe_load(file)
-
-print(configs)
-
-parameters = Parameters(configs)
-
-os.makedirs(parameters.output_dir_path)
-with open(parameters.output_dir_path + config_name.split('/')[-1], 'w') as file:
-    yaml.dump(configs, file, default_flow_style=False)
-
-print("LEARNING_RATE:\t" + str(parameters.learning_rate))
-
-
-
-#============================================
-#               FUNCTIONS
-#============================================
 
 
 def remove_example_by_length(lst, target_length):
@@ -55,83 +20,84 @@ def remove_example_by_length(lst, target_length):
 #                   MAIN
 #============================================
 
-json_train, json_dev = creating_data(parameters)
+def conduct_experiment(parameters):
+    json_train, json_dev = creating_data(parameters)
 
-#-------------------
-#    LOAD MODEL
-#-------------------
-t = Tokenizer(parameters)
+    #-------------------
+    #    LOAD MODEL
+    #-------------------
+    t = Tokenizer(parameters)
 
-# PREPARE DATA
-train_data = ( json_train["train"].shuffle().map(t.generate_and_tokenize_prompt) )
-val_data = ( json_dev["train"].shuffle().map(t.generate_and_tokenize_prompt) )
+    # PREPARE DATA
+    train_data = ( json_train["train"].shuffle().map(t.generate_and_tokenize_prompt) )
+    val_data = ( json_dev["train"].shuffle().map(t.generate_and_tokenize_prompt) )
 
-t.set_tokens(parameters)
+    t.set_tokens(parameters)
 
-original_train_length = len(train_data)
-train_data = remove_example_by_length(train_data, CUTOFF_LEN)
+    original_train_length = len(train_data)
+    train_data = remove_example_by_length(train_data, CUTOFF_LEN)
 
-if(len(train_data)!=original_train_length):
-    print("WARNING:")
-    print("original_train_length: " + str(original_train_length))
-    print("len(train_data): " + str(len(train_data)))
+    if(len(train_data)!=original_train_length):
+        print("WARNING:")
+        print("original_train_length: " + str(original_train_length))
+        print("len(train_data): " + str(len(train_data)))
 
-model = creating_model(parameters)
+    model = creating_model(parameters)
 
-training_arguments = transformers.TrainingArguments(
-    per_device_train_batch_size=parameters.micro_batch_size,
-    gradient_accumulation_steps=parameters.gradient_accumulation_steps,
-    warmup_ratio=WARMUP_RATIO,
-    num_train_epochs=parameters.epochs,
-    learning_rate=parameters.learning_rate,
-    fp16=True,
-    logging_strategy = "steps",
-    logging_steps=1,
-    optim="paged_adamw_32bit",
-    eval_strategy="epoch",
-    save_strategy="epoch",
-    output_dir=parameters.output_dir_path,
-    save_total_limit=0,
-    group_by_length=parameters.group_by_length,
-    load_best_model_at_end=True,
-    label_names=["labels"]
-)
+    training_arguments = transformers.TrainingArguments(
+        per_device_train_batch_size=parameters.micro_batch_size,
+        gradient_accumulation_steps=parameters.gradient_accumulation_steps,
+        warmup_ratio=WARMUP_RATIO,
+        num_train_epochs=parameters.epochs,
+        learning_rate=parameters.learning_rate,
+        fp16=True,
+        logging_strategy = "steps",
+        logging_steps=1,
+        optim="paged_adamw_32bit",
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        output_dir=parameters.output_dir_path,
+        save_total_limit=0,
+        group_by_length=parameters.group_by_length,
+        load_best_model_at_end=True,
+        label_names=["labels"]
+    )
 
-data_collator = transformers.DataCollatorForSeq2Seq(
-    t.tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
-)
+    data_collator = transformers.DataCollatorForSeq2Seq(
+        t.tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
+    )
 
-trainer = transformers.Trainer(
-    model=model,
-    train_dataset=train_data,
-    eval_dataset=val_data,
-    args=training_arguments,
-    data_collator=data_collator
-)
-model.config.use_cache = False
+    trainer = transformers.Trainer(
+        model=model,
+        train_dataset=train_data,
+        eval_dataset=val_data,
+        args=training_arguments,
+        data_collator=data_collator
+    )
+    model.config.use_cache = False
 
-if torch.cuda.device_count() > 1:
-    # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
-    model.is_parallelizable = True
-    model.model_parallel = True
+    if torch.cuda.device_count() > 1:
+        # keeps Trainer from trying its own DataParallelism when more than 1 gpu is available
+        model.is_parallelizable = True
+        model.model_parallel = True
 
-if "falcon" in parameters.model_name:
-    model.config.pad_token_id = model.config.eos_token_id
-else:
-    model.config.pad_token_id = 0
-    model.config.bos_token_id = 1
-    model.config.eos_token_id = 2
+    if "falcon" in parameters.model_name:
+        model.config.pad_token_id = model.config.eos_token_id
+    else:
+        model.config.pad_token_id = 0
+        model.config.bos_token_id = 1
+        model.config.eos_token_id = 2
 
-if torch.__version__ >= "2":
-    print("YES! I AM 2.0 :-)")
-    model = torch.compile(model)
-print("after compile")
-#-------------------
-#    LOAD MODEL
-#-------------------
-ts = time.time()
-trainer.train()
-print(f"Training time:{time.time() - ts}")
+    if torch.__version__ >= "2":
+        print("YES! I AM 2.0 :-)")
+        model = torch.compile(model)
+    print("after compile")
+    #-------------------
+    #    LOAD MODEL
+    #-------------------
+    ts = time.time()
+    trainer.train()
+    print(f"Training time:{time.time() - ts}")
 
-t.tokenizer.save_pretrained(parameters.output_dir_path)
-model.save_pretrained(parameters.output_dir_path)
+    t.tokenizer.save_pretrained(parameters.output_dir_path)
+    model.save_pretrained(parameters.output_dir_path)

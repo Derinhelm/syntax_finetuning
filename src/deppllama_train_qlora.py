@@ -1,18 +1,16 @@
 import argparse
 import transformers
 from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer
-import csv
 import random
-from typing import List
-import json
 import os
 import time
 import yaml
 
 random.seed(23)
 
-from constants import LORA_R, LORA_ALPHA, LORA_DROPOUT, LORA_TARGET_MODULES, CUTOFF_LEN, TRIM_LEN, WARMUP_RATIO
+from constants import LORA_R, LORA_ALPHA, LORA_DROPOUT, LORA_TARGET_MODULES, CUTOFF_LEN, WARMUP_RATIO
 from deppllama_utils import *
+from creating_data import creating_data
 from parameters import Parameters
  
 from peft import (
@@ -23,8 +21,6 @@ from peft import (
  
 #import fire
 import torch
-from datasets import load_dataset
-import pandas as pd
 
 #============================================
 #               PARAMETERS
@@ -46,25 +42,14 @@ os.makedirs(parameters.output_dir_path)
 with open(parameters.output_dir_path + config_name.split('/')[-1], 'w') as file:
     yaml.dump(configs, file, default_flow_style=False)
 
-
 print("LEARNING_RATE:\t" + str(parameters.learning_rate))
 
-tmp_train_file_name = "tmp_train.json"
-tmp_dev_file_name = "tmp_dev.json"
+
 
 #============================================
 #               FUNCTIONS
 #============================================
 
-#LOAD INPUT TSV files 
-def load(input_file_path):
-    dataset_df = pd.read_csv(input_file_path, header=None, usecols=[0,1, 2, 3], names=['0', '1', '2', '3'], sep="\t", quoting=csv.QUOTE_NONE, encoding='utf-8').astype(str)
-    dataset_df = dataset_df.rename(
-        columns={"0": "id", "1": "prefix", "2": "input_text", "3": "target_text"}
-    )
-    #dataset_df["prefix"] = ""
-    dataset_df = dataset_df[["id", "input_text", "target_text", "prefix"]]
-    return dataset_df
 
  
 # Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
@@ -117,30 +102,6 @@ def generate_and_tokenize_prompt(data_point, add_eos_token=True):
 
     
 
-def load_and_prepare_data(input_file_path: str, trim_len=15):
-
-    df = load(input_file_path)
-
-    dataset_data = [
-        {
-            "instruction": "Parse this sentence:",
-            "input": row_dict["input_text"],
-            "output": row_dict["target_text"]
-        }
-        for row_dict in df.to_dict(orient="records")
-    ]
-
-    for elem in dataset_data:
-        osplit = elem["output"].split()
-        l = len(osplit)
-        if l > trim_len:
-            isplit = elem["input"].split()[:trim_len]
-            osplit = osplit[:trim_len]
-            elem["input"] = " ".join(isplit)
-            elem["output"] = " ".join(osplit)
-        
-
-    return dataset_data
 
 def remove_example_by_length(lst, target_length):
     result = []
@@ -153,23 +114,7 @@ def remove_example_by_length(lst, target_length):
 #                   MAIN
 #============================================
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-#-------------------
-#    LOAD DATA 
-#-------------------
-train_data = load_and_prepare_data(parameters.input_train_path, TRIM_LEN)
-dev_data = load_and_prepare_data(parameters.input_dev_path, TRIM_LEN)
-
-
-with open(tmp_train_file_name, "w") as f:
-   json.dump(train_data, f)
-with open(tmp_dev_file_name, "w") as f:
-   json.dump(dev_data, f)
-
-json_train = load_dataset("json", data_files=tmp_train_file_name)
-json_dev = load_dataset("json", data_files=tmp_dev_file_name)
+json_train, json_dev = creating_data(parameters)
 
 #-------------------
 #    LOAD MODEL

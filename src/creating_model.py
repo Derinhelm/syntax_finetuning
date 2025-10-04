@@ -1,6 +1,6 @@
 from transformers import BitsAndBytesConfig, AutoModelForCausalLM
 
-from constants import LORA_R, LORA_ALPHA, LORA_DROPOUT, LORA_TARGET_MODULES
+from constants import LORA_TARGET_MODULES
 from deppllama_utils import *
  
 from peft import (
@@ -54,10 +54,10 @@ def creating_model(parameters):
         )
     else:
         config = LoraConfig(
-            r=LORA_R,
-            lora_alpha=LORA_ALPHA,
+            r=parameters.lora_r,
+            lora_alpha=parameters.lora_alpha,
             target_modules=LORA_TARGET_MODULES,
-            lora_dropout=LORA_DROPOUT,
+            lora_dropout=parameters.lora_dropout,
             bias="none",
             task_type="CAUSAL_LM",
         )

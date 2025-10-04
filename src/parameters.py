@@ -1,3 +1,10 @@
+
+class SeveralParameters:
+    def __init__(self, configs):
+        self.lora_r = configs.get("lora_r", [8])
+        self.lora_alpha = configs.get("lora_alpha", [16])
+        self.lora_dropout = configs.get("lora_dropout", [0.05])
+
 class Parameters:
     def __init__(self, configs):
         self.input_train_path = configs["train_file_path"]
@@ -14,7 +21,7 @@ class Parameters:
         self.batch_size = configs.get("batch_size", 32)
         self.micro_batch_size = configs.get("micro_batch_size", 8)
         self.gradient_accumulation_steps = self.batch_size // self.micro_batch_size
-        self.learning_rate = configs.get("learning_rate", 3e-4)
-        self.lora_r = configs.get("lora_r", 8)
-        self.lora_alpha = 16
-        self.lora_dropout = 0.05
+        self.learning_rate = configs.get("learning_rate", 3e-4) # TODO: переместить в Several
+        self.lora_r = None
+        self.lora_alpha = None # TODO: Сделать автоматическим
+        self.lora_dropout = None

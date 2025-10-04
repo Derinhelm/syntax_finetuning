@@ -104,7 +104,7 @@ def conduct_experiment(parameters):
     t.tokenizer.save_pretrained(parameters.output_dir_path)
     model.save_pretrained(parameters.output_dir_path)
     with open(f"{parameters.output_dir_path}/config_experiment.yaml", 'w') as file:
-        yaml.safe_dump(parameters, file)
+        yaml.dump(parameters, file, default_flow_style=False)
 
     del t
     del model

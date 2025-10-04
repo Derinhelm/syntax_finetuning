@@ -1,6 +1,7 @@
 import gc
 import transformers
 import time
+import yaml
 
 from constants import CUTOFF_LEN, WARMUP_RATIO
 from creating_data import creating_data
@@ -102,6 +103,9 @@ def conduct_experiment(parameters):
 
     t.tokenizer.save_pretrained(parameters.output_dir_path)
     model.save_pretrained(parameters.output_dir_path)
+    with open(f"{parameters.output_dir_path}/config_experiment.yaml", 'w') as file:
+        yaml.safe_dump(parameters, file)
+
     del t
     del model
     for _ in range(3):

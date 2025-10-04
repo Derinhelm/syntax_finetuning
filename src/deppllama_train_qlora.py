@@ -41,35 +41,13 @@ with open(config_name, 'r') as file:
 print(configs)
 
 parameters = Parameters(configs)
-model_name = configs["model_name"]
-root_output_dir_path = configs["output_dir_path"]
 
-treebank = configs.get("treebank", "gsd")
-clear_model_name = model_name.split('/')[-1].replace("-", "_").replace(".", "_")
-output_dir_path = f"{root_output_dir_path}/{clear_model_name}_{treebank}/"
-
-epochs = configs.get("epochs", 1)
-group_by_length = configs.get("group_by_length", False)
-
-disable_qlora = configs.get("disable_qlora", False)
-IS_INSTRUCT = configs.get("is_instruct", False)
-
-os.makedirs(output_dir_path)
-with open(output_dir_path + config_name.split('/')[-1], 'w') as file:
+os.makedirs(parameters.output_dir_path)
+with open(parameters.output_dir_path + config_name.split('/')[-1], 'w') as file:
     yaml.dump(configs, file, default_flow_style=False)
 
 
-TOKENIZER_MODEL = model_name
-BASE_MODEL = model_name
-OUTPUT_DIR = output_dir_path
-
- 
-BATCH_SIZE = configs.get("batch_size", 32) 
-MICRO_BATCH_SIZE = configs.get("micro_batch_size", 8)
-GRADIENT_ACCUMULATION_STEPS = BATCH_SIZE // MICRO_BATCH_SIZE
-LEARNING_RATE = configs.get("learning_rate", 3e-4)
-
-print("LEARNING_RATE:\t" + str(LEARNING_RATE))
+print("LEARNING_RATE:\t" + str(parameters.learning_rate))
 
 tmp_train_file_name = "tmp_train.json"
 tmp_dev_file_name = "tmp_dev.json"
@@ -196,7 +174,7 @@ json_dev = load_dataset("json", data_files=tmp_dev_file_name)
 #-------------------
 #    LOAD MODEL
 #-------------------
-tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(parameters.model_name, trust_remote_code=True)
 
 # PREPARE DATA
 train_data = ( json_train["train"].shuffle().map(generate_and_tokenize_prompt) )
@@ -219,9 +197,9 @@ quant_config = BitsAndBytesConfig(
     bnb_4bit_compute_dtype=torch.bfloat16
 )
 
-if not disable_qlora:
+if not parameters.disable_qlora:
     model = AutoModelForCausalLM.from_pretrained(
-        BASE_MODEL,
+        parameters.model_name,
         #load_in_4bit=True,
         quantization_config=quant_config,
         #torch_dtype=torch.bfloat16,
@@ -231,14 +209,14 @@ if not disable_qlora:
     )
 else:
     model = AutoModelForCausalLM.from_pretrained(
-        BASE_MODEL,
+        parameters.model_name,
         trust_remote_code=True,
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
     model.half()
 
-if "falcon" in model_name:
+if "falcon" in parameters.model_name:
     tokenizer.pad_token = tokenizer.eos_token
 else:
     tokenizer.pad_token_id = 0
@@ -252,7 +230,7 @@ print("padding_side\t" + str(tokenizer.padding_side))
 # PREPARE MODEL
 model = prepare_model_for_kbit_training(model)
 
-if "falcon" in model_name:
+if "falcon" in parameters.model_name:
     config = LoraConfig(
     r=16,
     lora_alpha=32,
@@ -276,20 +254,20 @@ model.print_trainable_parameters()
 
 
 training_arguments = transformers.TrainingArguments(
-    per_device_train_batch_size=MICRO_BATCH_SIZE,
-    gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
+    per_device_train_batch_size=parameters.micro_batch_size,
+    gradient_accumulation_steps=parameters.gradient_accumulation_steps,
     warmup_ratio=WARMUP_RATIO,
-    num_train_epochs=epochs,
-    learning_rate=LEARNING_RATE,
+    num_train_epochs=parameters.epochs,
+    learning_rate=parameters.learning_rate,
     fp16=True,
     logging_strategy = "steps",
     logging_steps=1,
     optim="paged_adamw_32bit",
     eval_strategy="epoch",
     save_strategy="epoch",
-    output_dir=OUTPUT_DIR,
+    output_dir=parameters.output_dir_path,
     save_total_limit=0,
-    group_by_length=group_by_length,
+    group_by_length=parameters.group_by_length,
     load_best_model_at_end=True,
     label_names=["labels"]
 )
@@ -312,7 +290,7 @@ if torch.cuda.device_count() > 1:
     model.is_parallelizable = True
     model.model_parallel = True
 
-if "falcon" in model_name:
+if "falcon" in parameters.model_name:
     model.config.pad_token_id = model.config.eos_token_id
 else:
     model.config.pad_token_id = 0
@@ -330,6 +308,5 @@ ts = time.time()
 trainer.train()
 print(f"Training time:{time.time() - ts}")
 
-tokenizer.save_pretrained(OUTPUT_DIR)
-model.save_pretrained(OUTPUT_DIR)
-
+tokenizer.save_pretrained(parameters.output_dir_path)
+model.save_pretrained(parameters.output_dir_path)

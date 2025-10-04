@@ -1,3 +1,4 @@
+import gc
 import transformers
 import time
 
@@ -101,3 +102,8 @@ def conduct_experiment(parameters):
 
     t.tokenizer.save_pretrained(parameters.output_dir_path)
     model.save_pretrained(parameters.output_dir_path)
+    del t
+    del model
+    for _ in range(3):
+        gc.collect() # Сборка мусора для удаления
+    torch.cuda.empty_cache()

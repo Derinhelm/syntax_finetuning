@@ -1,6 +1,6 @@
 import argparse
 import transformers
-from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer
 import random
 import os
 import time
@@ -8,18 +8,12 @@ import yaml
 
 random.seed(23)
 
-from constants import LORA_R, LORA_ALPHA, LORA_DROPOUT, LORA_TARGET_MODULES, CUTOFF_LEN, WARMUP_RATIO
+from constants import CUTOFF_LEN, WARMUP_RATIO
 from deppllama_utils import *
 from creating_data import creating_data
+from creating_model import creating_model # TODO: rename all
 from parameters import Parameters
- 
-from peft import (
-    LoraConfig,
-    get_peft_model,
-    prepare_model_for_kbit_training,
-)
- 
-#import fire
+
 import torch
 
 #============================================
@@ -125,42 +119,6 @@ tokenizer = AutoTokenizer.from_pretrained(parameters.model_name, trust_remote_co
 train_data = ( json_train["train"].shuffle().map(generate_and_tokenize_prompt) )
 val_data = ( json_dev["train"].shuffle().map(generate_and_tokenize_prompt) )
 
-
-original_train_length = len(train_data)
-
-train_data = remove_example_by_length(train_data, CUTOFF_LEN)
-
-if(len(train_data)!=original_train_length):
-    print("WARNING:")
-    print("original_train_length: " + str(original_train_length))
-    print("len(train_data): " + str(len(train_data)))
-
-quant_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_use_double_quant=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.bfloat16
-)
-
-if not parameters.disable_qlora:
-    model = AutoModelForCausalLM.from_pretrained(
-        parameters.model_name,
-        #load_in_4bit=True,
-        quantization_config=quant_config,
-        #torch_dtype=torch.bfloat16,
-        torch_dtype=torch.float16,
-        trust_remote_code=True,
-        device_map="auto",
-    )
-else:
-    model = AutoModelForCausalLM.from_pretrained(
-        parameters.model_name,
-        trust_remote_code=True,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
-    model.half()
-
 if "falcon" in parameters.model_name:
     tokenizer.pad_token = tokenizer.eos_token
 else:
@@ -171,32 +129,16 @@ else:
 
 print("padding_side\t" + str(tokenizer.padding_side))
 
+original_train_length = len(train_data)
 
-# PREPARE MODEL
-model = prepare_model_for_kbit_training(model)
+train_data = remove_example_by_length(train_data, CUTOFF_LEN)
 
-if "falcon" in parameters.model_name:
-    config = LoraConfig(
-    r=16,
-    lora_alpha=32,
-    target_modules=["query_key_value"],
-    lora_dropout=0.05,
-    bias="none",
-    task_type="CAUSAL_LM"
-    )
-else:
-    config = LoraConfig(
-        r=LORA_R,
-        lora_alpha=LORA_ALPHA,
-        target_modules=LORA_TARGET_MODULES,
-        lora_dropout=LORA_DROPOUT,
-        bias="none",
-        task_type="CAUSAL_LM",
-    )
+if(len(train_data)!=original_train_length):
+    print("WARNING:")
+    print("original_train_length: " + str(original_train_length))
+    print("len(train_data): " + str(len(train_data)))
 
-model = get_peft_model(model, config)
-model.print_trainable_parameters()
-
+model = creating_model(parameters)
 
 training_arguments = transformers.TrainingArguments(
     per_device_train_batch_size=parameters.micro_batch_size,

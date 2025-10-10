@@ -46,3 +46,4 @@ for experiment_number, experiment_params in enumerate(s_params):
 
     os.makedirs(cur_parameters.output_dir_path)
     conduct_experiment(cur_parameters)
+print("Finish")

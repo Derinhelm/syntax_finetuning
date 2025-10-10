@@ -11,7 +11,8 @@ random.seed(23)
 
 parser = argparse.ArgumentParser(description='Parsing 2011 Data Generator.')
 
-parser.add_argument('-i','--input', help='Input File Path',default=None)
+parser.add_argument('-i','--inputs', help='Input File Paths', nargs='*')
+parser.add_argument('-o','--output_name', help='Output File Name')
 parser.add_argument('-d','--decodeinput', help='Decode Input File Path',default=None)
 parser.add_argument('-r','--representation', help='representation', choices = ['lct', 'grct', 'loct'], default="lct")
 parser.add_argument('-m','--max_length', help='Max Length', type=int, default=100000)
@@ -25,7 +26,10 @@ parser.add_argument('--disable_tokenization', action="store_true", default=False
 
 
 args = parser.parse_args()
-input_file = args.input
+input_files = args.inputs
+print(input_files)
+output_name = args.output_name
+print(output_name)
 max_length = args.max_length
 max_sentences = args.max_sentences
 decode_input_file = args.decodeinput
@@ -410,8 +414,8 @@ def print_decode(tree_string, representation_type):
 
 #=================MAIN=======================        
 
-
-if input_file:
+res_list = []
+for input_file in input_files:
     with open(input_file, 'r') as file:
         content = file.read()
 
@@ -422,7 +426,7 @@ if input_file:
                 simplify_relations(tree)
 
         sentences = parse(content)
-        res_list = []
+
         for i in range( min(len(trees), max_sentences)):
             #if i != 135:
             #    continue
@@ -445,7 +449,9 @@ if input_file:
            # print(sent_res, end="\n\n")
             #print(corpus + "___" + str(i) + "\tparse\t" + str_input + "\t" + used_representation)
             res_list.append({"index": i, "input": str_input, "output": sent_res})
-        new_filename = f'src/data/{representation}_{input_file.split("/")[-1].split(".")[0]}.json'
-        print(new_filename)
-        with open(new_filename, 'w') as json_file:
-            json.dump(res_list, json_file, indent=4)
+            
+            
+new_filename = f'src/data/{representation}_{output_name}.json'
+print(new_filename)
+with open(new_filename, 'w') as json_file:
+    json.dump(res_list, json_file, indent=4)

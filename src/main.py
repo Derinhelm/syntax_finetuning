@@ -28,7 +28,7 @@ for param_name, param_values in configs.items():
         parameters.__setattr__(param_name, param_values) # Several parameters
 
 several_param_names = list(several_parameters.keys())
-s_params = list(itertools.product(several_parameters.values()))
+s_params = list(itertools.product(*several_parameters.values()))
 
 os.makedirs(parameters.root_output_dir_path)
 with open(parameters.root_output_dir_path + config_name.split('/')[-1], 'w') as file:

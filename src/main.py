@@ -19,7 +19,7 @@ config_name = parser_args.config_name
 with open(config_name, 'r') as file:
     configs = yaml.safe_load(file)
 
-parameters = Parameters()
+parameters = Parameters(config_name)
 several_parameters = OrderedDict()
 for param_name, param_values in configs.items():
     if isinstance(param_values, list):
@@ -30,8 +30,9 @@ for param_name, param_values in configs.items():
 several_param_names = list(several_parameters.keys())
 s_params = list(itertools.product(*several_parameters.values()))
 
-os.makedirs(parameters.output_dir_path)
-with open(parameters.output_dir_path + config_name.split('/')[-1], 'w') as file:
+#os.makedirs(parameters.root_output_dir_path)
+config_dir_path = parameters.config_dir_path
+with open(config_dir_path, 'w') as file:
     yaml.dump(configs, file, default_flow_style=False)
 
 for experiment_number, experiment_params in enumerate(s_params):

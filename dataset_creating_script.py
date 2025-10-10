@@ -1,5 +1,6 @@
 import argparse
 from conllu import parse_tree, parse
+import json
 import random
 import traceback
 
@@ -443,11 +444,8 @@ if input_file:
             #print(str_input, end="\n\n")
            # print(sent_res, end="\n\n")
             #print(corpus + "___" + str(i) + "\tparse\t" + str_input + "\t" + used_representation)
-            res_list.append((i, None, str_input, sent_res))
-        res_df = pd.DataFrame(res_list,
-            columns=['id', 'prefix', 'input_text', 'target_text'])
-        new_filename = f'src/data/{representation}_{input_file.split("/")[-1].split(".")[0]}.csv'
+            res_list.append({"index": i, "input": str_input, "output": sent_res})
+        new_filename = f'src/data/{representation}_{input_file.split("/")[-1].split(".")[0]}.json'
         print(new_filename)
-        res_df.to_csv(new_filename, index=False, sep="\t", header=False)
-
-
+        with open(new_filename, 'w') as json_file:
+            json.dump(res_list, json_file, indent=4)

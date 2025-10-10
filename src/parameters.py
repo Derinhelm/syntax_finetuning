@@ -1,5 +1,6 @@
 class Parameters:
-    def __init__(self):
+    def __init__(self, config_name):
+        self.config_name = config_name
         self.train_file_path = None
         self.dev_file_path = None
         self.model_name = None
@@ -25,3 +26,8 @@ class Parameters:
     def output_dir_path(self):
         clear_model_name = self.model_name.split('/')[-1].replace("-", "_").replace(".", "_")
         return f"{self.root_output_dir_path}/{clear_model_name}_{self.treebank}/{self.experiment_number}"
+       
+    @property 
+    def config_dir_path(self):
+        return self.root_output_dir_path + "/" + self.config_name.split('/')[-1]
+

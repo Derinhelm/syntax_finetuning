@@ -2,7 +2,6 @@ import csv
 import json
 
 
-from constants import TRIM_LEN
 from deppllama_utils import *
  
 from datasets import load_dataset
@@ -18,7 +17,7 @@ def load(input_file_path):
     dataset_df = dataset_df[["id", "input_text", "target_text", "prefix"]]
     return dataset_df
 
-def load_and_prepare_data(input_file_path: str, trim_len=15):
+def load_and_prepare_data(input_file_path: str):
 
     df = load(input_file_path)
 
@@ -30,16 +29,7 @@ def load_and_prepare_data(input_file_path: str, trim_len=15):
         }
         for row_dict in df.to_dict(orient="records")
     ]
-
-    for elem in dataset_data:
-        osplit = elem["output"].split()
-        l = len(osplit)
-        if l > trim_len:
-            isplit = elem["input"].split()[:trim_len]
-            osplit = osplit[:trim_len]
-            elem["input"] = " ".join(isplit)
-            elem["output"] = " ".join(osplit)
-        
+      
 
     return dataset_data
 
@@ -47,8 +37,8 @@ def load_and_prepare_data(input_file_path: str, trim_len=15):
 #    LOAD DATA 
 #-------------------
 def creating_data(parameters):
-    train_data = load_and_prepare_data(parameters.input_train_path, TRIM_LEN)
-    dev_data = load_and_prepare_data(parameters.input_dev_path, TRIM_LEN)
+    train_data = load_and_prepare_data(parameters.input_train_path)
+    dev_data = load_and_prepare_data(parameters.input_dev_path)
 
     tmp_train_file_name = "tmp_train.json"
     tmp_dev_file_name = "tmp_dev.json"

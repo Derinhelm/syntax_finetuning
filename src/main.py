@@ -30,14 +30,16 @@ for param_name, param_values in configs.items():
 several_param_names = list(several_parameters.keys())
 s_params = list(itertools.product(*several_parameters.values()))
 
-os.makedirs(parameters.root_output_dir_path)
-with open(parameters.root_output_dir_path + config_name.split('/')[-1], 'w') as file:
+os.makedirs(parameters.output_dir_path)
+with open(parameters.output_dir_path + config_name.split('/')[-1], 'w') as file:
     yaml.dump(configs, file, default_flow_style=False)
 
 for experiment_number, experiment_params in enumerate(s_params):
-    assert len(experiment_params[0]) == len(several_param_names)
+    print(experiment_params)
+    print(several_param_names)
+    assert len(experiment_params) == len(several_param_names)
     cur_parameters = copy.deepcopy(parameters)
-    for param_i, param in enumerate(experiment_params[0]):
+    for param_i, param in enumerate(experiment_params):
         cur_parameters.__setattr__(several_param_names[param_i], param)
     cur_parameters.experiment_number = experiment_number
     print("-" * 10, cur_parameters.__dict__, sep='\n')

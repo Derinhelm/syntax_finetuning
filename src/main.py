@@ -30,7 +30,7 @@ for param_name, param_values in configs.items():
 several_param_names = list(several_parameters.keys())
 s_params = list(itertools.product(several_parameters.values()))
 
-os.makedirs(parameters.output_dir_path)
+os.makedirs(parameters.root_output_dir_path)
 with open(parameters.output_dir_path + config_name.split('/')[-1], 'w') as file:
     yaml.dump(configs, file, default_flow_style=False)
 

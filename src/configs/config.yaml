@@ -1,7 +1,7 @@
 train_file_path: /src/src/data/grct_ru_gsd-ud-train.json
 dev_file_path: /src/src/data/grct_ru_gsd-ud-dev.json
 model_name: TinyLlama/TinyLlama_v1.1
-output_dir_path: /src/src/results
+root_output_dir_path: /src/src/results
 epochs: 2
 lora_r: [2, 4, 8]
 lora_alpha: [2, 4, 8, 16]

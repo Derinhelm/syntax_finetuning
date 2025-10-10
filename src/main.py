@@ -31,7 +31,7 @@ several_param_names = list(several_parameters.keys())
 s_params = list(itertools.product(several_parameters.values()))
 
 os.makedirs(parameters.root_output_dir_path)
-with open(parameters.output_dir_path + config_name.split('/')[-1], 'w') as file:
+with open(parameters.root_output_dir_path + config_name.split('/')[-1], 'w') as file:
     yaml.dump(configs, file, default_flow_style=False)
 
 for experiment_number, experiment_params in enumerate(s_params):

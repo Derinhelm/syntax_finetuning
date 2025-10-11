@@ -22,7 +22,7 @@ def creating_model(parameters):
 
     if not parameters.disable_qlora:
         model = AutoModelForCausalLM.from_pretrained(
-            parameters.model_name,
+            parameters.model_config.model_name,
             #load_in_4bit=True,
             quantization_config=quant_config,
             #torch_dtype=torch.bfloat16,
@@ -32,7 +32,7 @@ def creating_model(parameters):
         )
     else:
         model = AutoModelForCausalLM.from_pretrained(
-            parameters.model_name,
+            parameters.model_config.model_name,
             trust_remote_code=True,
             torch_dtype=torch.bfloat16,
             device_map="auto",
@@ -43,7 +43,7 @@ def creating_model(parameters):
     # PREPARE MODEL
     model = prepare_model_for_kbit_training(model)
 
-    if "falcon" in parameters.model_name:
+    if "falcon" in parameters.model_config.model_name:
         config = LoraConfig(
         r=16,
         lora_alpha=32,

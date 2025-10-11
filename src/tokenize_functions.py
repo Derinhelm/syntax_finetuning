@@ -5,7 +5,7 @@ from deppllama_utils import *
 class Tokenizer:
     def __init__(self, parameters):
         self.tokenizer = AutoTokenizer.from_pretrained(
-            parameters.model_name, trust_remote_code=True)
+            parameters.model_config.model_name, trust_remote_code=True)
 
     # Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
     def tokenize_base(self, prompt, cutoff_len, add_eos_token=True):
@@ -56,7 +56,7 @@ class Tokenizer:
         return tokenized_full_prompt
 
     def set_tokens(self, parameters):
-        if "falcon" in parameters.model_name:
+        if "falcon" in parameters.model_config.model_name:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         else:
             self.tokenizer.pad_token_id = 0

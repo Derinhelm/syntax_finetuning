@@ -83,7 +83,7 @@ def conduct_experiment(parameters):
         model.is_parallelizable = True
         model.model_parallel = True
 
-    if "falcon" in parameters.model_name:
+    if "falcon" in parameters.model_config.model_name:
         model.config.pad_token_id = model.config.eos_token_id
     else:
         model.config.pad_token_id = 0

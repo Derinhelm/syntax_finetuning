@@ -393,18 +393,6 @@ def print_line(line):
     return str(line["id"])+"\t"+line["form"]+"\t_\t_\t_\t_\t"+str(line["toid"])+"\t"+ line["deprel"]+"\t_\t_"
 
 
-def print_decode(tree_string, representation_type):
-    dep_array = get_decode(tree_string, representation_type)
-
-    for i in range(1, len(res)+1):
-        dep_array.append(print_line(res[i+1]))
-
-    for i in range(len(dep_array)):
-        print(dep_array[i])
-    print()
-
-
-
 #=================MAIN=======================        
 
 

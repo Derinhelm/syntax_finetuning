@@ -6,6 +6,7 @@ import random
 import os
 import yaml
 
+from config import DatasetConfig, ModelConfig
 from deppllama_train_qlora import conduct_experiment
 from parameters import Parameters
 
@@ -20,12 +21,23 @@ with open(config_name, 'r') as file:
     configs = yaml.safe_load(file)
 
 parameters = Parameters(config_name)
+
+if isinstance(configs['dataset_config'], list):
+    configs['dataset_config'] = [ DatasetConfig(path_c) for path_c in configs['dataset_config'] ]
+else:
+    configs['dataset_config'] = DatasetConfig(configs['dataset_config'])
+
+if isinstance(configs['model_config'], list):
+    configs['model_config'] = [ ModelConfig(path_c) for path_c in configs['model_config'] ]
+else:
+    configs['model_config'] = ModelConfig(configs['model_config'])
+
 several_parameters = OrderedDict()
 for param_name, param_values in configs.items():
     if isinstance(param_values, list):
-        several_parameters[param_name] = param_values # One parameter
+        several_parameters[param_name] = param_values # Several parameters
     else:
-        parameters.__setattr__(param_name, param_values) # Several parameters
+        parameters.__setattr__(param_name, param_values) # One parameter
 
 several_param_names = list(several_parameters.keys())
 s_params = list(itertools.product(*several_parameters.values()))

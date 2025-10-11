@@ -19,52 +19,35 @@ def simplify_relations(node):
     for child in node.children:
         simplify_relations(child)
 
-
-def get_masked_id(N, prob):
-    lista = []
-    for num in range(1, N+1):
-        if random.random() <= prob:
-            lista.append(num)
-    return lista
-
-def tree2string_plain(tokenlist, mylist = [], masked_id=[]):
+def tree2string_plain(tokenlist):
     res = ""
     for token in tokenlist:
         if isinstance(token["id"], int):
-            if token["id"] in masked_id:
-                res += "<mask> " 
-            else:
-                res += token["form"] + " "
+            res += token["form"] + " "
     return res.rstrip()
 
 # LOCT
 
-def tree2list_loct(node, mylist = [], masked_id=[]):
+def tree2list_loct(node, mylist = [],):
 
-        if node.token["id"] in masked_id:
-            node_str = "<mask>"
-        else:
-            node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
+        node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
 
         mylist.append(OP + " " + node_str)
         for child in node.children:
-            tree2list_loct(child, mylist=mylist, masked_id=masked_id)
+            tree2list_loct(child, mylist=mylist)
         mylist.append(CP)
 
 
-def tree2string_loct(node, masked_id=[]):
+def tree2string_loct(node):
     my_list = []
-    tree2list_loct(node, my_list, masked_id)
+    tree2list_loct(node, my_list)
     return " ".join(my_list)
 
 
 # LCT
 
-def tree2list_lct(node, mylist = [], masked_id=[]):
-    if node.token["id"] in masked_id:
-        node_str = "<mask>"
-    else:
-        node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
+def tree2list_lct(node, mylist = []):
+    node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
 
     mylist.append(OP + " " + node_str)
     is_deprel_written = False
@@ -77,7 +60,7 @@ def tree2list_lct(node, mylist = [], masked_id=[]):
                 mylist.append(OP + " " + node.token["deprel"] + " " + CP)
                 is_deprel_written = True
 
-        tree2list_lct(child, mylist=mylist, masked_id=masked_id)
+        tree2list_lct(child, mylist=mylist)
 
         if i == len(node.children) - 1 and not is_deprel_written:
                 mylist.append(OP + " " + node.token["deprel"] + " " + CP)
@@ -85,53 +68,44 @@ def tree2list_lct(node, mylist = [], masked_id=[]):
 
     mylist.append(CP)
 
-def tree2string_lct(node, masked_id=[]):
+def tree2string_lct(node):
     my_list = []
-    tree2list_lct(node, my_list, masked_id)
+    tree2list_lct(node, my_list)
     return " ".join(my_list)
 
 # GRCT
 
-def tree2list_grct(node, mylist = [], masked_id=[]):
+def tree2list_grct(node, mylist = []):
     node_str = node.token["deprel"]
 
     mylist.append(OP + " " + node_str)
     is_deprel_written = False
 
     if len(node.children) == 0:
-        if node.token["id"] in masked_id:
-            node_str = "<mask>"
-        else:
-            node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
+        node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
         mylist.append(OP + " " + node_str + " " + CP)
 
     for i, child in enumerate(node.children):        
         if child.token["id"] > node.token["id"] and not is_deprel_written:
-            if node.token["id"] in masked_id:
-                node_str = "<mask>"
-            else:
-                node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
+            node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
 
             mylist.append(OP + " " + node_str + " " + CP)
             is_deprel_written = True
 
-        tree2list_grct(child, mylist=mylist, masked_id=masked_id)
+        tree2list_grct(child, mylist=mylist)
 
         if i == len(node.children) - 1 and not is_deprel_written:
-            if node.token["id"] in masked_id:
-                node_str = "<mask>"
-            else:
-                node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
+            node_str = node.token["form"].replace("[", "-LRB-").replace("]", "-RRB-")
             
             mylist.append(OP + " " + node_str + " " + CP)
             is_deprel_written = True            
 
     mylist.append(CP)
 
-def tree2string_grct(node, masked_id=[]):
+def tree2string_grct(node):
     my_list = []
     #print_tree(node)
-    tree2list_grct(node, my_list, masked_id)
+    tree2list_grct(node, my_list)
     return " ".join(my_list)
 
 

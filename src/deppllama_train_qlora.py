@@ -58,7 +58,7 @@ def conduct_experiment(parameters):
         optim="paged_adamw_32bit",
         eval_strategy="epoch",
         save_strategy="best",
-        output_dir=parameters.output_dir_path,
+        output_dir=parameters.output_experiment_path,
         save_total_limit=0,
         group_by_length=parameters.group_by_length,
         load_best_model_at_end=True,
@@ -94,16 +94,14 @@ def conduct_experiment(parameters):
         print("YES! I AM 2.0 :-)")
         model = torch.compile(model)
     print("after compile")
-    #-------------------
-    #    LOAD MODEL
-    #-------------------
+
     ts = time.time()
     trainer.train()
     print(f"Training time:{time.time() - ts}")
 
-    t.tokenizer.save_pretrained(parameters.output_dir_path)
-    model.save_pretrained(parameters.output_dir_path)
-    with open(f"{parameters.output_dir_path}/config_experiment.yaml", 'w') as file:
+    t.tokenizer.save_pretrained(parameters.output_experiment_path)
+    model.save_pretrained(parameters.output_experiment_path)
+    with open(f"{parameters.output_experiment_path}/config_experiment.yaml", 'w') as file:
         yaml.dump(parameters, file, default_flow_style=False)
 
     del t

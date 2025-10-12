@@ -21,11 +21,14 @@ class Parameters:
         return self.batch_size // self.micro_batch_size
 
     @property
-    def output_dir_path(self):
+    def output_model_dataset_path(self):
         clear_model_name = self.model_config.model_name.split('/')[-1].replace("-", "_").replace(".", "_")
-        return f"{self.root_output_dir_path}/{clear_model_name}_{self.treebank}/{self.experiment_number}"
+        return f"{self.root_output_dir_path}/{clear_model_name}_{self.treebank}"
+
+    @property
+    def output_experiment_path(self):
+        return f"{self.output_model_dataset_path}/{self.experiment_number}"
        
     @property 
     def config_dir_path(self):
         return self.root_output_dir_path + "/" + self.config_name.split('/')[-1]
-

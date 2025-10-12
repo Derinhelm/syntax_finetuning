@@ -34,8 +34,6 @@ def conduct_experiment(parameters):
     train_data = ( json_train["train"].shuffle().map(t.generate_and_tokenize_prompt) )
     val_data = ( json_dev["train"].shuffle().map(t.generate_and_tokenize_prompt) )
 
-    t.set_tokens(parameters)
-
     original_train_length = len(train_data)
     train_data = remove_example_by_length(train_data, CUTOFF_LEN)
 

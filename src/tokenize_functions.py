@@ -12,7 +12,7 @@ class BaseTokenizer:
         print("padding_side\t" + str(self.tokenizer.padding_side))
 
     # Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
-    def tokenize_base(self, prompt):
+    def tokenize(self, prompt):
         result = self.tokenizer(prompt, return_tensors=None)
         if (result["input_ids"][-1] != self.tokenizer.eos_token_id):
             result["input_ids"].append(self.tokenizer.eos_token_id)
@@ -20,10 +20,6 @@ class BaseTokenizer:
     
         result["labels"] = result["input_ids"].copy()
         return result
-
-    # Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
-    def tokenize(self, prompt):
-        return self.tokenize_base(prompt)
 
     # Notice: result["labels"] is rewritten so that only the output is considered
     def generate_and_tokenize_prompt(self, data_point):

@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer
 from deppllama_utils import *
 
-class Tokenizer:
+class BaseTokenizer:
     def __init__(self, parameters):
         self.tokenizer = AutoTokenizer.from_pretrained(
             parameters.model_config.model_name, trust_remote_code=True)
@@ -37,3 +37,6 @@ class Tokenizer:
         tokenized_full_prompt["labels"] = [-100] * user_prompt_len + \
             tokenized_full_prompt["labels"][user_prompt_len:]  # could be sped up, probably
         return tokenized_full_prompt
+
+class InstructTokenizer:
+    pass

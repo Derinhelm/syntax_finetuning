@@ -6,7 +6,7 @@ import yaml
 from constants import CUTOFF_LEN, WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
-from tokenize_functions import Tokenizer
+from tokenize_functions import InstructTokenizer, BaseTokenizer
 
 import torch
 
@@ -28,7 +28,10 @@ def conduct_experiment(parameters):
     #-------------------
     #    LOAD MODEL
     #-------------------
-    t = Tokenizer(parameters)
+    if parameters.model_config.is_instruct:
+        t = InstructTokenizer(parameters)
+    else:
+        t = BaseTokenizer(parameters)
 
     # PREPARE DATA
     train_data = ( json_train["train"].shuffle().map(t.generate_and_tokenize_prompt) )

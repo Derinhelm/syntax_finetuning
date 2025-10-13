@@ -31,7 +31,7 @@ class BaseTokenizer:
         tokenized_full_prompt = self.tokenize(full_prompt)
 
         user_prompt = generate_prompt_str(data_point["input"])
-        tokenized_user_prompt = self.tokenize(user_prompt, add_eos_token=True)
+        tokenized_user_prompt = self.tokenize(user_prompt)
         user_prompt_len = len(tokenized_user_prompt["input_ids"]) - 1 # Minus eos-token
 
         tokenized_full_prompt["labels"] = [-100] * user_prompt_len + \

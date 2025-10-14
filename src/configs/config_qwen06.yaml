@@ -1,0 +1,8 @@
+dataset_config:
+  train_file_path: /content/syntax_finetuning/src/data/grct_ru_gsd-ud-train.json
+  dev_file_path: /content/syntax_finetuning/src/data/grct_ru_gsd-ud-dev.json
+model_config:
+  model_name: Qwen/Qwen3-0.6B-Base
+  is_instruct: True
+root_output_dir_path: /content/syntax_finetuning/results
+epochs: 2

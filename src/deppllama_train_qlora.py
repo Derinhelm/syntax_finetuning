@@ -58,7 +58,7 @@ def conduct_experiment(parameters):
         logging_steps=1,
         optim="paged_adamw_32bit",
         eval_strategy="epoch",
-        save_strategy="best",
+        save_strategy="no",
         output_dir=parameters.output_experiment_path,
         save_total_limit=0,
         group_by_length=parameters.group_by_length,

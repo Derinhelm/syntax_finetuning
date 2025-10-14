@@ -45,9 +45,9 @@ class InstructTokenizer:
         print("padding_side\t" + str(self.tokenizer.padding_side))
 
     # Notice: in the generate_and_tokenize_prompt function result["labels"] is rewritten
-    def tokenize(self, messages):
+    def tokenize(self, messages, add_generation_prompt):
         result = self.tokenizer.apply_chat_template(messages, tokenize=True,
-          add_generation_prompt=False, return_tensors=None, enable_thinking=False,
+          add_generation_prompt=add_generation_prompt, return_tensors=None, enable_thinking=False,
           return_dict=True)
         #result = self.tokenizer(prompt, return_tensors=None)
         if (result["input_ids"][-1] != self.tokenizer.eos_token_id):
@@ -71,10 +71,10 @@ class InstructTokenizer:
     # Notice: result["labels"] is rewritten so that only the output is considered
     def generate_and_tokenize_prompt(self, data_point):
         train_messages = self.generate_train_messages(data_point)
-        tokenized_train_messages = self.tokenize(train_messages)
+        tokenized_train_messages = self.tokenize(train_messages, False)
 
         pred_messages = self.generate_pred_messages(data_point)
-        tokenized_pred_messages = self.tokenize(pred_messages)
+        tokenized_pred_messages = self.tokenize(pred_messages, True)
         tokenized_pred_messages_len = len(tokenized_pred_messages["input_ids"]) - 1 # Minus eos-token
 
         tokenized_train_messages["labels"] = [-100] * tokenized_pred_messages_len + \

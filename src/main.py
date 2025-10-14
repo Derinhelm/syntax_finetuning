@@ -43,13 +43,15 @@ for param_name, param_values in configs.items():
 print(dataset_configs)
 print(model_configs)
 several_param_names = list(several_parameters.keys())
+s_params = list(itertools.product(*several_parameters.values()))
+if not s_params:
+    s_params = [{}]
+
 for model_config in model_configs:
     for dataset_config in dataset_configs:
         parameters.model_config = model_config 
         parameters.dataset_config = dataset_config
         os.makedirs(parameters.output_model_dataset_path)
-
-        s_params = list(itertools.product(*several_parameters.values()))
 
         config_dir_path = parameters.config_dir_path
         with open(config_dir_path, 'w') as file:

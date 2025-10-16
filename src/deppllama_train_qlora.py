@@ -62,7 +62,6 @@ def conduct_experiment(parameters):
         output_dir=parameters.output_experiment_path,
         save_total_limit=0,
         group_by_length=parameters.group_by_length,
-        load_best_model_at_end=True,
         label_names=["labels"]
     )
 

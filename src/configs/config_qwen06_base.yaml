@@ -5,6 +5,6 @@ model_config:
   model_name: Qwen/Qwen3-0.6B-Base
   is_instruct: False
 root_output_dir_path: /content/syntax_finetuning/results
-epochs: 3
+epochs: 2
 batch_size: 16
 

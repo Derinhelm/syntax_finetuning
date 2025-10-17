@@ -1,6 +1,6 @@
 dataset_config:
-  train_file_path: /src/src/data/grct_ru_gsd-ud-train.json
-  dev_file_path: /src/src/data/grct_ru_gsd-ud-dev.json
+  train_file_path: /src/src/data/syntagrus/grct_ru_syntagrus-train.json 
+  dev_file_path: /src/src/data/syntagrus/grct_ru_syntagrus-dev.json 
 model_config:
   model_name: TinyLlama/TinyLlama_v1.1
 root_output_dir_path: /src/src/results

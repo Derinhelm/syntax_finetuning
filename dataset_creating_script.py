@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Transform a dataset sample')
 
 parser.add_argument('-i','--inputs', help='Input File Paths', nargs='*')
 parser.add_argument('-o','--output_name', help='Output File Name')
-parser.add_argument('-r','--representation', help='representation', choices = ['lct', 'grct', 'loct'], default="lct")
+parser.add_argument('-r','--representation', help='representation', choices = ['lct', 'grct', 'loct', 'conll'], default="lct")
 parser.add_argument('-m','--max_length', help='Max Length', type=int, default=100000)
 parser.add_argument('-n','--max_sentences', help='Max Number of Sentences', type=int, default=10000000)
 parser.add_argument('--simple_relations', action="store_true", default=False)
@@ -51,7 +51,10 @@ for input_file in input_files:
         for i in range( min(len(trees), max_sentences)):
             str_input = tree2string_plain(sentences[i])
                 
-            if representation == "lct":
+            if representation == "conll":
+                sentences[i].metadata = {}
+                sent_res = sentences[i].serialize().replace("\n\n", "\n")
+            elif representation == "lct": # TODO: bug with lct and loct ???
                 sent_res = tree2string_loct(trees[i]).replace(" ", "")
             elif representation == "grct":
                 sent_res = tree2string_grct(trees[i]).replace(" ", "")

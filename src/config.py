@@ -10,7 +10,7 @@ class DatasetConfig:
     def __init__(self, dataset_config):
         self.train_file_path = dataset_config['train_file_path']
         self.dev_file_path = dataset_config['dev_file_path']
-        self.treebank = "gsd" # TODO: delete default value
+        self.treebank = dataset_config['treebank']
 
     def __repr__(self):
-        return f"({self.train_file_path}, {self.dev_file_path})"
+        return f"({self.train_file_path}, {self.dev_file_path}, {self.treebank})"

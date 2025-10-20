@@ -54,7 +54,7 @@ for input_file in input_files:
             if representation == "conll":
                 sentences[i].metadata = {}
                 sent_res = sentences[i].serialize().replace("\n\n", "\n")
-            elif representation == "lct": # TODO: bug with lct and loct ???
+            elif representation == "loct":
                 sent_res = tree2string_loct(trees[i]).replace(" ", "")
             elif representation == "grct":
                 sent_res = tree2string_grct(trees[i]).replace(" ", "")

@@ -21,13 +21,17 @@ class BaseTokenizer:
         result["labels"] = result["input_ids"].copy()
         return result
 
+    def encode_input(self, input_text):
+        user_prompt = generate_prompt_str(input_text)
+        tokenized_user_prompt = self.tokenize(user_prompt)
+        return tokenized_user_prompt
+
     # Notice: result["labels"] is rewritten so that only the output is considered
     def generate_and_tokenize_prompt(self, data_point):
         full_prompt = generate_prompt(data_point)
         tokenized_full_prompt = self.tokenize(full_prompt)
 
-        user_prompt = generate_prompt_str(data_point["input"])
-        tokenized_user_prompt = self.tokenize(user_prompt)
+        tokenized_user_prompt = self.encode_input(data_point["input"])
         user_prompt_len = len(tokenized_user_prompt["input_ids"]) - 1 # Minus eos-token
 
         tokenized_full_prompt["labels"] = [-100] * user_prompt_len + \
@@ -63,18 +67,22 @@ class InstructTokenizer:
                   { "role": "assistant", "content": data_point['output'] },
                ]
 
-    def generate_pred_messages(self, data_point):
+    def generate_pred_messages(self, input_text):
         return [
-                  { "role": "user", "content": data_point['input'] },
+                  { "role": "user", "content": input_text },
                ]
+
+    def encode_input(self, input_text):
+        pred_messages = self.generate_pred_messages(input_text)
+        tokenized_pred_messages = self.tokenize(pred_messages, True)
+        return tokenized_pred_messages
 
     # Notice: result["labels"] is rewritten so that only the output is considered
     def generate_and_tokenize_prompt(self, data_point):
         train_messages = self.generate_train_messages(data_point)
         tokenized_train_messages = self.tokenize(train_messages, False)
 
-        pred_messages = self.generate_pred_messages(data_point)
-        tokenized_pred_messages = self.tokenize(pred_messages, True)
+        tokenized_pred_messages = self.encode_input(data_point['input'])
         tokenized_pred_messages_len = len(tokenized_pred_messages["input_ids"]) - 1 # Minus eos-token
 
         tokenized_train_messages["labels"] = [-100] * tokenized_pred_messages_len + \

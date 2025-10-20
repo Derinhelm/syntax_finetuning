@@ -29,9 +29,9 @@ def conduct_experiment(parameters):
     #    LOAD MODEL
     #-------------------
     if parameters.model_config.is_instruct:
-        t = InstructTokenizer(parameters)
+        t = InstructTokenizer(parameters.model_config.model_name)
     else:
-        t = BaseTokenizer(parameters)
+        t = BaseTokenizer(parameters.model_config.model_name)
 
     # PREPARE DATA
     train_data = ( json_train["train"].shuffle().map(t.generate_and_tokenize_prompt) )

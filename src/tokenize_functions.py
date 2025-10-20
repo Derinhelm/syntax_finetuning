@@ -2,9 +2,9 @@ from transformers import AutoTokenizer
 from deppllama_utils import *
 
 class BaseTokenizer:
-    def __init__(self, parameters):
+    def __init__(self, model_name):
         self.tokenizer = AutoTokenizer.from_pretrained(
-            parameters.model_config.model_name, trust_remote_code=True)
+            model_name, trust_remote_code=True)
         self.tokenizer.pad_token_id = 0
         self.tokenizer.bos_token_id = 1
         self.tokenizer.eos_token_id = 2
@@ -39,9 +39,9 @@ class BaseTokenizer:
         return tokenized_full_prompt
 
 class InstructTokenizer:
-    def __init__(self, parameters):
+    def __init__(self, model_name):
         self.tokenizer = AutoTokenizer.from_pretrained(
-            parameters.model_config.model_name, trust_remote_code=True)
+            model_name, trust_remote_code=True)
         self.tokenizer.pad_token_id = 0
         self.tokenizer.bos_token_id = 1
         self.tokenizer.eos_token_id = 2

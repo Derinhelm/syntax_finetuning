@@ -3,7 +3,6 @@ class Parameters:
         self.config_name = config_name
         self.dataset_config = None
         self.model_config = None
-        self.treebank = "gsd" # TODO: delete default value
         self.root_output_dir_path = None
         self.experiment_number = None
         self.epochs = 1
@@ -23,7 +22,7 @@ class Parameters:
     @property
     def output_model_dataset_path(self):
         clear_model_name = self.model_config.model_name.split('/')[-1].replace("-", "_").replace(".", "_")
-        return f"{self.root_output_dir_path}/{clear_model_name}_{self.treebank}"
+        return f"{self.root_output_dir_path}/{clear_model_name}_{self.dataset_config.treebank}"
 
     @property
     def output_experiment_path(self):

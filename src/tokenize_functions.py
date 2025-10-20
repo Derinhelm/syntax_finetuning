@@ -37,6 +37,9 @@ class BaseTokenizer:
         tokenized_full_prompt["labels"] = [-100] * user_prompt_len + \
             tokenized_full_prompt["labels"][user_prompt_len:]  # could be sped up, probably
         return tokenized_full_prompt
+        
+    def decode(self, token_ids):
+        return self.tokenizer.decode(token_ids, skip_special_tokens=True)
 
 class InstructTokenizer:
     def __init__(self, model_name):
@@ -88,4 +91,7 @@ class InstructTokenizer:
         tokenized_train_messages["labels"] = [-100] * tokenized_pred_messages_len + \
             tokenized_train_messages["labels"][tokenized_pred_messages_len:]  # could be sped up, probably
         return tokenized_train_messages
+
+    def decode(self, token_ids):
+        return self.tokenizer.decode(token_ids, skip_special_tokens=True)
 

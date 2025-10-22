@@ -64,5 +64,5 @@ for input_file in input_files:
            
 new_filename = f'src/data/{representation}_{output_name}.json'
 print(new_filename)
-with open(new_filename, 'w') as json_file:
-    json.dump(res_list, json_file, indent=4)
+with open(new_filename, 'w', encoding='utf-8') as json_file:
+    json.dump(res_list, json_file, ensure_ascii=False, indent=4)

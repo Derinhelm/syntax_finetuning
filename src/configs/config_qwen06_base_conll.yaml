@@ -1,6 +1,6 @@
 dataset_config:
-  train_file_path: /content/syntax_finetuning/src/data/conll_ru_syntagrus-train.json
-  dev_file_path: /content/syntax_finetuning/src/data/conll_ru_syntagrus-dev.json
+  train_file_path: /content/syntax_finetuning/src/data/gsd/conll_ru_gsd-train.json
+  dev_file_path: /content/syntax_finetuning/src/data/gsd/conll_ru_gsd-dev.json
 model_config:
   model_name: Qwen/Qwen3-0.6B-Base
   is_instruct: False

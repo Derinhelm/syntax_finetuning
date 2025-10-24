@@ -63,8 +63,10 @@ def conduct_experiment(parameters):
         save_total_limit=0,
         group_by_length=parameters.group_by_length,
         label_names=["labels"],
-        per_device_eval_batch_size=parameters.model_config.per_device_eval_batch_size
+        per_device_eval_batch_size=parameters.model_config.per_device_eval_batch_size,
+        torch_empty_cache_steps=parameters.model_config.torch_empty_cache_steps,
     )
+    print(training_arguments)
 
     data_collator = transformers.DataCollatorForSeq2Seq(
         t.tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True

@@ -62,7 +62,8 @@ def conduct_experiment(parameters):
         output_dir=parameters.output_experiment_path,
         save_total_limit=0,
         group_by_length=parameters.group_by_length,
-        label_names=["labels"]
+        label_names=["labels"],
+        per_device_eval_batch_size=parameters.model_config.per_device_eval_batch_size
     )
 
     data_collator = transformers.DataCollatorForSeq2Seq(

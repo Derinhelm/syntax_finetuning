@@ -2,6 +2,7 @@ class ModelConfig:
     def __init__(self, model_config):
         self.is_instruct = model_config.get('is_instruct', False)
         self.model_name = model_config['model_name']
+        self.per_device_eval_batch_size = model_config.get('per_device_eval_batch_size', 8)
 
     def __repr__(self):
         return self.model_name

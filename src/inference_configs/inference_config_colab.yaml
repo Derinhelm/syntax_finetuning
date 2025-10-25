@@ -1,5 +1,5 @@
 dataset:
-    path: syntagrus/grct_ru_syntagrus-test.json
+    path: /content/syntax_finetuning/src/data/syntagrus/grct_ru_syntagrus-test.json
     name: grct_syntagrus
     representation_type: grct
 models:

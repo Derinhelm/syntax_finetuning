@@ -3,7 +3,7 @@ import torch
 from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig, set_seed
 from peft import PeftModel
 
-from src.tokenize_functions import BaseTokenizer, InstructTokenizer
+from tokenize_functions import BaseTokenizer, InstructTokenizer
 
 class LLMInferencer:
     def __init__(self, original_model_id, peft_model_id, is_instruct, seed):

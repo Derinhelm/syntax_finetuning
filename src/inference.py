@@ -1,4 +1,5 @@
 import argparse
+import gc
 import json
 import time
 import yaml

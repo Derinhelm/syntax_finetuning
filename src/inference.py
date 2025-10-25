@@ -4,6 +4,8 @@ import json
 import time
 import yaml
 
+import torch
+
 from inference_functions.inferencer import LLMInferencer
 from inference_functions.tree_decoder import TreeDecoder
 

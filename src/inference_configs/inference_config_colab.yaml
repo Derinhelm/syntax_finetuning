@@ -1,0 +1,14 @@
+dataset:
+    path: syntagrus/grct_ru_syntagrus-test.json
+    name: grct_syntagrus
+    representation_type: grct
+models:
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: Derinhelm/SyntaxQwen3-0.6-SynTagRusGRCT-Base
+    is_instruct: False
+    name: Qwen_0.6_Base
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: Derinhelm/SyntaxQwen3-0.6-SynTagRusGRCT-Instruct
+    is_instruct: True
+    name: Qwen_0.6_Instruct
+output_dir: /content

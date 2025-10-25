@@ -1,12 +1,13 @@
 import transformers
 import torch
-from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig
+from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer, GenerationConfig, set_seed
 from peft import PeftModel
 
 from src.tokenize_functions import BaseTokenizer, InstructTokenizer
 
 class LLMInferencer:
-    def __init__(self, original_model_id, peft_model_id, is_instruct):
+    def __init__(self, original_model_id, peft_model_id, is_instruct, seed):
+        set_seed(seed)
         quant_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_use_double_quant=True,

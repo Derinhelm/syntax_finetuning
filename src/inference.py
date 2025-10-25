@@ -1,10 +1,12 @@
+import json
+
 from src.inference_functions.inferencer import LLMInferencer
 from src.inference_functions.tree_decoder import TreeDecoder
 
 class Parser:
     def __init__(self, original_model_id, peft_model_id,
-                 is_instruct, representation_type):
-       self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct)
+                 is_instruct, representation_type, seed):
+       self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed)
        self.tree_decoder = TreeDecoder(representation_type)
 
     def parse(self, sent):
@@ -12,7 +14,9 @@ class Parser:
         res = self.tree_decoder.decode_tree(answer_output)
         return answer_output, full_output, res
         
-import json
+    def clear(self):
+        del self.llm
+        del self.tree_decoder
 
 def inference_dataset(parser, filepath, result_filepath):
     with open(filepath, 'r') as f:
@@ -28,4 +32,35 @@ def inference_dataset(parser, filepath, result_filepath):
         res.append(new_d)
     with open(result_filepath, 'w', encoding='utf-8') as json_file:
         json.dump(res, json_file, ensure_ascii=False, indent=4)
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--config_name", nargs='?', default='/src/src/configs/config.yaml')
+parser_args = parser.parse_args()
+config_name = parser_args.config_name
+
+with open(config_name, 'r') as file:
+    configs = yaml.safe_load(file)
+
+output_dir = configs['output_dir']
+seed = configs.get('seed', 42)
+
+dataset_config = configs['dataset']
+dataset_path = dataset_config['path']
+dataset_name = dataset_config['name']
+dataset_repr = dataset_config['representation_type']
+
+for model_config in configs['models']:
+    original_model_id = model_config['original_model_id']
+    peft_model_id = model_config['peft_model_id']
+    is_instruct = model_config['is_instruct']
+    model_name = model_config['name']
+    result_path = f"{output_dir}/{model_name}_{dataset_name}.json"
+    parser = Parser(original_model_id, peft_model_id, is_instruct, dataset_repr, seed)
+    inference_dataset(parser, dataset_path, result_path)
+    parser.clear()
+    del parser
+    for _ in range(3):
+        gc.collect() # Сборка мусора для удаления
+    torch.cuda.empty_cache()
 

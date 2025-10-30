@@ -11,7 +11,8 @@ class VllmModel:
             max_seq_len_to_capture=4096, # TODO
             max_model_len=4096,
             dtype=torch.float16,
-            enable_lora=True
+            enable_lora=True,
+            skip_tokenizer_init=True,
         )
         self.seed = seed
         self.lora_path = lora_path # TODO

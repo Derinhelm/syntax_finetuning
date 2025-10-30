@@ -23,9 +23,7 @@ class VllmModel:
             temperature=0,
             max_tokens=512,
             stop_token_ids=[2],
-            seed=self.seed,
-            n=1, # TODO: greedy search ???
-            best_of=4,
+            seed=self.seed
         )
         outputs = llm.generate(
            [tokens_prompt],

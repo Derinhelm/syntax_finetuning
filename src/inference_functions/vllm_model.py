@@ -25,7 +25,6 @@ class VllmModel:
             seed=self.seed,
             n=1, # TODO: greedy search ???
             best_of=4,
-            early_stopping=True,
         )
         outputs = llm.generate(
            [tokens_prompt],

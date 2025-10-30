@@ -100,8 +100,8 @@ class TreeDecoder:
             return str(parsing_res)
         res = []
         for token in parsing_res.values():
-          t =  { 'id': str(token['id']), 'form': token['deprel'],
-                 'parent_id': token['toid'], 'relation': token['form'] }
+          t =  { 'id': str(token['id']), 'form': token['form'],
+                 'parent_id': token['toid'], 'relation': token['deprel'] }
           res.append(t)
         return res
 

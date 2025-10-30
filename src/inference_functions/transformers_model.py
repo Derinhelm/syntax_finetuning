@@ -5,7 +5,7 @@ from peft import PeftModel
 
 
 class TransformersModel:
-    def __init__(self, original_model_id, peft_model_id, is_instruct, seed):
+    def __init__(self, original_model_id, peft_model_id, seed):
         set_seed(seed)
         quant_config = BitsAndBytesConfig(
             load_in_4bit=True,

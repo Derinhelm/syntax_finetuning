@@ -23,9 +23,8 @@ class VllmModel:
             max_tokens=512,
             stop_token_ids=[2],
             seed=self.seed,
-            n=1,
+            n=1, # TODO: greedy search ???
             best_of=4,
-            use_beam_search=True,
             early_stopping=True,
         )
         outputs = llm.generate(

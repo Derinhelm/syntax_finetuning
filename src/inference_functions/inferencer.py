@@ -4,7 +4,7 @@ import torch
 from tokenize_functions import BaseTokenizer, InstructTokenizer
 
 class LLMInferencer:
-    def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library="transformers"):
+    def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library):
         self.model_library = model_library
         if model_library == "transformers":
             from inference_functions.transformers_model import TransformersModel

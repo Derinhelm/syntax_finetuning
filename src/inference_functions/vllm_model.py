@@ -25,7 +25,7 @@ class VllmModel:
             stop_token_ids=[2],
             seed=self.seed
         )
-        outputs = llm.generate(
+        outputs = self.llm.generate(
            [tokens_prompt],
            sampling_params=sampling_params,
            lora_request=LoRARequest("lora_adapter", 1, self.lora_path)

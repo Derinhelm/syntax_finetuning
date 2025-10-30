@@ -6,7 +6,7 @@ class VllmModel:
     def __init__(self, original_model_id, lora_path, seed):
         # lora_path should be a path to directory with lora adapter
         self.llm = LLM(
-            seed=seed
+            seed=seed,
             model=original_model_id,
             max_seq_len_to_capture=4096, # TODO
             max_model_len=4096,
@@ -23,6 +23,10 @@ class VllmModel:
             max_tokens=512,
             stop_token_ids=[2],
             seed=self.seed,
+            n=1,
+            best_of=4,
+            use_beam_search=True,
+            early_stopping=True,
         )
         outputs = llm.generate(
            [tokens_prompt],

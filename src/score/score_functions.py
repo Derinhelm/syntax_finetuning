@@ -1,3 +1,4 @@
+import argparse
 from collections import Counter
 import json
 
@@ -54,12 +55,26 @@ def calculate_sent_metrucs(sent):
 def calculate(filename):
     with open(filename, 'r') as f:
         data = json.load(f)
-    res = [calculate_sent_metrucs(sent) for sent in data]
-    return (res)
+    new_data = []
+    for sent in data:
+        sent_uas, sent_las = calculate_sent_metrucs(sent)
+        sent_dict = { "uas": sent_uas, "las": sent_las }
+        #sent_dict["pred_tree"] = sent["pred_tree"]
+        #sent_dict["gold_tree"] = sent["gold_tree"]
+        new_data.append(sent_dict)
+    return new_data
 
-res = calculate('../../pred_results/Qwen06_Instruct_grct_syntagrus.json') # TODO
-good_uas = [r[0] for r in res if r[0] is not None]
-good_las = [r[1] for r in res if r[1] is not None]
-print(sum(good_uas) / len(good_uas))
-print(sum(good_las) / len(good_las))
+parser = argparse.ArgumentParser()
+parser.add_argument("--filepath")
+parser.add_argument("--result_filepath")
+parser_args = parser.parse_args()
+
+res = calculate(parser_args.filepath) # TODO
+#good_uas = [r["uas"] for r in res if r["uas"] is not None]
+#good_las = [r["las"] for r in res if r["las"] is not None]
+#print(sum(good_uas) / len(good_uas))
+#print(sum(good_las) / len(good_las))
+
+with open(parser_args.result_filepath, 'w', encoding='utf-8') as json_file:
+    json.dump(res, json_file, ensure_ascii=False, indent=4)
 

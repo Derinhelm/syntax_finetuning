@@ -49,3 +49,8 @@ python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_s
 ```
 python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu' -o 'ru_syntagrus-test' -r conll
 ```
+
+## Вычисление метрик
+```
+python3 score_functions.py --filepath '../../pred_results/Qwen06_Instruct_grct_syntagrus.json' --result_filepath '../../metrics/metrics_Qwen06_Instruct_grct_syntagrus.json'
+```

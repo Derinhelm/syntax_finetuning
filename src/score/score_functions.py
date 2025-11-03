@@ -64,17 +64,22 @@ def calculate(filename):
         new_data.append(sent_dict)
     return new_data
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--filepath")
-parser.add_argument("--result_filepath")
-parser_args = parser.parse_args()
+def calculate_save_metrics(input_filepath, result_filepath):
+    print(f"input_filepath: {input_filepath}, result_filepath: {result_filepath}")
+    res = calculate(input_filepath) # TODO
+    with open(result_filepath, 'w', encoding='utf-8') as json_file:
+        json.dump(res, json_file, ensure_ascii=False, indent=4)
 
-res = calculate(parser_args.filepath) # TODO
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--filepath")
+    parser.add_argument("--result_filepath")
+    parser_args = parser.parse_args()
+    calculate_save_metrics(parser_args.filepath, parser_args.result_filepath)
+
 #good_uas = [r["uas"] for r in res if r["uas"] is not None]
 #good_las = [r["las"] for r in res if r["las"] is not None]
 #print(sum(good_uas) / len(good_uas))
 #print(sum(good_las) / len(good_las))
 
-with open(parser_args.result_filepath, 'w', encoding='utf-8') as json_file:
-    json.dump(res, json_file, ensure_ascii=False, indent=4)
 

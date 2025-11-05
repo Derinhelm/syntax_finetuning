@@ -20,10 +20,10 @@
   representation_type: grct
   pred_result_path: pred_results/Qwen4_Base_grct_syntagrus.json
   metric_path: metrics/metrics_Qwen4_Base_grct_syntagrus.json
-#- model_name: Qwen4_Base
-#  representation_type: lct
-#  pred_result_path: pred_results/Qwen4_Base_lct_syntagrus.json
-#  metric_path: metrics/metrics_Qwen4_Base_lct_syntagrus.json
+- model_name: Qwen4_Base
+  representation_type: lct
+  pred_result_path: pred_results/Qwen4_Base_lct_syntagrus.json
+  metric_path: metrics/metrics_Qwen4_Base_lct_syntagrus.json
 - model_name: Qwen4_Instruct
   representation_type: grct
   pred_result_path: pred_results/Qwen4_Instruct_grct_syntagrus.json
@@ -36,9 +36,42 @@
   representation_type: grct
   pred_result_path: pred_results/Ruadapt4_Hybrid_grct_syntagrus.json
   metric_path: metrics/metrics_Ruadapt4_Hybrid_grct_syntagrus.json
-#- model_name: Ruadapt4_Hybrid
-#  representation_type: lct
-#  pred_result_path: pred_results/Ruadapt4_Hybrid_lct_syntagrus.json
-#  metric_path: metrics/metrics_Ruadapt4_Hybrid_lct_syntagrus.json
+- model_name: Ruadapt4_Hybrid
+  representation_type: lct
+  pred_result_path: pred_results/Ruadapt4_Hybrid_lct_syntagrus.json
+  metric_path: metrics/metrics_Ruadapt4_Hybrid_lct_syntagrus.json
 # -- 8
-
+- model_name: Qwen8_Base
+  representation_type: grct
+  pred_result_path: pred_results/Qwen8_Base_grct_syntagrus.json
+  metric_path: metrics/metrics_Qwen8_Base_grct_syntagrus.json
+- model_name: Qwen8_Base
+  representation_type: lct
+  pred_result_path: pred_results/Qwen8_Base_lct_syntagrus.json
+  metric_path: metrics/metrics_Qwen8_Base_lct_syntagrus.json
+- model_name: Qwen8_Instruct
+  representation_type: grct
+  pred_result_path: pred_results/Qwen8_Instruct_grct_syntagrus.json
+  metric_path: metrics/metrics_Qwen8_Instruct_grct_syntagrus.json
+- model_name: Qwen8_Instruct
+  representation_type: lct
+  pred_result_path: pred_results/Qwen8_Instruct_lct_syntagrus.json
+  metric_path: metrics/metrics_Qwen8_Instruct_lct_syntagrus.json
+- model_name: Ruadapt8_Instruct
+  representation_type: grct
+  pred_result_path: pred_results/Ruadapt8_Instruct_grct_syntagrus.json
+  metric_path: metrics/metrics_Ruadapt8_Instruct_grct_syntagrus.json
+- model_name: Ruadapt8_Instruct
+  representation_type: lct
+  pred_result_path: pred_results/Ruadapt8_Instruct_lct_syntagrus.json
+  metric_path: metrics/metrics_Ruadapt8_Instruct_lct_syntagrus.json
+# -- other
+- model_name: Llama7_Base
+  representation_type: grct
+  pred_result_path: pred_results/Llama7_grct_syntagrus.json
+  metric_path: metrics/metrics_Llama7_grct_syntagrus.json
+# -- other
+- model_name: Qwen06_Base_lr5
+  representation_type: lct
+  pred_result_path: pred_results/Qwen06_Base_lr5_lct_syntagrus.json
+  metric_path: metrics/metrics_Qwen06_Base_lr5_lct_syntagrus.json

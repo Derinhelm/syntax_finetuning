@@ -11,8 +11,8 @@ from inference_functions.tree_decoder import TreeDecoder
 
 class Parser:
     def __init__(self, original_model_id, peft_model_id,
-                 is_instruct, representation_type, seed, model_library):
-       self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library)
+                 is_instruct, representation_type, seed, model_library, max_tokens):
+       self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
        self.tree_decoder = TreeDecoder(representation_type)
 
     def parse(self, sent):
@@ -66,9 +66,10 @@ for model_config in configs['models']:
     peft_model_id = model_config['peft_model_id']
     is_instruct = model_config['is_instruct']
     model_name = model_config['name']
+    max_tokens = model_config.get('max_tokens', 512)
     model_library = model_config.get('model_library', 'transformers')
     result_path = f"{output_dir}/{model_name}_{dataset_name}.json"
-    parser = Parser(original_model_id, peft_model_id, is_instruct, dataset_repr, seed, model_library)
+    parser = Parser(original_model_id, peft_model_id, is_instruct, dataset_repr, seed, model_library, max_tokens)
     inference_dataset(parser, dataset_path, result_path)
     parser.clear()
     del parser

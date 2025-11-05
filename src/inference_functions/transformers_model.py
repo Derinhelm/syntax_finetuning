@@ -5,8 +5,9 @@ from peft import PeftModel
 
 
 class TransformersModel:
-    def __init__(self, original_model_id, peft_model_id, seed):
+    def __init__(self, original_model_id, peft_model_id, seed, max_tokens):
         set_seed(seed)
+        self.max_tokens = max_tokens
         quant_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_use_double_quant=True,
@@ -42,7 +43,7 @@ class TransformersModel:
             gen_outputs = self.model.generate(
                 input_ids=input_ids,
                 generation_config=self.generation_config,
-                max_new_tokens=1024,
+                max_new_tokens=self.max_tokens,
                 use_cache=True,
                 eos_token_id=self.model.config.eos_token_id,
                 pad_token_id=self.model.config.pad_token_id,

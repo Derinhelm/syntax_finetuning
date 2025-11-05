@@ -3,7 +3,7 @@ from vllm.lora.request import LoRARequest
 import torch
 
 class VllmModel:
-    def __init__(self, original_model_id, peft_model_id, seed):
+    def __init__(self, original_model_id, peft_model_id, seed, max_tokens):
         # peft_model_id should be a path to directory with lora adapter
         self.llm = LLM(
             seed=seed,
@@ -15,13 +15,14 @@ class VllmModel:
             skip_tokenizer_init=True,
         )
         self.seed = seed
+        self.max_tokens = max_tokens
         self.peft_model_id = peft_model_id # TODO
 
     def create_output(self, input_ids):
         tokens_prompt = TokensPrompt(prompt_token_ids=input_ids)
         sampling_params = SamplingParams(
             temperature=0,
-            max_tokens=512,
+            max_tokens=self.max_tokens,
             stop_token_ids=[2],
             seed=self.seed
         )

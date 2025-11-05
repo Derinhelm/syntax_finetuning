@@ -25,13 +25,14 @@ def create_edges(tree):
     assert len(unlabeled_edges) == len(unlabeled_edges_set)
     assert len(labeled_edges) == len(labeled_edges_set)
     assert len(unlabeled_edges_set) == len(labeled_edges_set)
-    return unlabeled_edges_set, labeled_edges_set
+    return unlabeled_edges, labeled_edges, \
+           unlabeled_edges_set, labeled_edges_set
 
 def calculate_sent_metrucs(sent):
     if not isinstance(sent['pred_tree'], list):
         return None, None
-    pred_unlab_edges, pred_lab_edges = create_edges(sent['pred_tree'])
-    gold_unlab_edges, gold_lab_edges = create_edges(sent['gold_tree'])
+    _, _, pred_unlab_edges, pred_lab_edges = create_edges(sent['pred_tree'])
+    _, _, gold_unlab_edges, gold_lab_edges = create_edges(sent['gold_tree'])
     uas_numerator = len(pred_unlab_edges & gold_unlab_edges)
     las_numerator = len(pred_lab_edges & gold_lab_edges)
     prec_denominator = len(pred_unlab_edges)

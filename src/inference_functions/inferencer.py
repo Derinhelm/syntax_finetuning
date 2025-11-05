@@ -4,14 +4,14 @@ import torch
 from tokenize_functions import BaseTokenizer, InstructTokenizer
 
 class LLMInferencer:
-    def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library):
+    def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens):
         self.model_library = model_library
         if model_library == "transformers":
             from inference_functions.transformers_model import TransformersModel
-            self.model = TransformersModel(original_model_id, peft_model_id, seed)
+            self.model = TransformersModel(original_model_id, peft_model_id, seed, max_tokens)
         elif model_library == "vllm":
             from inference_functions.vllm_model import VllmModel
-            self.model = VllmModel(original_model_id, peft_model_id, seed)
+            self.model = VllmModel(original_model_id, peft_model_id, seed, max_tokens)
         else:
             print(f"Error model_library:{model_library}")
         

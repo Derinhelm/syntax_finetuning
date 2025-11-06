@@ -71,7 +71,19 @@
   pred_result_path: pred_results/Llama7_grct_syntagrus.json
   metric_path: metrics/metrics_Llama7_grct_syntagrus.json
 # -- other
+- model_name: Qwen06_Base_grct5
+  representation_type: grct
+  pred_result_path: pred_results/Qwen06_Base_lr5_grct_syntagrus.json
+  metric_path: metrics/metrics_Qwen06_Base_lr5_grct_syntagrus.json
 - model_name: Qwen06_Base_lr5
   representation_type: lct
   pred_result_path: pred_results/Qwen06_Base_lr5_lct_syntagrus.json
   metric_path: metrics/metrics_Qwen06_Base_lr5_lct_syntagrus.json
+- model_name: Qwen06_Instruct_lr5
+  representation_type: grct
+  pred_result_path: pred_results/Qwen06_Instruct_lr5_grct_syntagrus.json
+  metric_path: metrics/metrics_Qwen06_Instruct_lr5_grct_syntagrus.json
+- model_name: Qwen06_Instruct_lr5
+  representation_type: lct
+  pred_result_path: pred_results/Qwen06_Instruct_lr5_lct_syntagrus.json
+  metric_path: metrics/metrics_Qwen06_Instruct_lr5_lct_syntagrus.json

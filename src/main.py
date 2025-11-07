@@ -46,6 +46,7 @@ for param_name, param_values in configs.items():
 
 print(dataset_configs)
 print(model_configs)
+print(seed)
 several_param_names = list(several_parameters.keys())
 s_params = list(itertools.product(*several_parameters.values()))
 if not s_params:

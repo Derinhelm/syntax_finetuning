@@ -24,12 +24,13 @@ class Parser:
         del self.llm
         del self.tree_decoder
 
-def inference_dataset(parser, filepath, result_filepath):
+def inference_dataset(parser, filepath, result_filepath, index_set):
     with open(filepath, 'r') as f:
         data = json.load(f)
     res = []
     ts = time.time()
     for d_i, d in enumerate(data):
+      if (index_set is None) or (d['index'] in index_set):
         new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
         llm_output, full_output, pred_tree = parser.parse(d['input'])
         new_d['pred_output'] = llm_output
@@ -59,6 +60,9 @@ dataset_config = configs['dataset']
 dataset_path = dataset_config['path']
 dataset_name = dataset_config['name']
 dataset_repr = dataset_config['representation_type']
+index_set = dataset_config.get('index_set', None)
+if index_set is not None:
+    index_set = set(index_set)
 
 for model_config in configs['models']:
     print(model_config)
@@ -70,7 +74,7 @@ for model_config in configs['models']:
     model_library = model_config.get('model_library', 'transformers')
     result_path = f"{output_dir}/{model_name}_{dataset_name}.json"
     parser = Parser(original_model_id, peft_model_id, is_instruct, dataset_repr, seed, model_library, max_tokens)
-    inference_dataset(parser, dataset_path, result_path)
+    inference_dataset(parser, dataset_path, result_path, index_set)
     parser.clear()
     del parser
     for _ in range(3):

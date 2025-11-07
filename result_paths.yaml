@@ -70,8 +70,12 @@
   representation_type: grct
   pred_result_path: pred_results/Llama7_grct_syntagrus.json
   metric_path: metrics/metrics_Llama7_grct_syntagrus.json
+- model_name: Llama7_ft_Base
+  representation_type: grct
+  pred_result_path: pred_results/Llama7_ft_grct_syntagrus.json
+  metric_path: metrics/metrics_Llama7_ft_grct_syntagrus.json 
 # -- other
-- model_name: Qwen06_Base_grct5
+- model_name: Qwen06_Base_lr5
   representation_type: grct
   pred_result_path: pred_results/Qwen06_Base_lr5_grct_syntagrus.json
   metric_path: metrics/metrics_Qwen06_Base_lr5_grct_syntagrus.json

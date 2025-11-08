@@ -1,5 +1,6 @@
 import gc
 import transformers
+from transformers import set_seed
 import time
 import yaml
 
@@ -23,6 +24,7 @@ def remove_example_by_length(lst, target_length):
 #============================================
 
 def conduct_experiment(parameters):
+    set_seed(parameters.seed)
     json_train, json_dev = creating_data(parameters)
 
     #-------------------
@@ -63,6 +65,7 @@ def conduct_experiment(parameters):
         save_total_limit=0,
         group_by_length=parameters.group_by_length,
         label_names=["labels"],
+        seed=parameters.seed,
         per_device_eval_batch_size=parameters.model_config.per_device_eval_batch_size,
         torch_empty_cache_steps=parameters.model_config.torch_empty_cache_steps,
     )

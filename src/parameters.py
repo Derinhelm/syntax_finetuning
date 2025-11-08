@@ -14,6 +14,7 @@ class Parameters:
         self.lora_r = 8
         self.lora_alpha = 16
         self.lora_dropout = 0.05
+        self.seed = 42
 
     @property
     def gradient_accumulation_steps(self):

@@ -6,8 +6,6 @@ import random
 import os
 import yaml
 
-from transformers import set_seed
-
 from config import DatasetConfig, ModelConfig
 from deppllama_train_qlora import conduct_experiment
 from parameters import Parameters
@@ -23,12 +21,8 @@ with open(config_name, 'r') as file:
 parameters = Parameters(config_name)
 dataset_configs, model_configs = [], []
 several_parameters = OrderedDict()
-seed = 42 # TODO
 for param_name, param_values in configs.items():
-    if param_name == "seed":
-        seed = param_values
-        assert isinstance(seed, int)
-    elif param_name == 'dataset_config':
+    if param_name == 'dataset_config':
         if isinstance(configs['dataset_config'], list):
             dataset_configs = [ DatasetConfig(path_c) for path_c in configs['dataset_config'] ]
         else:
@@ -46,7 +40,6 @@ for param_name, param_values in configs.items():
 
 print(dataset_configs)
 print(model_configs)
-print(seed)
 several_param_names = list(several_parameters.keys())
 s_params = list(itertools.product(*several_parameters.values()))
 if not s_params:
@@ -54,7 +47,6 @@ if not s_params:
 
 for model_config in model_configs:
     for dataset_config in dataset_configs:
-        set_seed(seed)
         parameters.model_config = model_config 
         parameters.dataset_config = dataset_config
         os.makedirs(parameters.output_model_dataset_path)

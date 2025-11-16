@@ -95,3 +95,20 @@
   representation_type: lct
   pred_result_path: pred_results/Qwen06_Instruct_lr5_lct_syntagrus.json
   metric_path: metrics/metrics_Qwen06_Instruct_lr5_lct_syntagrus.json
+# Train seeds
+- model_name: Qwen4_Base_1000
+  representation_type: grct
+  pred_result_path: pred_results/1000/Qwen4_Base_seed_1000_grct_syntagrus.json
+  #metric_path: metrics/metrics_Qwen4_Base_grct_syntagrus.json
+- model_name: Qwen4_Base_1000
+  representation_type: lct
+  pred_result_path: pred_results/1000/Qwen4_Base_seed_1000_lct_syntagrus.json
+  #metric_path: metrics/metrics_Qwen4_Base_lct_syntagrus.json
+- model_name: Qwen4_Base_2000
+  representation_type: grct
+  pred_result_path: pred_results/2000/Qwen4_Base_seed_2000_grct_syntagrus.json
+  #metric_path: metrics/metrics_Qwen4_Base_grct_syntagrus.json
+- model_name: Qwen4_Base_2000
+  representation_type: lct
+  pred_result_path: pred_results/2000/Qwen4_Base_seed_2000_lct_syntagrus.json
+  #metric_path: metrics/metrics_Qwen4_Base_lct_syntagrus.json

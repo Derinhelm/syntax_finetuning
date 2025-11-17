@@ -6,6 +6,7 @@ model_config:
   is_instruct: False
 root_output_dir_path: /content/syntax_finetuning/results
 epochs: 2
+eval_steps: 50
 save_epoch_adapters: True
 batch_size: 16
 

@@ -5,6 +5,7 @@ from deppllama_utils import *
  
 from peft import (
     LoraConfig,
+    LoftQConfig,
     get_peft_model,
     prepare_model_for_kbit_training,
 )
@@ -53,6 +54,9 @@ def creating_model(parameters):
         task_type="CAUSAL_LM"
         )
     else:
+        loftq_config = None
+        if parameters.init_lora_weights == "loftq":
+            loftq_config = LoftQConfig(loftq_bits=4)
         config = LoraConfig(
             r=parameters.lora_r,
             lora_alpha=parameters.lora_alpha,
@@ -60,6 +64,8 @@ def creating_model(parameters):
             lora_dropout=parameters.lora_dropout,
             bias="none",
             task_type="CAUSAL_LM",
+            init_lora_weights=parameters.init_lora_weights,
+            loftq_config = loftq_config,
         )
 
     model = get_peft_model(model, config)

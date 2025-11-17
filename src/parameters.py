@@ -17,6 +17,7 @@ class Parameters:
         self.seed = 42
         self.save_epoch_adapters = False
         self.eval_steps = None
+        self.init_lora_weights = True
 
     @property
     def gradient_accumulation_steps(self):

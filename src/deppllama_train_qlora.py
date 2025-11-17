@@ -21,6 +21,19 @@ class LoRACallback(TrainerCallback):
             model.save_pretrained(args.output_dir, save_only_model=True)
 
 
+class MemoryOptimizedTrainer(transformers.Trainer):
+    def evaluation_loop(self, *args, **kwargs):
+        # Явно используем no_grad для валидации
+        with torch.no_grad():
+            result = super().evaluation_loop(*args, **kwargs)
+        
+        # Принудительная очистка CUDA кэша после валидации
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            
+        return result
+
+
 def remove_example_by_length(lst, target_length):
     result = []
     for item in lst:
@@ -90,7 +103,7 @@ def conduct_experiment(parameters):
     else:
         callbacks = None
 
-    trainer = transformers.Trainer(
+    trainer = MemoryOptimizedTrainer(
         model=model,
         train_dataset=train_data,
         eval_dataset=val_data,

@@ -11,6 +11,15 @@ from tokenize_functions import InstructTokenizer, BaseTokenizer
 
 import torch
 
+from transformers import TrainerCallback
+
+class LoRACallback(TrainerCallback):
+    def on_save(self, args, state, control, **kwargs):
+        # Сохраняем только адаптеры
+        if state.is_world_process_zero:
+            model = kwargs['model']
+            model.save_pretrained(args.output_dir, save_only_model=True)
+
 
 def remove_example_by_length(lst, target_length):
     result = []
@@ -60,7 +69,7 @@ def conduct_experiment(parameters):
         logging_steps=1,
         optim="paged_adamw_32bit",
         eval_strategy="epoch",
-        save_strategy="no",
+        save_strategy= "epoch" if parameters.save_epoch_adapters else "no",
         output_dir=parameters.output_experiment_path,
         save_total_limit=0,
         group_by_length=parameters.group_by_length,
@@ -75,12 +84,18 @@ def conduct_experiment(parameters):
         t.tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
     )
 
+    if parameters.save_epoch_adapters:
+        callbacks = [LoRACallback]
+    else:
+        callbacks = None
+
     trainer = transformers.Trainer(
         model=model,
         train_dataset=train_data,
         eval_dataset=val_data,
         args=training_arguments,
-        data_collator=data_collator
+        data_collator=data_collator,
+        callbacks=callbacks,
     )
     model.config.use_cache = False
 

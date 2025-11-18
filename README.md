@@ -50,6 +50,31 @@ python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_s
 python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu' -o 'ru_syntagrus-test' -r conll
 ```
 
+# GSD
+```
+python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-train.conllu' -o 'ru_gsd-train' -r grct
+```
+
+```
+python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-dev.conllu' -o 'ru_gsd-dev' -r grct
+```
+
+```
+python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-test.conllu' -o 'ru_gsd-test' -r grct
+```
+
+```
+python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-train.conllu' -o 'ru_gsd-train' -r lct
+```
+
+```
+python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-dev.conllu' -o 'ru_gsd-dev' -r lct
+```
+
+```
+python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-test.conllu' -o 'ru_gsd-test' -r lct
+```
+
 ## Вычисление метрик
 ```
 python3 score_functions.py --filepath '../../pred_results/Qwen06_Instruct_grct_syntagrus.json' --result_filepath '../../metrics/metrics_Qwen06_Instruct_grct_syntagrus.json'

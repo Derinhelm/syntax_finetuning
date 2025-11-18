@@ -1,3 +1,5 @@
+from constants import CUTOFF_LEN
+
 class Parameters:
     def __init__(self, config_name):
         self.config_name = config_name
@@ -17,6 +19,7 @@ class Parameters:
         self.save_epoch_adapters = False
         self.eval_steps = None
         self.init_lora_weights = True
+        self.cutoff_len = CUTOFF_LEN
 
     @property
     def gradient_accumulation_steps(self):

@@ -4,7 +4,7 @@ from transformers import set_seed
 import time
 import yaml
 
-from constants import CUTOFF_LEN, WARMUP_RATIO
+from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
 from tokenize_functions import InstructTokenizer, BaseTokenizer
@@ -62,7 +62,7 @@ def conduct_experiment(parameters):
     val_data = ( json_dev["train"].shuffle().map(t.generate_and_tokenize_prompt) )
 
     original_train_length = len(train_data)
-    train_data = remove_example_by_length(train_data, CUTOFF_LEN)
+    train_data = remove_example_by_length(train_data, parameters.cutoff_len)
 
     if(len(train_data)!=original_train_length):
         print("WARNING:")

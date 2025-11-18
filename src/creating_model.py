@@ -35,9 +35,6 @@ def creating_model(parameters):
     # PREPARE MODEL
     model = prepare_model_for_kbit_training(model)
 
-    #loftq_config = None
-    #if parameters.init_lora_weights == "loftq":
-    #    loftq_config = LoftQConfig(loftq_bits=4)
     config = LoraConfig(
             r=parameters.lora_r,
             lora_alpha=parameters.lora_alpha,
@@ -45,11 +42,11 @@ def creating_model(parameters):
             lora_dropout=parameters.lora_dropout,
             bias="none",
             task_type="CAUSAL_LM",
-            #init_lora_weights=parameters.init_lora_weights,
-            #loftq_config = loftq_config,
+            init_lora_weights=parameters.init_lora_weights if parameters.init_lora_weights != "loftq" else True,
     )
 
     model = get_peft_model(model, config)
-    replace_lora_weights_loftq(model)
+    if parameters.init_lora_weights == "loftq":
+        replace_lora_weights_loftq(model)
     model.print_trainable_parameters()
     return model

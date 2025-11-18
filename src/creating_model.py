@@ -38,8 +38,6 @@ def creating_model(parameters):
             torch_dtype=torch.bfloat16,
             device_map="auto",
         )
-        model.half()
-
 
     # PREPARE MODEL
     model = prepare_model_for_kbit_training(model)

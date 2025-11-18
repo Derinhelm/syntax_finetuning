@@ -47,6 +47,11 @@ def creating_model(parameters):
 
     model = get_peft_model(model, config)
     if parameters.init_lora_weights == "loftq":
-        replace_lora_weights_loftq(model)
+        if parameters.model_config.model_name[0] == "/":
+        # TODO: путь может начинаться не с /, потенциальная проблема
+            replace_lora_weights_loftq(model,
+                model_path=parameters.model_config.model_name)
+        else:
+            replace_lora_weights_loftq(model)
     model.print_trainable_parameters()
     return model

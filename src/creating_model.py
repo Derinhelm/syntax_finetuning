@@ -21,8 +21,7 @@ def creating_model(parameters):
         bnb_4bit_compute_dtype=torch.bfloat16
     )
 
-    if not parameters.disable_qlora:
-        model = AutoModelForCausalLM.from_pretrained(
+    model = AutoModelForCausalLM.from_pretrained(
             parameters.model_config.model_name,
             #load_in_4bit=True,
             quantization_config=quant_config,
@@ -31,31 +30,14 @@ def creating_model(parameters):
             trust_remote_code=True,
             device_map="auto",
         )
-    else:
-        model = AutoModelForCausalLM.from_pretrained(
-            parameters.model_config.model_name,
-            trust_remote_code=True,
-            torch_dtype=torch.bfloat16,
-            device_map="auto",
-        )
 
     # PREPARE MODEL
     model = prepare_model_for_kbit_training(model)
 
-    if "falcon" in parameters.model_config.model_name:
-        config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        target_modules=["query_key_value"],
-        lora_dropout=0.05,
-        bias="none",
-        task_type="CAUSAL_LM"
-        )
-    else:
-        loftq_config = None
-        if parameters.init_lora_weights == "loftq":
-            loftq_config = LoftQConfig(loftq_bits=4)
-        config = LoraConfig(
+    loftq_config = None
+    if parameters.init_lora_weights == "loftq":
+        loftq_config = LoftQConfig(loftq_bits=4)
+    config = LoraConfig(
             r=parameters.lora_r,
             lora_alpha=parameters.lora_alpha,
             target_modules=LORA_TARGET_MODULES,
@@ -64,7 +46,7 @@ def creating_model(parameters):
             task_type="CAUSAL_LM",
             init_lora_weights=parameters.init_lora_weights,
             loftq_config = loftq_config,
-        )
+    )
 
     model = get_peft_model(model, config)
     model.print_trainable_parameters()

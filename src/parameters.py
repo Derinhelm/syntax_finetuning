@@ -7,7 +7,6 @@ class Parameters:
         self.experiment_number = None
         self.epochs = 1
         self.group_by_length = False
-        self.disable_qlora = False
         self.batch_size = 32
         self.micro_batch_size = 8
         self.learning_rate = 3e-4

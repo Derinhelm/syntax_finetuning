@@ -85,7 +85,7 @@ def conduct_experiment(parameters):
         eval_steps = parameters.eval_steps if parameters.eval_steps is not None else None,
         save_strategy= "epoch" if parameters.save_epoch_adapters else "no",
         output_dir=parameters.output_experiment_path,
-        save_total_limit=0,
+        save_total_limit=parameters.save_total_limit,
         group_by_length=parameters.group_by_length,
         label_names=["labels"],
         seed=parameters.seed,

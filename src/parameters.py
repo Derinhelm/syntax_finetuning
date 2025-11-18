@@ -20,6 +20,7 @@ class Parameters:
         self.eval_steps = None
         self.init_lora_weights = True
         self.cutoff_len = CUTOFF_LEN
+        self.save_total_limit = None
 
     @property
     def gradient_accumulation_steps(self):

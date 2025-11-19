@@ -6,6 +6,49 @@ import random
 from src.sentence_utils import simplify_relations, tree2string_plain, \
     tree2string_loct, tree2string_lct, tree2string_grct
 
+OP = '['
+CP = ']'
+
+def process_treebank_sample(input_files, output_name,
+        max_length, max_sentences, representation,
+        simple_relations):
+  res_list = []
+  for input_file in input_files:
+    with open(input_file, 'r') as file:
+        content = file.read()
+
+        trees = parse_tree(content)
+
+        if simple_relations:
+            for tree in trees:
+                simplify_relations(tree)
+
+        sentences = parse(content)
+
+        for i in range( min(len(trees), max_sentences)):
+            str_input = tree2string_plain(sentences[i])
+                
+            if representation == "conll":
+                for token in sentences[i]:
+                    for k in dict(token):
+                        if k not in {"id", "form", "head", "deprel"}:
+                            token[k] = "_"
+
+                sentences[i].metadata = {}
+                sent_res = sentences[i].serialize().replace("\n\n", "\n")
+            elif representation == "loct":
+                sent_res = tree2string_loct(trees[i]).replace(" ", "")
+            elif representation == "grct":
+                sent_res = tree2string_grct(trees[i]).replace(" ", "")
+            else:
+                sent_res = tree2string_lct(trees[i]).replace(" ", "")
+            res_list.append({"index": i, "input": str_input, "output": sent_res})
+           
+  new_filename = f'src/data/{representation}_{output_name}.json'
+  print(new_filename)
+  with open(new_filename, 'w', encoding='utf-8') as json_file:
+    json.dump(res_list, json_file, ensure_ascii=False, indent=4)
+
 random.seed(23)
 
 parser = argparse.ArgumentParser(description='Transform a dataset sample')
@@ -25,44 +68,8 @@ print(output_name)
 max_length = args.max_length
 max_sentences = args.max_sentences
 representation = args.representation
-
 simple_relations = args.simple_relations
 
+process_treebank_sample(input_files, output_name, max_length,
+    max_sentences, representation, simple_relations)
 
-
-OP = '['
-CP = ']'
-
-VERBOSE=False
-
-res_list = []
-for input_file in input_files:
-    with open(input_file, 'r') as file:
-        content = file.read()
-
-        trees = parse_tree(content)
-
-        if simple_relations:
-            for tree in trees:
-                simplify_relations(tree)
-
-        sentences = parse(content)
-
-        for i in range( min(len(trees), max_sentences)):
-            str_input = tree2string_plain(sentences[i])
-                
-            if representation == "conll":
-                sentences[i].metadata = {}
-                sent_res = sentences[i].serialize().replace("\n\n", "\n")
-            elif representation == "loct":
-                sent_res = tree2string_loct(trees[i]).replace(" ", "")
-            elif representation == "grct":
-                sent_res = tree2string_grct(trees[i]).replace(" ", "")
-            else:
-                sent_res = tree2string_lct(trees[i]).replace(" ", "")
-            res_list.append({"index": i, "input": str_input, "output": sent_res})
-           
-new_filename = f'src/data/{representation}_{output_name}.json'
-print(new_filename)
-with open(new_filename, 'w', encoding='utf-8') as json_file:
-    json.dump(res_list, json_file, ensure_ascii=False, indent=4)

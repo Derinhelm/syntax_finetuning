@@ -1,78 +1,13 @@
 
 
-Создание датасета:
+Создание датасета с полными синтаксическими типами связи:
 ```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-Taiga/ru_taiga-ud-train-a.conllu' 'src/data/conllu/UD_Russian-Taiga/ru_taiga-ud-train-b.conllu' -r grct -o 'ru_taiga-train'
-```
-или
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-Taiga/ru_taiga-ud-train-a.conllu' 'src/data/conllu/UD_Russian-Taiga/ru_taiga-ud-train-b.conllu' -r loct -o 'ru_taiga-train'
-```
-или
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu' -o 'ru_syntagrus-test' -r conll
+python3 dataset_creating_script.py -c config_dataset_full_rel.yaml
 ```
 
-## SynTagRus
+Создание датасета с усеченными синтаксическими типами связи:
 ```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-a.conllu' 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-b.conllu' 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-c.conllu' -o 'ru_syntagrus-train' -r grct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-dev.conllu' -o 'ru_syntagrus-dev' -r grct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu' -o 'ru_syntagrus-test' -r grct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-a.conllu' 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-b.conllu' 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-c.conllu' -o 'ru_syntagrus-train' -r lct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-dev.conllu' -o 'ru_syntagrus-dev' -r lct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu' -o 'ru_syntagrus-test' -r lct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-a.conllu' 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-b.conllu' 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-train-c.conllu' -o 'ru_syntagrus-train' -r conll
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-dev.conllu' -o 'ru_syntagrus-dev' -r conll
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu' -o 'ru_syntagrus-test' -r conll
-```
-
-# GSD
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-train.conllu' -o 'ru_gsd-train' -r grct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-dev.conllu' -o 'ru_gsd-dev' -r grct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-test.conllu' -o 'ru_gsd-test' -r grct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-train.conllu' -o 'ru_gsd-train' -r lct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-dev.conllu' -o 'ru_gsd-dev' -r lct
-```
-
-```
-python3 dataset_creating_script.py -i 'src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-test.conllu' -o 'ru_gsd-test' -r lct
+python3 dataset_creating_script.py -c config_dataset_simple_rel.yaml
 ```
 
 ## Вычисление метрик

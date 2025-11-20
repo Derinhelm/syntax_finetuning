@@ -30,7 +30,8 @@ class MemoryOptimizedTrainer(transformers.Trainer):
         # Принудительная очистка CUDA кэша после валидации
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            
+        for _ in range(3):
+            gc.collect() # Сборка мусора для удаления
         return result
 
 

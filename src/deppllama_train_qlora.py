@@ -22,18 +22,38 @@ class LoRACallback(TrainerCallback):
 
 
 class MemoryOptimizedTrainer(transformers.Trainer):
-    def evaluation_loop(self, *args, **kwargs):
-        # Явно используем no_grad для валидации
-        with torch.no_grad():
-            result = super().evaluation_loop(*args, **kwargs)
-        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.step_count = 0
+
+    def memory_clean(self):
         # Принудительная очистка CUDA кэша после валидации
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         for _ in range(3):
             gc.collect() # Сборка мусора для удаления
+
+    def evaluation_loop(self, *args, **kwargs):
+        # Явно используем no_grad для валидации
+        with torch.no_grad():
+            result = super().evaluation_loop(*args, **kwargs)
+        self.memory_clean()
         return result
 
+    def on_step_end(self, args, state, control, **kwargs):
+        """
+        Вызывается после каждого шага обучения
+        """
+        # Вызываем родительский метод
+        result = super().on_step_end(args, state, control, **kwargs)
+        
+        self.step_count += 1
+        
+        # Очистка памяти каждые N шагов
+        if self.step_count % 100 == 0: # TODO: as a parameter
+            self.memory_clean()
+            
+        return result
 
 def remove_example_by_length(lst, target_length):
     result = []

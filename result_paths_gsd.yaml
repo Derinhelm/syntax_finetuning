@@ -1,0 +1,52 @@
+- model_name: Qwen06_Base_lr5_0_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_0_grct_gsd.json
+- model_name: Qwen06_Base_lr5_1_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_1_grct_gsd.json
+- model_name: Qwen06_Base_lr5_2_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_2_grct_gsd.json
+- model_name: Qwen06_Base_lr5_3_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_3_grct_gsd.json
+
+- model_name: Qwen06_Base_lr5_a8_0_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_a8_0_grct_gsd.json
+- model_name: Qwen06_Base_lr5_a8_1_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_a8_1_grct_gsd.json
+- model_name: Qwen06_Base_lr5_a8_2_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_a8_2_grct_gsd.json
+- model_name: Qwen06_Base_lr5_a8_3_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_Base_lr5_a8_3_grct_gsd.json
+
+- model_name: Qwen06_lr5_0_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_0_grct_gsd.json
+- model_name: Qwen06_lr5_1_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_1_grct_gsd.json
+- model_name: Qwen06_lr5_2_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_2_grct_gsd.json
+- model_name: Qwen06_lr5_3_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_3_grct_gsd.json
+
+- model_name: Qwen06_lr5_a8_0_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_a8_0_grct_gsd.json
+- model_name: Qwen06_lr5_a8_1_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_a8_1_grct_gsd.json
+- model_name: Qwen06_lr5_a8_2_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_a8_2_grct_gsd.json
+- model_name: Qwen06_lr5_a8_3_grct_gsd
+  representation_type: grct
+  pred_result_path: pred_results/gsd/gsd_grct_expir/Qwen06_lr5_a8_3_grct_gsd.json
+

@@ -1,0 +1,13 @@
+dataset_config:
+  train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_train.json
+  dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_dev.json
+model_config:
+  model_name: Qwen/Qwen3-0.6B
+  is_instruct: True
+root_output_dir_path: /content/adapters/Qwen3_0_6B_gsd/0/checkpoint-476
+epochs: 2
+eval_steps: 50
+init_lora_weights: loftq
+save_epoch_adapters: True
+batch_size: 16
+

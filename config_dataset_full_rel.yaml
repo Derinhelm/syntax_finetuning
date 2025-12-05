@@ -2,6 +2,7 @@ formats:
   - grct
   - lct
   - conll
+  - conll_short
 simple_relations: False
 treebanks:
   - input_directory: src/data/conllu/UD_Russian-GSD-master
@@ -24,3 +25,16 @@ treebanks:
       - ru_syntagrus-ud-test.conllu
     prefix: ru_full_syntagrus
     output_directory: src/data/dataset_full_rel/syntagrus
+  - input_directory: src/data/conllu/UD_Russian-Taiga
+    train:
+      - ru_taiga-ud-train-a.conllu
+      - ru_taiga-ud-train-b.conllu
+      - ru_taiga-ud-train-c.conllu
+      - ru_taiga-ud-train-d.conllu
+      - ru_taiga-ud-train-e.conllu
+    dev:
+      - ru_taiga-ud-dev.conllu
+    test:
+      - ru_taiga-ud-test.conllu
+    prefix: ru_full_taiga
+    output_directory: src/data/dataset_full_rel/taiga

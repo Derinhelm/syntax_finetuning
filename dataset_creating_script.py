@@ -1,6 +1,7 @@
 import argparse
 from conllu import parse_tree, parse
 import json
+import gc
 import random
 import yaml
 
@@ -33,14 +34,20 @@ def process_treebank_sample(input_files, output_path,
         for i in range(len(trees)):
             str_input = tree2string_plain(sentences[i])
                 
-            if representation == "conll":
+            if representation == "conll" or representation == "conll_short":
                 for token in sentences[i]:
                     for k in dict(token):
                         if k not in {"id", "form", "head", "deprel"}:
                             token[k] = "_"
 
                 sentences[i].metadata = {}
-                sent_res = sentences[i].serialize().replace("\n\n", "\n")
+                if representation == "conll":
+                    sent_res = sentences[i].serialize().replace("\n\n", "\n")
+                else:
+                    sent_res = ""
+                    for t_i, token in enumerate(sentences[i]):
+                        t = sentences[i][t_i]
+                        sent_res += f"{t['id']}\t{t['form']}\t{t['head']}\t{t['deprel']}\n"
             elif representation == "loct":
                 sent_res = tree2string_loct(trees[i]).replace(" ", "")
             elif representation == "grct":
@@ -52,7 +59,10 @@ def process_treebank_sample(input_files, output_path,
   print(output_path)
   with open(output_path, 'w', encoding='utf-8') as json_file:
     json.dump(res_list, json_file, ensure_ascii=False, indent=4)
-
+  del res_list
+  for _ in range(3):
+      gc.collect()
+  
 random.seed(23)
 
 parser = argparse.ArgumentParser(description='Transform a dataset sample')

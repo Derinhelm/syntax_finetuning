@@ -89,24 +89,23 @@ for filename_i in train_dict:
     #print("=" * 10)
 
 # По всем train-данным
-for filename_i, file_train in train_dict.items():
+for filename_i, file_train in mean_train_dict.items():
     filename_dir = filenames[filename_i].split('/')[-1].split('.')[-2]
     os.mkdir(f'{output_dir}/{filename_dir}')
     for exp_i, exp_dict in file_train.items():
         expir_name = f"filename: {filename_i}, exp: {exp_i}"
         #print(expir_name)
         prev_point_amount = 0
-        loss_list = [d['loss'] for e_i in exp_dict for d in exp_dict[e_i]]
-        if loss_list:
-            plt.plot(loss_list)
-            for e_i in exp_dict:
-                plt.axvline(prev_point_amount)
-                prev_point_amount += len(exp_dict[e_i])
-                #print(len(exp_dict[e_i]))
+        if exp_dict:
+            plt.plot(exp_dict.keys(), exp_dict.values())
+            plt.plot([d['epoch'] for d in dev_dict[filename_i][exp_i]],
+                                    [d['eval_loss'] for d in dev_dict[filename_i][exp_i]], color='red')
 
-        #axs[exp_i][epoche_i].plot([d['loss'] for d in tr_dict[exp_i][epoche_i]])
+            for e_i in range(6):
+                plt.axvline(e_i, color='grey', alpha=0.4)
 
             plt.title(expir_name)
-            plt.savefig(f'{output_dir}/{filename_dir}/filename_{filename_i}_exp_{exp_i}.jpg', bbox_inches='tight')
+            plt.savefig(f'{output_dir}/{filename_dir}/{filename_dir}_exp_{exp_i}.jpg', bbox_inches='tight')
             plt.cla()
+print(f"Результаты сохранены в {output_dir}")
 

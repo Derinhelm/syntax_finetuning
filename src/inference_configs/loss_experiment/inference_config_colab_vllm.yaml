@@ -4,7 +4,7 @@ dataset:
     representation_type: grct
 models:
   - original_model_id: Qwen/Qwen3-0.6B
-    peft_model_id: /content/adapters/
+    peft_model_id: /content/adapters/Qwen3_0_6B_gsd/0/checkpoint-476
     is_instruct: True
     name: Qwen_0.6_Instruct
     model_library: vllm

@@ -10,7 +10,13 @@ python3 dataset_creating_script.py -c config_dataset_full_rel.yaml
 python3 dataset_creating_script.py -c config_dataset_simple_rel.yaml
 ```
 
-## Вычисление метрик
+## Анализ метрик в процессе обучения
+```
+python3 process_train_metrics.py --filenames train_output/out_qwen4_base_eval25_gsd_bots.txt train_output/out_qwen06_gsd_grct_bots.txt
+```
+
+
+## Вычисление метрик на тестовой выборке
 ```
 python3 score_functions.py --filepath '../../pred_results/Qwen06_Instruct_grct_syntagrus.json' --result_filepath '../../metrics/metrics_Qwen06_Instruct_grct_syntagrus.json'
 ```

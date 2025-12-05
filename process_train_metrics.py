@@ -35,8 +35,10 @@ def process_data(filename):
     
 parser = argparse.ArgumentParser()
 parser.add_argument("--filenames", nargs='*')
+parser.add_argument("--output_dir", nargs='?', default=".")
 parser_args = parser.parse_args()
 filenames = parser_args.filenames
+output_dir = parser_args.output_dir
     
 train_dict, dev_dict = {}, {}
 for filename_i, filename in enumerate(filenames):
@@ -89,7 +91,7 @@ for filename_i in train_dict:
 # По всем train-данным
 for filename_i, file_train in train_dict.items():
     filename_dir = filenames[filename_i].split('/')[-1].split('.')[-2]
-    os.mkdir(f'train_graphics/{filename_dir}')
+    os.mkdir(f'{output_dir}/{filename_dir}')
     for exp_i, exp_dict in file_train.items():
         expir_name = f"filename: {filename_i}, exp: {exp_i}"
         #print(expir_name)
@@ -105,6 +107,6 @@ for filename_i, file_train in train_dict.items():
         #axs[exp_i][epoche_i].plot([d['loss'] for d in tr_dict[exp_i][epoche_i]])
 
             plt.title(expir_name)
-            plt.savefig(f'train_graphics/{filename_dir}/filename_{filename_i}_exp_{exp_i}.jpg', bbox_inches='tight')
+            plt.savefig(f'{output_dir}/{filename_dir}/filename_{filename_i}_exp_{exp_i}.jpg', bbox_inches='tight')
             plt.cla()
 

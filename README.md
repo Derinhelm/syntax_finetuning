@@ -12,7 +12,7 @@ python3 dataset_creating_script.py -c config_dataset_simple_rel.yaml
 
 ## Анализ метрик в процессе обучения
 ```
-python3 process_train_metrics.py --filenames train_output/out_qwen4_base_eval25_gsd_bots.txt train_output/out_qwen06_gsd_grct_bots.txt
+python3 process_train_metrics.py --filenames train_output/out_qwen4_base_eval25_gsd_bots.txt train_output/out_qwen06_gsd_grct_bots.txt --output_dir '../train_graphics'
 ```
 
 

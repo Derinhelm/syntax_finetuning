@@ -6,11 +6,20 @@ import os
 
 import matplotlib.pyplot as plt
 
+def create_description(text):
+    splitted_text = text.split("padding_side")[0].split("----------")
+    e = splitted_text[0].strip().split("\n")
+    values, keys = e[-2], e[-1]
+    keys_res = f"{keys}\n{values}\n"
+    return (keys_res, splitted_text[1].strip())
+
 def process_data(filename): 
     with open(filename, 'r') as f:
         data = f.read().strip()
     
     data = data.split('Training time') # Splitting by experiments
+    expir_descriptions = [create_description(d)
+        for d in data if "padding_side" in d]
     data = [ exp.split("\n") for exp in data]
     data = [[ d for d in exp if len(d) > 0 and \
               d[0] == '{' and d[-1] == '}' and "'epoch'" in d ] for exp in data] # Deleting non-loss strings
@@ -18,9 +27,11 @@ def process_data(filename):
     
     data = [[ json.loads(d.replace("'", "\"").replace("nan", "\"nan\"").replace("inf", "\"inf\""))
               for d in exp ] for exp in data]
+    data = [d for d in data if d]
     
     train_dict = {}
-    eval_dict = {} 
+    eval_dict = {}
+    assert len(data) == len(expir_descriptions)
     for exp_i, exp in enumerate(data):
         train_dict[exp_i] = defaultdict(list)
         eval_dict[exp_i] = []
@@ -31,7 +42,7 @@ def process_data(filename):
                 eval_dict[exp_i].append(d)
             #else:
                 #print(d)
-    return train_dict, eval_dict
+    return train_dict, eval_dict, expir_descriptions
     
 parser = argparse.ArgumentParser()
 parser.add_argument("--filenames", nargs='*')
@@ -40,9 +51,9 @@ parser_args = parser.parse_args()
 filenames = parser_args.filenames
 output_dir = parser_args.output_dir
     
-train_dict, dev_dict = {}, {}
+train_dict, dev_dict, expir_descriptions = {}, {}, {}
 for filename_i, filename in enumerate(filenames):
-    train_dict[filename_i], dev_dict[filename_i] = process_data(filename)
+    train_dict[filename_i], dev_dict[filename_i], expir_descriptions[filename_i] = process_data(filename)
     
 mean_train_dict = {}
 for filename_i in train_dict:
@@ -97,15 +108,24 @@ for filename_i, file_train in mean_train_dict.items():
         #print(expir_name)
         prev_point_amount = 0
         if exp_dict:
-            plt.plot(exp_dict.keys(), exp_dict.values())
-            plt.plot([d['epoch'] for d in dev_dict[filename_i][exp_i]],
+            f, axs = plt.subplots(1, 2)
+            axs[0].plot(exp_dict.keys(), exp_dict.values())
+            axs[0].plot([d['epoch'] for d in dev_dict[filename_i][exp_i]],
                                     [d['eval_loss'] for d in dev_dict[filename_i][exp_i]], color='red')
 
             for e_i in range(6):
-                plt.axvline(e_i, color='grey', alpha=0.4)
+                axs[0].axvline(e_i, color='grey', alpha=0.4)
 
-            plt.title(expir_name)
+            axs[0].set_title(expir_name)
+            descr_keys, descr_text = expir_descriptions[filename_i][exp_i]
+            descr_text = descr_text.split(",")
+            descr_text = [s.replace("}", "").replace(")", "") for s in descr_text if (":" in s or ")" in s)
+                 and "dataset_config" not in s
+                 and "config_name" not in s
+                 and "dir" not in s ]
+            axs[1].text(0, 0, descr_keys + "\n" + "\n".join(descr_text))
+            axs[1].axis('off')
             plt.savefig(f'{output_dir}/{filename_dir}/{filename_dir}_exp_{exp_i}.jpg', bbox_inches='tight')
-            plt.cla()
+            plt.close(f)
 print(f"Результаты сохранены в {output_dir}")
 

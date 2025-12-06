@@ -93,7 +93,7 @@ for filename_i, file_train in mean_train_dict.items():
     filename_dir = filenames[filename_i].split('/')[-1].split('.')[-2]
     os.mkdir(f'{output_dir}/{filename_dir}')
     for exp_i, exp_dict in file_train.items():
-        expir_name = f"filename: {filename_i}, exp: {exp_i}"
+        expir_name = f"filename: {filename_dir}, exp: {exp_i}"
         #print(expir_name)
         prev_point_amount = 0
         if exp_dict:

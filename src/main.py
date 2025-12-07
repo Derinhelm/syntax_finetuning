@@ -45,8 +45,8 @@ s_params = list(itertools.product(*several_parameters.values()))
 if not s_params:
     s_params = [{}]
 
-for model_config in model_configs:
-    for dataset_config in dataset_configs:
+for model_i, model_config in enumerate(model_configs):
+    for dataset_i, dataset_config in enumerate(dataset_configs):
         parameters.model_config = model_config 
         parameters.dataset_config = dataset_config
         os.makedirs(parameters.output_model_dataset_path)
@@ -56,6 +56,9 @@ for model_config in model_configs:
             yaml.dump(configs, file, default_flow_style=False)
 
         for experiment_number, experiment_params in enumerate(s_params):
+            print(f"Model {model_i} from {len(model_configs)}")
+            print(f"Dataset {dataset_i} from {len(dataset_configs)}")
+            print(f"Experiment {experiment_number} from {len(s_params)}")
             print(experiment_params)
             print(several_param_names)
             assert len(experiment_params) == len(several_param_names)

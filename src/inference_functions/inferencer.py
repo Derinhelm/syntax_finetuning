@@ -32,7 +32,5 @@ class LLMInferencer:
         if result_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
             result_ids = result_ids[:-1]
         result = self.tokenizer.decode(result_ids).rstrip().lstrip()
-        return result, full_output
-        
-            
-
+        token_amount = (len(input_ids), len(result_ids))
+        return result, full_output, token_amount

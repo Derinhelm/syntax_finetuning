@@ -17,10 +17,10 @@ class Parser:
 
     def parse(self, sent):
         ts = time.time()
-        answer_output, full_output = self.llm.get_llm_output(sent)
+        answer_output, full_output, token_amount = self.llm.get_llm_output(sent)
         llm_time = time.time() - ts
         res = self.tree_decoder.decode_tree(answer_output)
-        return answer_output, full_output, res, llm_time
+        return answer_output, full_output, res, llm_time, token_amount
         
     def clear(self):
         del self.llm
@@ -32,16 +32,17 @@ def inference_dataset(parser, filepath, result_filepath, index_set):
     res = []
     ts = time.time()
     for d_i, d in enumerate(data):
-      if (index_set is None) or (d['index'] in index_set):
-        new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
-        llm_output, full_output, pred_tree, llm_time = parser.parse(d['input'])
-        new_d['pred_output'] = llm_output
-        new_d['full_pred_output'] = full_output
-        new_d['pred_tree'] = pred_tree
-        new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'])
-        new_d['llm_time'] = llm_time
-        res.append(new_d)
-        print(f"{d_i}/{len(data)}. {time.time() - ts}")
+        if (index_set is None) or (d['index'] in index_set):
+            new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
+            llm_output, full_output, pred_tree, llm_time, token_amount = parser.parse(d['input'])
+            new_d['pred_output'] = llm_output
+            new_d['full_pred_output'] = full_output
+            new_d['pred_tree'] = pred_tree
+            new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'])
+            new_d['llm_time'] = llm_time
+            new_d['input_tokens'], new_d['output_tokens'] = token_amount
+            res.append(new_d)
+            print(f"{d_i}/{len(data)}. {time.time() - ts}")
     print(time.time() - ts)
     with open(result_filepath, 'w', encoding='utf-8') as json_file:
         json.dump(res, json_file, ensure_ascii=False, indent=4)

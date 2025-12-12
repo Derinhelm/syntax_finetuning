@@ -69,14 +69,14 @@ if index_set is not None:
     index_set = set(index_set)
 
 for model_config in configs['models']:
-    print(model_config)
-    original_model_id = model_config['original_model_id']
-    peft_model_id = model_config['peft_model_id']
+  print(model_config)
+  original_model_id = model_config['original_model_id']
+  peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
+  for peft_model_id, adapter_name in peft_adapters:
     is_instruct = model_config['is_instruct']
-    model_name = model_config['name']
     max_tokens = model_config.get('max_tokens', 512)
     model_library = model_config.get('model_library', 'transformers')
-    result_path = f"{output_dir}/{model_name}_{dataset_name}.json"
+    result_path = f"{output_dir}/{adapter_name}_{dataset_name}.json"
     parser = Parser(original_model_id, peft_model_id, is_instruct, dataset_repr, seed, model_library, max_tokens)
     inference_dataset(parser, dataset_path, result_path, index_set)
     parser.clear()

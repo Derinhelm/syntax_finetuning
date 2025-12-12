@@ -47,6 +47,11 @@ def inference_dataset(parser, filepath, result_filepath, index_set):
     with open(result_filepath, 'w', encoding='utf-8') as json_file:
         json.dump(res, json_file, ensure_ascii=False, indent=4)
 
+def create_adapter_name(adapter_path):
+    fragments = adapter_path.split("/")
+    fragments = [fr for fr in fragments
+                 if not fr.isdigit() and "checkpoint" not in fr]
+    return fragments[-1]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config_name", nargs='?', default='/src/src/configs/config.yaml')
@@ -71,8 +76,14 @@ if index_set is not None:
 for model_config in configs['models']:
   print(model_config)
   original_model_id = model_config['original_model_id']
-  peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
+  if "peft_model_id" in model_config:
+    peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
+  else:
+    config_adapters = model_config['peft_group']
+    print(f"config_adapters:{config_adapters}")
+    peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
   for peft_model_id, adapter_name in peft_adapters:
+    print(f"\npeft_model_id: {peft_model_id}\nadapter_name: {adapter_name}")
     is_instruct = model_config['is_instruct']
     max_tokens = model_config.get('max_tokens', 512)
     model_library = model_config.get('model_library', 'transformers')

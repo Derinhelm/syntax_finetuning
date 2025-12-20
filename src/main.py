@@ -11,7 +11,7 @@ from deppllama_train_qlora import conduct_experiment
 from parameters import Parameters
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--config_name", nargs='?', default='/src/src/configs/config.yaml')
+parser.add_argument("config_name", nargs='?', default='/src/src/configs/config.yaml')
 parser_args = parser.parse_args()
 config_name = parser_args.config_name
 

@@ -54,7 +54,7 @@ def create_adapter_name(adapter_path):
     return fragments[-1]
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--config_name", nargs='?', default='/src/src/configs/config.yaml')
+parser.add_argument("config_name", nargs='?', default='/src/src/configs/config.yaml')
 parser_args = parser.parse_args()
 config_name = parser_args.config_name
 

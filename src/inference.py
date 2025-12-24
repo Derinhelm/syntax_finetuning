@@ -53,46 +53,51 @@ def create_adapter_name(adapter_path):
                  if not fr.isdigit() and "checkpoint" not in fr]
     return fragments[-1]
 
-parser = argparse.ArgumentParser()
-parser.add_argument("config_name", nargs='?', default='/src/src/configs/config.yaml')
-parser_args = parser.parse_args()
-config_name = parser_args.config_name
+def inference_main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config_name", nargs='?',
+                        default='/src/src/configs/config.yaml')
+    parser_args = parser.parse_args()
+    config_name = parser_args.config_name
 
-with open(config_name, 'r') as file:
-    configs = yaml.safe_load(file)
-print(configs, "-" * 20, sep="\n")
+    with open(config_name, 'r') as file:
+        configs = yaml.safe_load(file)
+    print(configs, "-" * 20, sep="\n")
 
-output_dir = configs['output_dir']
-seed = configs.get('seed', 42)
+    output_dir = configs['output_dir']
+    seed = configs.get('seed', 42)
 
-dataset_config = configs['dataset']
-dataset_path = dataset_config['path']
-dataset_name = dataset_config['name']
-dataset_repr = dataset_config['representation_type']
-index_set = dataset_config.get('index_set', None)
-if index_set is not None:
-    index_set = set(index_set)
+    dataset_config = configs['dataset']
+    dataset_path = dataset_config['path']
+    dataset_name = dataset_config['name']
+    dataset_repr = dataset_config['representation_type']
+    index_set = dataset_config.get('index_set', None)
+    if index_set is not None:
+        index_set = set(index_set)
 
-for model_config in configs['models']:
-  print(model_config)
-  original_model_id = model_config['original_model_id']
-  if "peft_model_id" in model_config:
-    peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
-  else:
-    config_adapters = model_config['peft_group']
-    print(f"config_adapters:{config_adapters}")
-    peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
-  for peft_model_id, adapter_name in peft_adapters:
-    print(f"\npeft_model_id: {peft_model_id}\nadapter_name: {adapter_name}")
-    is_instruct = model_config['is_instruct']
-    max_tokens = model_config.get('max_tokens', 512)
-    model_library = model_config.get('model_library', 'transformers')
-    result_path = f"{output_dir}/{adapter_name}_{dataset_name}.json"
-    parser = Parser(original_model_id, peft_model_id, is_instruct, dataset_repr, seed, model_library, max_tokens)
-    inference_dataset(parser, dataset_path, result_path, index_set)
-    parser.clear()
-    del parser
-    for _ in range(3):
-        gc.collect() # Сборка мусора для удаления
-    torch.cuda.empty_cache()
+    for model_config in configs['models']:
+        print(model_config)
+        original_model_id = model_config['original_model_id']
+        if "peft_model_id" in model_config:
+            peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
+        else:
+            config_adapters = model_config['peft_group']
+            print(f"config_adapters:{config_adapters}")
+            peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
+        for peft_model_id, adapter_name in peft_adapters:
+            print(f"\npeft_model_id: {peft_model_id}\nadapter_name: {adapter_name}")
+            is_instruct = model_config['is_instruct']
+            max_tokens = model_config.get('max_tokens', 512)
+            model_library = model_config.get('model_library', 'transformers')
+            result_path = f"{output_dir}/{adapter_name}_{dataset_name}.json"
+            parser = Parser(original_model_id, peft_model_id, is_instruct,
+                            dataset_repr, seed, model_library, max_tokens)
+            inference_dataset(parser, dataset_path, result_path, index_set)
+            parser.clear()
+            del parser
+            for _ in range(3):
+                gc.collect() # Сборка мусора для удаления
+            torch.cuda.empty_cache()
 
+if __name__ == "__main__":
+    inference_main()

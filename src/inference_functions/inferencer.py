@@ -21,7 +21,7 @@ class LLMInferencer:
             self.tokenizer = BaseTokenizer(original_model_id)
 
 
-    def get_llm_output(self, input_text):
+    def get_llm_output(self, input_text, input_tokens):
         inputs = self.tokenizer.encode_input(input_text)
         input_ids = inputs['input_ids']
         if input_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
@@ -34,3 +34,4 @@ class LLMInferencer:
         result = self.tokenizer.decode(result_ids).rstrip().lstrip()
         token_amount = (len(input_ids), len(result_ids))
         return result, full_output, token_amount
+

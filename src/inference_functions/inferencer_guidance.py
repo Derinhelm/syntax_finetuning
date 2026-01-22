@@ -21,7 +21,7 @@ class LLMInferencerGuidance:
         print(prompt)
         lm = self.model # copying
         indexes = [str(i) for i in range(len(input_tokens))]
-        relations = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', 'cc', 'ccomp', 'compound', 'conj', 'cop', 'csubj', '', 'dep', 'det', 'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'iobj', 'list', 'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan', 'parataxis', 'punct', 'root', 'vocative', 'xcomp']
+        relations = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', 'cc', 'ccomp', 'compound', 'conj', 'cop', 'csubj', 'dep', 'det', 'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'iobj', 'list', 'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan', 'parataxis', 'punct', 'root', 'vocative', 'xcomp']
         print(f"relations: {relations}")
         
         for w_i, w in enumerate(input_tokens):

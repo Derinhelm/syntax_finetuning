@@ -7,6 +7,6 @@ models:
     peft_model_id: None # TODO
     is_instruct: True
     name: Qwen_0.6_Instruct
-    model_library: vllm_outlines
+    model_library: vllm_xgrammar
 output_dir: /content/pred_results
 

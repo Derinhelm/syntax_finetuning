@@ -2,9 +2,9 @@ import torch
 from vllm import LLM, SamplingParams
 from vllm.sampling_params import GuidedDecodingParams
 
-class LLMInferencerVllmOutlines:
+class LLMInferencerVllmXgrammar:
     def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens):
-        self.model_library = "vllm_outlines"
+        self.model_library = "vllm_xgrammar"
         self.model = LLM(model=original_model_id, dtype=torch.float16, max_model_len=max_tokens)
 
     def get_llm_output(self, input_text, input_tokens=None):
@@ -17,18 +17,18 @@ class LLMInferencerVllmOutlines:
              'parataxis', 'punct', 'root', 'vocative', 'xcomp']
         ids = [str(i) for i in range(1, len(input_tokens) + 1)]
         conll_grammar = ""
-        conll_grammar += "?start: " +  ' "\\n" '.join([f"line{id}" for id in ids]) + "\n"
+        conll_grammar += "root ::= " +  ' "\\n" '.join([f"line{id}" for id in ids]) + "\n"
         for t_i, t in enumerate(input_tokens):
-            r_line = f'line{t_i + 1}: "{t_i + 1} {t} " id " " rel' + "\n"
+            r_line = f'line{t_i + 1} ::= "{t_i + 1} {t} " id " " rel' + "\n"
             conll_grammar += r_line
-        conll_grammar += 'id: "' + '" | "'.join(ids) + '"\n'
-        conll_grammar += 'rel: "' + '" | "'.join(relations) + '"\n'
+        conll_grammar += 'id ::= "' + '" | "'.join(ids) + '"\n'
+        conll_grammar += 'rel ::= "' + '" | "'.join(relations) + '"\n'
         #print(conll_grammar)
 
         # Guided decoding by Grammar
 
         guided_decoding_params_grammar = GuidedDecodingParams(
-            grammar=conll_grammar, backend="outlines",)
+            grammar=conll_grammar)
         sampling_params_grammar = SamplingParams(
             guided_decoding=guided_decoding_params_grammar, max_tokens=200,)
 

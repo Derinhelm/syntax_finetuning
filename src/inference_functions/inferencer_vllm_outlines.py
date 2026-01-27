@@ -1,0 +1,53 @@
+import torch
+from vllm import LLM, SamplingParams
+from vllm.sampling_params import GuidedDecodingParams
+
+class LLMInferencerVllmOutlines:
+    def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens):
+        self.model_library = "vllm_outlines"
+        self.model = LLM(model=original_model_id, dtype=torch.float16, max_model_len=max_tokens)
+
+    def get_llm_output(self, input_text, input_tokens=None):
+        print(f"input_tokens: {input_tokens}")
+
+        relations = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', 'cc',
+             'ccomp', 'compound', 'conj', 'cop', 'csubj', 'dep', 'det',
+             'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'iobj', 'list',
+             'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan',
+             'parataxis', 'punct', 'root', 'vocative', 'xcomp']
+        ids = [str(i) for i in range(1, len(input_tokens) + 1)]
+        conll_grammar = ""
+        conll_grammar += "?start: " +  ' "\\n" '.join([f"line{id}" for id in ids]) + "\n"
+        for t_i, t in enumerate(input_tokens):
+            r_line = f'line{t_i + 1}: "{t_i + 1} {t} " id " " rel' + "\n"
+            conll_grammar += r_line
+        conll_grammar += 'id: "' + '" | "'.join(ids) + '"\n'
+        conll_grammar += 'rel: "' + '" | "'.join(relations) + '"\n'
+        #print(conll_grammar)
+
+        # Guided decoding by Grammar
+
+        guided_decoding_params_grammar = GuidedDecodingParams(
+            grammar=conll_grammar, backend="outlines",)
+        sampling_params_grammar = SamplingParams(
+            guided_decoding=guided_decoding_params_grammar, max_tokens=200,)
+
+        # TODO: В исходном промпте перечисляем не текст, а токены через ' '
+        conll_prompt = f"""
+Пример: Предложение <Началу работ препятствовал недостаток финансирования .> в формате CONLL:
+1	Началу	_	_	_	_	3	iobj	_	_
+2	работ	_	_	_	_	1	nmod	_	_
+3	препятствовал	_	_	_	_	0	root	_	_
+4	недостаток	_	_	_	_	3	nsubj	_	_
+5	финансирования	_	_	_	_	4	nmod	_	_
+6	.	_	_	_	_	3	punct	_	_
+Задание: Верни в формате CONLL предложение <{input_text}>:
+Результат должен состоять из 7 строк в формате CONLL. Во втором столбце должны быть токены {str(input_tokens)}. Нельзя нарушать порядок токенов. Нельзя добавлять токены. Нельзя удалять токены.
+"""
+
+        outputs = self.model.generate(prompts=conll_prompt, sampling_params=sampling_params_grammar)
+        #print(f"res: {outputs[0].outputs[0].text}")
+        result = outputs[0].outputs[0].text
+        full_output = outputs[0].prompt + result
+        return result, full_output, (len(outputs[0].prompt_token_ids), len(outputs[0].outputs[0].token_ids))
+

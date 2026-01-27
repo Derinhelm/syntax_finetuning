@@ -6,17 +6,20 @@ import yaml
 
 import torch
 
-from inference_functions.inferencer import LLMInferencer
-from inference_functions.inferencer_guidance import LLMInferencerGuidance
 from inference_functions.tree_decoder import TreeDecoder
 
 class Parser:
     def __init__(self, original_model_id, peft_model_id,
                  is_instruct, representation_type, seed, model_library, max_tokens):
-       if model_library != "guidance":
-           self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
-       else:
+       if model_library == "guidance":
+           from inference_functions.inferencer_guidance import LLMInferencerGuidance
            self.llm = LLMInferencerGuidance(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
+       elif model_library == "vllm_outlines":
+           from inference_functions.inferencer_vllm_outlines import LLMInferencerVllmOutlines
+           self.llm = LLMInferencerVllmOutlines(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
+       else:
+           from inference_functions.inferencer import LLMInferencer
+           self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
        self.tree_decoder = TreeDecoder(representation_type)
 
     def parse(self, input_text, input_tokens=None):

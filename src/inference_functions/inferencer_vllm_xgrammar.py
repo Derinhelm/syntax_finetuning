@@ -19,7 +19,8 @@ class LLMInferencerVllmXgrammar:
         conll_grammar = ""
         conll_grammar += "root ::= " +  ' "\\n" '.join([f"line{id}" for id in ids]) + "\n"
         for t_i, t in enumerate(input_tokens):
-            r_line = f'line{t_i + 1} ::= "{t_i + 1} {t} " id " " rel' + "\n"
+            t_change = t.replace('\"', '\\"')
+            r_line = f'line{t_i + 1} ::= "{t_i + 1} {t_change} " id " " rel' + "\n"
             conll_grammar += r_line
         conll_grammar += 'id ::= "' + '" | "'.join(ids) + '"\n'
         conll_grammar += 'rel ::= "' + '" | "'.join(relations) + '"\n'

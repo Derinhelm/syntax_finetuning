@@ -8,5 +8,6 @@ models:
     is_instruct: True
     name: Qwen_0.6_Instruct
     model_library: vllm_xgrammar
+    max_tokens: 5000
 output_dir: /content/pred_results
 

@@ -45,7 +45,7 @@ def inference_dataset(parser, filepath, result_filepath, index_set):
         data = json.load(f)
     res = []
     ts = time.time()
-    last_saved_i = 0
+    last_unsaved_i = 0
     for d_i, d in enumerate(data):
         if (index_set is None) or (d['index'] in index_set):
             new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
@@ -61,13 +61,18 @@ def inference_dataset(parser, filepath, result_filepath, index_set):
             new_d['input_tokens'], new_d['output_tokens'] = token_amount
             res.append(new_d)
             print(f"{d_i}/{len(data)}. {time.time() - ts}")
-        if len(res) - last_saved_i >= 10:
+        if len(res) - last_unsaved_i >= 10:
             with open(result_filepath, 'a', encoding='utf-8') as json_file:
-                for s_i in range(last_saved_i + 1, len(res)):
+                for s_i in range(last_unsaved_i, len(res)):
                     json_file.write(json.dumps(res[s_i],
                         ensure_ascii=False) + '\n')
                 json_file.flush()
-            last_saved_i = len(res) - 1
+            last_unsaved_i = len(res)
+    with open(result_filepath, 'a', encoding='utf-8') as json_file:
+        for s_i in range(last_unsaved_i, len(res)):
+            json_file.write(json.dumps(res[s_i],
+                ensure_ascii=False) + '\n')
+            json_file.flush()
     print(time.time() - ts)
 
 def create_adapter_name(adapter_path):

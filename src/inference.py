@@ -1,6 +1,7 @@
 import argparse
 import gc
 import json
+import os
 import time
 import yaml
 
@@ -24,7 +25,11 @@ class Parser:
 
     def parse(self, input_text, input_tokens=None):
         ts = time.time()
-        answer_output, full_output, token_amount = self.llm.get_llm_output(input_text, input_tokens)
+        try:
+            answer_output, full_output, token_amount = self.llm.get_llm_output(input_text, input_tokens)
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            answer_output, full_output, token_amount = None, None, None
         llm_time = time.time() - ts
         res = self.tree_decoder.decode_tree(answer_output)
         return answer_output, full_output, res, llm_time, token_amount
@@ -70,6 +75,7 @@ def create_adapter_name(adapter_path):
     return fragments[-1]
 
 def inference_main():
+    os.environ["VLLM_ENGINE_ITERATION_TIMEOUT_S"] = "300"
     parser = argparse.ArgumentParser()
     parser.add_argument("config_name", nargs='?',
                         default='/src/src/configs/config.yaml')

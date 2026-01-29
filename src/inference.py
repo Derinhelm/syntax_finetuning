@@ -38,6 +38,7 @@ def inference_dataset(parser, filepath, result_filepath, index_set):
         data = json.load(f)
     res = []
     ts = time.time()
+    last_saved_i = 0
     for d_i, d in enumerate(data):
         if (index_set is None) or (d['index'] in index_set):
             new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
@@ -53,9 +54,14 @@ def inference_dataset(parser, filepath, result_filepath, index_set):
             new_d['input_tokens'], new_d['output_tokens'] = token_amount
             res.append(new_d)
             print(f"{d_i}/{len(data)}. {time.time() - ts}")
+        if len(res) - last_saved_i >= 10:
+            with open(result_filepath, 'w', encoding='utf-8') as json_file:
+                for s_i in range(last_saved_i + 1, len(res)):
+                    json_file.write(json.dumps(res[s_i],
+                        ensure_ascii=False) + '\n')
+                json_file.flush()
+            last_saved_i = len(res) - 1
     print(time.time() - ts)
-    with open(result_filepath, 'w', encoding='utf-8') as json_file:
-        json.dump(res, json_file, ensure_ascii=False, indent=4)
 
 def create_adapter_name(adapter_path):
     fragments = adapter_path.split("/")
@@ -99,7 +105,7 @@ def inference_main():
             is_instruct = model_config['is_instruct']
             max_tokens = model_config.get('max_tokens', 512)
             model_library = model_config.get('model_library', 'transformers')
-            result_path = f"{output_dir}/{adapter_name}_{dataset_name}.json"
+            result_path = f"{output_dir}/{adapter_name}_{dataset_name}.jsonl"
             parser = Parser(original_model_id, peft_model_id, is_instruct,
                             dataset_repr, seed, model_library, max_tokens)
             inference_dataset(parser, dataset_path, result_path, index_set)

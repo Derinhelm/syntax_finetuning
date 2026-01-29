@@ -43,7 +43,7 @@ class LLMInferencerVllmXgrammar:
 5	финансирования	_	_	_	_	4	nmod	_	_
 6	.	_	_	_	_	3	punct	_	_
 Задание: Верни в формате CONLL предложение <{input_text}>:
-Результат должен состоять из 7 строк в формате CONLL. Во втором столбце должны быть токены {str(input_tokens)}. Нельзя нарушать порядок токенов. Нельзя добавлять токены. Нельзя удалять токены.
+Результат должен состоять из {len(input_tokens)} строк в формате CONLL. Во втором столбце должны быть токены {str(input_tokens)}. Нельзя нарушать порядок токенов. Нельзя добавлять токены. Нельзя удалять токены.
 """
 
         outputs = self.model.generate(prompts=conll_prompt, sampling_params=sampling_params_grammar)

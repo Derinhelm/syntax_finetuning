@@ -31,7 +31,7 @@ class LLMInferencerVllmXgrammar:
         guided_decoding_params_grammar = GuidedDecodingParams(
             grammar=conll_grammar)
         sampling_params_grammar = SamplingParams(
-            guided_decoding=guided_decoding_params_grammar, max_tokens=200,)
+            guided_decoding=guided_decoding_params_grammar)
 
         # TODO: В исходном промпте перечисляем не текст, а токены через ' '
         conll_prompt = f"""

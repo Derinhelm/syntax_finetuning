@@ -39,6 +39,8 @@ class Parser:
         del self.tree_decoder
 
 def inference_dataset(parser, filepath, result_filepath, index_set):
+    with open(result_filepath, 'x') as f:
+        pass # Creating file, if not exist
     with open(filepath, 'r') as f:
         data = json.load(f)
     res = []

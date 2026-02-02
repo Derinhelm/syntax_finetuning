@@ -7,7 +7,19 @@ from conllu import parse
 import json
 import gc
 
+from metric_functions.difference_tokens.data_preparing import preprocess_tree
 
+def get_pred_trees(pred_filename, format):
+    if format == "jsonl":
+        pred_trees = []
+        with open(pred_filename, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):         
+                item = json.loads(line)
+                pred_trees.append(item)
+    else:
+        with open(pred_filename, 'r', encoding='utf-8') as f:
+            pred_trees = json.load(f)
+    return pred_trees
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Getting config name')
@@ -46,23 +58,22 @@ if __name__ == "__main__":
     for pred_filename in pred_filenames:
         print(pred_filename)
         try:
-          if format == "jsonl":
-            pred_trees = []
-            with open(pred_filename, 'r', encoding='utf-8') as f:
-              for line_num, line in enumerate(f, 1):         
-                  item = json.loads(line)
-                  pred_trees.append(item)
-          else:
-            with open(pred_filename, 'r', encoding='utf-8') as f:
-                pred_trees = json.load(f)
-
+          pred_trees = get_pred_trees(pred_filename, format)
           assert len(sentences) == len(pred_trees)
           config_uas[pred_filename], config_las[pred_filename] = [], []
 
-
           for sent_i, sent_r in enumerate(sentences):
             try:
-                sent_uas, sent_las = process_function(sentences[sent_i], pred_trees[sent_i])
+                if isinstance(pred_trees[sent_i]["pred_tree"], list):
+                    gold_tree = [{'id': str(t['id']), 'form': t['form'],
+                        'parent_id': str(t['head']), 'relation': t['deprel'],
+                        'pos': t['upos'], 'feats': t['feats']} for t in sentences[sent_i]]
+
+                    gold_tree = preprocess_tree(gold_tree)
+                    pred_tree = preprocess_tree(pred_trees[sent_i]["pred_tree"])
+                    sent_uas, sent_las = process_function(gold_tree, pred_tree)
+                else: # Предложение с некорректным результатом
+                    sent_uas, sent_las = None, None # TODO: Где обработка для точек Stanza ?
                 config_uas[pred_filename].append(sent_uas)
                 config_las[pred_filename].append(sent_las)
             except Exception as e:

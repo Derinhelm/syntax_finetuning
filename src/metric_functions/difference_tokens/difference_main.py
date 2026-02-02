@@ -1,4 +1,3 @@
-from metric_functions.difference_tokens.metric_calculating import calculate_metrics
 from metric_functions.difference_tokens.category_calculating \
             import create_statistics
 

@@ -1,5 +1,5 @@
-from metric_functions.token_aligning import create_edges
-from metric_functions.data_preparing import delete_point_nodes
+from metric_functions.difference_tokens.token_aligning import create_edges
+from metric_functions.difference_tokens.data_preparing import delete_point_nodes
     
 from collections import Counter
 from copy import deepcopy

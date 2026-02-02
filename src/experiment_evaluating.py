@@ -1,6 +1,4 @@
-from metric_functions.metric_calculating import calculate_metrics
-from metric_functions.category_calculating import create_statistics
-    
+
 import argparse
 import os
 import yaml
@@ -8,25 +6,8 @@ import yaml
 from conllu import parse
 import json
 import gc
-    
-def print_mean_metrics(uas_metrics, las_metrics):
-    good_uas = [r for r in uas_metrics if r is not None]
-    bad_uas = [r for r in uas_metrics if r is None]
-    good_las = [r for r in las_metrics if r is not None]
-    bad_las = [r for r in las_metrics if r is None]
-    if good_uas:
-        print(f"{sum(good_uas) / len(good_uas) * 100:.1f}% ({sum(good_uas) / len(uas_metrics) * 100:.1f}%)")
-    if good_las:
-        print(f"{sum(good_las) / len(good_las) * 100:.1f}% ({sum(good_las) / len(las_metrics) * 100:.1f}%)")
-    print(len(bad_uas), len(uas_metrics))#len(bad_las))
-    
-def process_sentence(gold_tree, parser_tree):
-    output_r, output_errors, output_extra_pred_tokens = create_statistics(
-        gold_tree, parser_tree)
-    # TODO: output_errors и output_extra_pred_tokens - для сохранения
-    sent_uas, sent_las = \
-        calculate_metrics(output_r)
-    return sent_uas, sent_las
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Getting config name')
@@ -39,6 +20,15 @@ if __name__ == "__main__":
     gold_path = config["gold_file"]
     
     format = config.get("format", "jsonl")
+    metric_type = config.get("metric_type", "difference")
+
+    if metric_type == "difference":
+        from metric_functions.difference_tokens.difference_main import process_sentence, print_mean_metrics
+        process_function = process_sentence
+        print_function = print_mean_metrics
+    elif metric_type == "normal":
+        print("normal")
+        1 / 0 # TODO
 
     pred_filenames = []
     for file_directory in config['pred_directories']:
@@ -69,9 +59,10 @@ if __name__ == "__main__":
           assert len(sentences) == len(pred_trees)
           config_uas[pred_filename], config_las[pred_filename] = [], []
 
+
           for sent_i, sent_r in enumerate(sentences):
             try:
-                sent_uas, sent_las = process_sentence(sentences[sent_i], pred_trees[sent_i])
+                sent_uas, sent_las = process_function(sentences[sent_i], pred_trees[sent_i])
                 config_uas[pred_filename].append(sent_uas)
                 config_las[pred_filename].append(sent_las)
             except Exception:
@@ -86,7 +77,7 @@ if __name__ == "__main__":
         
     for config_i, config_name in enumerate(config_uas):
         print(config_name)
-        print_mean_metrics(config_uas[config_name], config_las[config_name])
+        print_function(config_uas[config_name], config_las[config_name])
         print()
     #if (config_i + 1) % 4 == 0:
     #  print("-" * 15)

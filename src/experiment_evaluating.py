@@ -7,7 +7,10 @@ from conllu import parse
 import json
 import gc
 
-from metric_functions.difference_tokens.data_preparing import preprocess_tree
+from metric_functions.category_calculating \
+            import create_statistics
+from metric_functions.data_preparing import preprocess_tree
+
 
 def get_pred_trees(pred_filename, format):
     if format == "jsonl":
@@ -21,6 +24,17 @@ def get_pred_trees(pred_filename, format):
             pred_trees = json.load(f)
     return pred_trees
 
+def print_mean_metrics(uas_metrics, las_metrics):
+    good_uas = [r for r in uas_metrics if r is not None]
+    bad_uas = [r for r in uas_metrics if r is None]
+    good_las = [r for r in las_metrics if r is not None]
+    bad_las = [r for r in las_metrics if r is None]
+    if good_uas:
+        print(f"{sum(good_uas) / len(good_uas) * 100:.2f}% ({sum(good_uas) / len(uas_metrics) * 100:.2f}%)")
+    if good_las:
+        print(f"{sum(good_las) / len(good_las) * 100:.2f}% ({sum(good_las) / len(las_metrics) * 100:.2f}%)")
+    print(len(bad_uas), len(uas_metrics))#len(bad_las))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Getting config name')
     parser.add_argument('-c','--config', help='Config Name',
@@ -33,14 +47,6 @@ if __name__ == "__main__":
     
     format = config.get("format", "jsonl")
     metric_type = config.get("metric_type", "difference")
-
-    if metric_type == "difference":
-        from metric_functions.difference_tokens.difference_main import process_sentence, print_mean_metrics
-        process_function = process_sentence
-        print_function = print_mean_metrics
-    elif metric_type == "normal":
-        print("normal")
-        1 / 0 # TODO
 
     pred_filenames = []
     for file_directory in config['pred_directories']:
@@ -67,10 +73,11 @@ if __name__ == "__main__":
                     gold_tree = [{'id': str(t['id']), 'form': t['form'],
                         'parent_id': str(t['head']), 'relation': t['deprel'],
                         'pos': t['upos'], 'feats': t['feats']} for t in sentences[sent_i]]
-
+                    gold_text = sentences[sent_i].metadata['text']
                     gold_tree = preprocess_tree(gold_tree)
                     pred_tree = preprocess_tree(pred_trees[sent_i]["pred_tree"])
-                    sent_uas, sent_las = process_function(gold_tree, pred_tree)
+                    sent_uas, sent_las = create_statistics(gold_text, gold_tree,
+                        pred_tree, metric_type)
                 else: # Предложение с некорректным результатом
                     sent_uas, sent_las = None, None
                 config_uas[pred_filename].append(sent_uas)
@@ -78,10 +85,7 @@ if __name__ == "__main__":
 
             del pred_trees
             gc.collect()
+
+            print_mean_metrics(config_uas[pred_filename], config_las[pred_filename])
         except Exception as e:
             print(f"Error: {e}")
-        
-    for config_i, config_name in enumerate(config_uas):
-        print(config_name)
-        print_function(config_uas[config_name], config_las[config_name])
-        print()

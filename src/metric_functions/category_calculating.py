@@ -1,16 +1,21 @@
-from metric_functions.difference_tokens.token_aligning import create_edges
-    
 from collections import Counter
 from copy import deepcopy
 
-def create_statistics(gold_tree, pred_tree):
-    pred_unlabeled_edges, pred_labeled_edges = create_edges(pred_tree)
+def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
+    if metric_type == "difference":
+        from metric_functions.edge_creating.creating_edges_difference import create_edges
+        create_fun = create_edges
+    else:
+        from metric_functions.edge_creating.create_edges_normal import create_edges
+        create_fun = lambda tree_param: create_edges(gold_text, tree_param)
+
+    pred_unlabeled_edges, pred_labeled_edges = create_fun(pred_tree)
     pred_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in pred_labeled_edges]
 
     #print(pred_labeled_edges_set)
     # .split(":")[0] - from src.sentence_utils.simplify_relations
 
-    gold_unlabeled_edges, gold_labeled_edges = create_edges(gold_tree)
+    gold_unlabeled_edges, gold_labeled_edges = create_fun(gold_tree)
     gold_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in gold_labeled_edges]
 
     pred_len = len(pred_unlabeled_edges)

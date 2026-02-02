@@ -100,17 +100,19 @@ def inference_main():
     dataset_path = dataset_config['path']
     dataset_name = dataset_config['name']
     dataset_repr = dataset_config['representation_type']
-    index_set = dataset_config.get('index_set', None)
-    index_start = dataset_config.get('index_start', None)
-    assert not (index_set is not None and index_start is not None) # Не более одного ограничения
-    index_predicate = lambda ind: True
-    if index_set is not None:
-        index_predicate = lambda ind: ind in set(index_set)
-    if index_start is not None:
-        index_predicate = lambda ind: ind >= index_start
 
     for model_config in configs['models']:
         print(model_config)
+        index_set = model_config.get('index_set', None)
+        index_start = model_config.get('index_start', None)
+        assert not (index_set is not None and index_start is not None) # Не более одного ограничения
+        index_predicate = lambda ind: True
+        if index_set is not None:
+            index_predicate = lambda ind: ind in set(index_set)
+        if index_start is not None:
+            print(f"{index_start=}")
+            index_predicate = lambda ind: ind >= index_start
+
         original_model_id = model_config['original_model_id']
         if "peft_model_id" in model_config:
             peft_adapters = [(model_config['peft_model_id'], model_config['name'])]

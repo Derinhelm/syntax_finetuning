@@ -65,7 +65,8 @@ if __name__ == "__main__":
                 sent_uas, sent_las = process_function(sentences[sent_i], pred_trees[sent_i])
                 config_uas[pred_filename].append(sent_uas)
                 config_las[pred_filename].append(sent_las)
-            except Exception:
+            except Exception as e:
+                print(e)
                 # TODO (для предложений из нескольких предложений)
                 config_uas[pred_filename].append(1)
                 config_las[pred_filename].append(1)

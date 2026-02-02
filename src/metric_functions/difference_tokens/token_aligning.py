@@ -20,10 +20,5 @@ def create_edges(tree):
         node = id_dict[t["id"]]
         unlabeled_edges.append((node, parent_node))
         labeled_edges.append((node, parent_node, t['relation']))
-    unlabeled_edges_set = set(unlabeled_edges)
-    labeled_edges_set = set(labeled_edges)
-    assert len(unlabeled_edges) == len(unlabeled_edges_set)
-    assert len(labeled_edges) == len(labeled_edges_set)
-    assert len(unlabeled_edges_set) == len(labeled_edges_set)
-    return unlabeled_edges, labeled_edges, \
-           unlabeled_edges_set, labeled_edges_set
+    assert len(unlabeled_edges) == len(labeled_edges)
+    return unlabeled_edges, labeled_edges

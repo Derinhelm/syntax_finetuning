@@ -58,12 +58,11 @@ if __name__ == "__main__":
     for pred_filename in pred_filenames:
         print(pred_filename)
         try:
-          pred_trees = get_pred_trees(pred_filename, format)
-          assert len(sentences) == len(pred_trees)
-          config_uas[pred_filename], config_las[pred_filename] = [], []
+            pred_trees = get_pred_trees(pred_filename, format)
+            assert len(sentences) == len(pred_trees)
+            config_uas[pred_filename], config_las[pred_filename] = [], []
 
-          for sent_i, sent_r in enumerate(sentences):
-            try:
+            for sent_i, sent_r in enumerate(sentences):
                 if isinstance(pred_trees[sent_i]["pred_tree"], list):
                     gold_tree = [{'id': str(t['id']), 'form': t['form'],
                         'parent_id': str(t['head']), 'relation': t['deprel'],
@@ -73,23 +72,16 @@ if __name__ == "__main__":
                     pred_tree = preprocess_tree(pred_trees[sent_i]["pred_tree"])
                     sent_uas, sent_las = process_function(gold_tree, pred_tree)
                 else: # Предложение с некорректным результатом
-                    sent_uas, sent_las = None, None # TODO: Где обработка для точек Stanza ?
+                    sent_uas, sent_las = None, None
                 config_uas[pred_filename].append(sent_uas)
                 config_las[pred_filename].append(sent_las)
-            except Exception as e:
-                print(e)
-                # TODO (для предложений из нескольких предложений)
-                config_uas[pred_filename].append(1)
-                config_las[pred_filename].append(1)
 
-          del pred_trees
-          gc.collect()
+            del pred_trees
+            gc.collect()
         except Exception as e:
-          print(f"Error: {e}")
+            print(f"Error: {e}")
         
     for config_i, config_name in enumerate(config_uas):
         print(config_name)
         print_function(config_uas[config_name], config_las[config_name])
         print()
-    #if (config_i + 1) % 4 == 0:
-    #  print("-" * 15)

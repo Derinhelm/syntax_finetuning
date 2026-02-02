@@ -38,7 +38,7 @@ class Parser:
         del self.llm
         del self.tree_decoder
 
-def inference_dataset(parser, filepath, result_filepath, index_set):
+def inference_dataset(parser, filepath, result_filepath, index_predicate):
     with open(result_filepath, 'x') as f:
         pass # Creating file, if not exist
     with open(filepath, 'r') as f:
@@ -47,7 +47,7 @@ def inference_dataset(parser, filepath, result_filepath, index_set):
     ts = time.time()
     last_unsaved_i = 0
     for d_i, d in enumerate(data):
-        if (index_set is None) or (d['index'] in index_set):
+        if index_predicate(d['index']):
             new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
             new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'])
             print(new_d['gold_tree'])
@@ -101,8 +101,13 @@ def inference_main():
     dataset_name = dataset_config['name']
     dataset_repr = dataset_config['representation_type']
     index_set = dataset_config.get('index_set', None)
+    index_start = dataset_config.get('index_start', None)
+    assert not (index_set is not None and index_start is not None) # Не более одного ограничения
+    index_predicate = lambda ind: True
     if index_set is not None:
-        index_set = set(index_set)
+        index_predicate = lambda ind: ind in set(index_set)
+    if index_start is not None:
+        index_predicate = lambda ind: ind >= index_start
 
     for model_config in configs['models']:
         print(model_config)
@@ -121,7 +126,7 @@ def inference_main():
             result_path = f"{output_dir}/{adapter_name}_{dataset_name}.jsonl"
             parser = Parser(original_model_id, peft_model_id, is_instruct,
                             dataset_repr, seed, model_library, max_tokens)
-            inference_dataset(parser, dataset_path, result_path, index_set)
+            inference_dataset(parser, dataset_path, result_path, index_predicate)
             parser.clear()
             del parser
             for _ in range(3):

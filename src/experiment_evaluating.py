@@ -29,10 +29,8 @@ def print_mean_metrics(uas_metrics, las_metrics):
     bad_uas = [r for r in uas_metrics if r is None]
     good_las = [r for r in las_metrics if r is not None]
     bad_las = [r for r in las_metrics if r is None]
-    if good_uas:
-        print(f"{sum(good_uas) / len(good_uas) * 100:.2f}% ({sum(good_uas) / len(uas_metrics) * 100:.2f}%)")
-    if good_las:
-        print(f"{sum(good_las) / len(good_las) * 100:.2f}% ({sum(good_las) / len(las_metrics) * 100:.2f}%)")
+    print(f"UAS: {sum(good_uas) / len(good_uas) * 100:.2f}% ({sum(good_uas) / len(uas_metrics) * 100:.2f}%), " +
+        f"LAS: {sum(good_las) / len(good_las) * 100:.2f}% ({sum(good_las) / len(las_metrics) * 100:.2f}%)")
     print(len(bad_uas), len(uas_metrics))#len(bad_las))
 
 if __name__ == "__main__":

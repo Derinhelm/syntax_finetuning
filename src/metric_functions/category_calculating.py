@@ -5,9 +5,15 @@ def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
     if metric_type == "difference":
         from metric_functions.edge_creating.creating_edges_difference import create_edges
         create_fun = create_edges
-    else:
+    elif metric_type == "difference_easy":
+        from metric_functions.edge_creating.creating_edges_difference_easy import create_edges
+        create_fun = create_edges
+    elif metric_type == "normal":
         from metric_functions.edge_creating.create_edges_normal import create_edges
         create_fun = lambda tree_param: create_edges(gold_text, tree_param)
+    else:
+        print(f"Error metric_type: {metric_type}")
+        return None, None
 
     pred_unlabeled_edges, pred_labeled_edges = create_fun(pred_tree)
     pred_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in pred_labeled_edges]

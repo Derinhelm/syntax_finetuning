@@ -1,0 +1,5 @@
+gold_file: src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu
+pred_directories:
+  - pred_results
+format: list
+metric_type: difference_easy

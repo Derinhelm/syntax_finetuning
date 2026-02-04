@@ -1,6 +1,10 @@
+import signal
 import torch
 from vllm import LLM, SamplingParams
 from vllm.sampling_params import GuidedDecodingParams
+
+def timeout_handler(signum, frame):
+    raise TimeoutError("Время выполнения истекло!")
 
 class LLMInferencerVllmXgrammar:
     def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens):
@@ -8,6 +12,7 @@ class LLMInferencerVllmXgrammar:
         self.model = LLM(model=original_model_id, dtype=torch.float16,
             max_model_len=max_tokens, seed=seed)
         self.max_tokens = max_tokens
+        signal.signal(signal.SIGALRM, timeout_handler)
 
     def get_llm_output(self, input_text, input_tokens=None):
         print(f"input_tokens: {input_tokens}")
@@ -51,7 +56,9 @@ class LLMInferencerVllmXgrammar:
 Результат должен состоять из {len(input_tokens)} строк в формате CONLL. Во втором столбце должны быть токены {str(input_tokens)}. Нельзя нарушать порядок токенов. Нельзя добавлять токены. Нельзя удалять токены.
 """
 
+        signal.alarm(120)
         outputs = self.model.generate(prompts=conll_prompt, sampling_params=sampling_params_grammar)
+        signal.alarm(0)
         #print(f"res: {outputs[0].outputs[0].text}")
         result = outputs[0].outputs[0].text
         full_output = outputs[0].prompt + result

@@ -3,6 +3,8 @@ import torch
 from vllm import LLM, SamplingParams
 from vllm.sampling_params import GuidedDecodingParams
 
+import inference_functions.prompt_creating.prompt_functions
+
 def timeout_handler(signum, frame):
     raise TimeoutError("Время выполнения истекло!")
 
@@ -45,17 +47,7 @@ class LLMInferencerVllmXgrammar:
             seed=self.seed)
 
         # TODO: В исходном промпте перечисляем не текст, а токены через ' '
-        conll_prompt = f"""
-Пример: Предложение <Началу работ препятствовал недостаток финансирования .> в формате CONLL:
-1 Началу 3 iobj
-2 работ 1 nmod
-3 препятствовал	0 root
-4 недостаток 3 nsubj
-5 финансирования 4 nmod
-6 . 3 punct
-Задание: Верни в формате CONLL предложение <{input_text}>:
-Результат должен состоять из {len(input_tokens)} строк в формате CONLL. Во втором столбце должны быть токены {str(input_tokens)}. Нельзя нарушать порядок токенов. Нельзя добавлять токены. Нельзя удалять токены.
-"""
+        conll_prompt = prompt2(input_text, input_tokens)
 
         signal.alarm(120)
         outputs = self.model.generate(prompts=conll_prompt, sampling_params=sampling_params_grammar)

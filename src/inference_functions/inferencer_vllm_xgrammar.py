@@ -12,6 +12,7 @@ class LLMInferencerVllmXgrammar:
         self.model = LLM(model=original_model_id, dtype=torch.float16,
             max_model_len=max_tokens, seed=seed)
         self.max_tokens = max_tokens
+        self.seed = seed
         signal.signal(signal.SIGALRM, timeout_handler)
 
     def get_llm_output(self, input_text, input_tokens=None):

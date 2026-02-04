@@ -41,7 +41,7 @@ class Parser:
             answer_output, full_output, token_amount = self.llm.get_llm_output(input_text, input_tokens)
         except Exception as e:
             print(f"Ошибка: {e}")
-            answer_output, full_output, token_amount = None, None, None
+            answer_output, full_output, token_amount = None, None, (None, None)
         llm_time = time.time() - ts
         res = self.tree_decoder_result.decode_tree(answer_output)
         return answer_output, full_output, res, llm_time, token_amount

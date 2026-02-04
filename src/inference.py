@@ -7,21 +7,33 @@ import yaml
 
 import torch
 
-from inference_functions.tree_decoder import TreeDecoder
+def create_decoder(representation_type):
+    if representation_type == "conll_short":
+        from inference_functions.tree_decoder_conll_short import TreeDecoderConllShort
+        return TreeDecoderConllShort(representation_type)
+    else:
+        from inference_functions.tree_decoder import TreeDecoder
+        return TreeDecoder(representation_type)
 
 class Parser:
     def __init__(self, original_model_id, peft_model_id,
-                 is_instruct, representation_type, seed, model_library, max_tokens):
-       if model_library == "guidance":
+                 is_instruct, representation_type, seed, model_library, max_tokens,
+                 representation_type_result):
+        if model_library == "guidance":
            from inference_functions.inferencer_guidance import LLMInferencerGuidance
            self.llm = LLMInferencerGuidance(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
-       elif model_library == "vllm_xgrammar":
+        elif model_library == "vllm_xgrammar":
            from inference_functions.inferencer_vllm_xgrammar import LLMInferencerVllmXgrammar
            self.llm = LLMInferencerVllmXgrammar(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
-       else:
+        else:
            from inference_functions.inferencer import LLMInferencer
            self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
-       self.tree_decoder = TreeDecoder(representation_type)
+        self.tree_decoder = create_decoder(representation_type)
+        if representation_type_result is not None:
+            self.tree_decoder_result = create_decoder(representation_type_result)
+        else:
+            # Связывание с существующим декодером
+            self.tree_decoder_result = self.tree_decoder
 
     def parse(self, input_text, input_tokens=None):
         ts = time.time()
@@ -31,11 +43,13 @@ class Parser:
             print(f"Ошибка: {e}")
             answer_output, full_output, token_amount = None, None, None
         llm_time = time.time() - ts
-        res = self.tree_decoder.decode_tree(answer_output)
+        res = self.tree_decoder_result.decode_tree(answer_output)
         return answer_output, full_output, res, llm_time, token_amount
         
     def clear(self):
         del self.llm
+        if self.tree_decoder_result != self.tree_decoder:
+            del self.tree_decoder_result
         del self.tree_decoder
 
 def inference_dataset(parser, filepath, result_filepath, index_predicate):
@@ -126,8 +140,10 @@ def inference_main():
             max_tokens = model_config.get('max_tokens', 512)
             model_library = model_config.get('model_library', 'transformers')
             result_path = f"{output_dir}/{adapter_name}_{dataset_name}.jsonl"
+            representation_type_result = model_config.get('representation_type_result')
             parser = Parser(original_model_id, peft_model_id, is_instruct,
-                            dataset_repr, seed, model_library, max_tokens)
+                            dataset_repr, seed, model_library, max_tokens,
+                            representation_type_result)
             inference_dataset(parser, dataset_path, result_path, index_predicate)
             parser.clear()
             del parser

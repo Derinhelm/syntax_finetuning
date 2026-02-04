@@ -3,7 +3,7 @@ import torch
 from vllm import LLM, SamplingParams
 from vllm.sampling_params import GuidedDecodingParams
 
-import inference_functions.prompt_creating.prompt_functions
+from inference_functions.prompt_creating.prompt_functions import prompt2
 
 def timeout_handler(signum, frame):
     raise TimeoutError("Время выполнения истекло!")
@@ -25,14 +25,14 @@ class LLMInferencerVllmXgrammar:
              'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'iobj', 'list',
              'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan',
              'parataxis', 'punct', 'root', 'vocative', 'xcomp']
-        ids = [str(i) for i in range(1, len(input_tokens) + 1)]
+        ids = [str(i) for i in range(len(input_tokens) + 1)]
         conll_grammar = ""
         conll_grammar += "root ::= " +  ' "\\n" '.join([f"line{id}" for id in ids]) + "\n"
         for t_i, t in enumerate(input_tokens):
             t_change = t.replace('\"', '\\"')
             r_line = f'line{t_i + 1} ::= "{t_i + 1} {t_change} " id " " rel' + "\n"
             conll_grammar += r_line
-        conll_grammar += 'id ::= "' + '" | "'.join(ids) + '"\n'
+        conll_grammar += 'id ::= "' + '" | "'.join([0] + ids) + '"\n'
         conll_grammar += 'rel ::= "' + '" | "'.join(relations) + '"\n'
         #print(conll_grammar)
 

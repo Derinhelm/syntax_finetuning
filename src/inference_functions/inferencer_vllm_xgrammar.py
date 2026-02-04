@@ -5,7 +5,8 @@ from vllm.sampling_params import GuidedDecodingParams
 class LLMInferencerVllmXgrammar:
     def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens):
         self.model_library = "vllm_xgrammar"
-        self.model = LLM(model=original_model_id, dtype=torch.float16, max_model_len=max_tokens)
+        self.model = LLM(model=original_model_id, dtype=torch.float16,
+            max_model_len=max_tokens, seed=seed)
         self.max_tokens = max_tokens
 
     def get_llm_output(self, input_text, input_tokens=None):
@@ -33,7 +34,9 @@ class LLMInferencerVllmXgrammar:
             grammar=conll_grammar)
         sampling_params_grammar = SamplingParams(
             guided_decoding=guided_decoding_params_grammar,
-            max_tokens=self.max_tokens)
+            max_tokens=self.max_tokens,
+            temperature=0,
+            seed=self.seed)
 
         # TODO: В исходном промпте перечисляем не текст, а токены через ' '
         conll_prompt = f"""

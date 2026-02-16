@@ -1,26 +1,15 @@
+# Дообучение больших языковых моделей для синтаксического анализа русского языка
 
+Цель исследования - проверка возможности дообучения LLM для синтаксического анализа.
 
-Создание датасета с полными синтаксическими типами связи:
-```
-python3 dataset_creating_script.py -c config_dataset_full_rel.yaml
-```
+Рассматривались:
+- LLM базового, инструктивного и адаптированного типа,
+- форматы скобочных последовательностей GRCT и LCT.
 
-Создание датасета с усеченными синтаксическими типами связи:
-```
-python3 dataset_creating_script.py -c config_dataset_simple_rel.yaml
-```
+Для дообучения выбраны модели семейства Qwen3 размером 4 и 8 миллиарда параметров.
 
-## Анализ метрик в процессе обучения
-```
-python3 process_train_metrics.py --filenames train_output/out_qwen4_base_eval25_gsd_bots.txt train_output/out_qwen06_gsd_grct_bots.txt --output_dir '../train_graphics'
-```
+Все дообученные LLM превзошли классические нейросетевые синтаксические анализаторы по метрике LAS, и почти все дообученные LLM - по метрике UAS.
 
+![Оценка качества дообученных LLM](results.png)
 
-## Вычисление метрик на тестовой выборке
-```
-python3 score_functions.py --filepath '../../pred_results/Qwen06_Instruct_grct_syntagrus.json' --result_filepath '../../metrics/metrics_Qwen06_Instruct_grct_syntagrus.json'
-```
-
-```
-python3 src/creating_metrics.py
-```
+Наилучшие дообученные модели опубликованы: https://huggingface.co/collections/Derinhelm/syntaxllm

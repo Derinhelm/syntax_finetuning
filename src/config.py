@@ -12,6 +12,8 @@ class DatasetConfig:
     def __init__(self, dataset_config):
         self.train_file_path = dataset_config['train_file_path']
         self.dev_file_path = dataset_config['dev_file_path']
+        self.test_file_path = dataset_config.get('test_file_path')
+        self.treebank_repr = dataset_config.get('treebank_repr', 'grct') # TODO
         self.treebank = dataset_config.get('treebank', 'gsd')
 
     def __repr__(self):

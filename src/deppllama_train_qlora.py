@@ -8,6 +8,7 @@ from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
 from tokenize_functions import InstructTokenizer, BaseTokenizer
+from inference import Parser, inference_dataset
 
 import torch
 
@@ -165,3 +166,26 @@ def conduct_experiment(parameters):
     for _ in range(3):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
+
+
+    if parameters.dataset_config.test_file_path is not None:
+        original_model_id = parameters.model_config.model_name
+        peft_model_id = parameters.output_experiment_path # TODO
+        is_instruct = parameters.model_config.is_instruct
+        dataset_repr = parameters.dataset_config.treebank_repr
+        seed = parameters.seed
+        model_library = "vllm" # TODO: ???
+        max_tokens = 3000 # TODO
+        parser = Parser(original_model_id, peft_model_id, is_instruct,
+                            dataset_repr, seed, model_library, max_tokens)
+        dataset_path = parameters.dataset_config.test_file_path
+        res_name = parameters.output_model_dataset_path.split("/")[1] # TODO
+        output_dir = parameters.output_experiment_path
+        result_path = f"{output_dir}/pred_{res_name}.jsonl"
+        inference_dataset(parser, dataset_path, result_path, None)
+        parser.clear()
+        del parser
+        for _ in range(3):
+            gc.collect() # Сборка мусора для удаления
+        torch.cuda.empty_cache()
+

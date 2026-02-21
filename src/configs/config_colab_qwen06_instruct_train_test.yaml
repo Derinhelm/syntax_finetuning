@@ -1,0 +1,17 @@
+dataset_config:
+  train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_train.json
+  dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_dev.json
+  test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_test.json
+  treebank_repr: grct
+model_config:
+  model_name: Qwen/Qwen3-0.6B
+  is_instruct: True
+  torch_empty_cache_steps: 2
+  per_device_eval_batch_size: 2
+root_output_dir_path: /content/syntax_finetuning/results
+epochs: 2
+eval_steps: 50
+init_lora_weights: loftq
+save_epoch_adapters: True
+batch_size: 16
+

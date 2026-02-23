@@ -174,7 +174,7 @@ def conduct_experiment(parameters):
         is_instruct = parameters.model_config.is_instruct
         dataset_repr = parameters.dataset_config.treebank_repr
         seed = parameters.seed
-        model_library = "vllm" # TODO: ???
+        model_library = "transformers" # TODO: ???
         max_tokens = 3000 # TODO
         parser = Parser(original_model_id, peft_model_id, is_instruct,
                             dataset_repr, seed, model_library, max_tokens)

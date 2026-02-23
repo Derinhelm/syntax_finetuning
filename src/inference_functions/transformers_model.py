@@ -26,7 +26,7 @@ class TransformersModel:
         self.model = PeftModel.from_pretrained(
             model_from,
             peft_model_id
-        )
+        ).to(model_from.device)
         self.model.config.pad_token_id = 0
         self.model.config.bos_token_id = 1
         self.model.config.eos_token_id = 2

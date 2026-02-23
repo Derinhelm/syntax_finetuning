@@ -179,7 +179,7 @@ def conduct_experiment(parameters):
         parser = Parser(original_model_id, peft_model_id, is_instruct,
                             dataset_repr, seed, model_library, max_tokens)
         dataset_path = parameters.dataset_config.test_file_path
-        res_name = parameters.output_model_dataset_path.split("/")[1] # TODO
+        res_name = parameters.output_model_dataset_path.split("/")[-1] # TODO
         output_dir = parameters.output_experiment_path
         result_path = f"{output_dir}/pred_{res_name}.jsonl"
         inference_dataset(parser, dataset_path, result_path, None)

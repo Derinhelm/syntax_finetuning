@@ -69,7 +69,7 @@ class LLMInferencerVllmPartRegex:
         space_tokens = self.tokenizer.encode(" ")
 
         for t_i, t in enumerate(input_tokens):
-            part_line = self.tokenizer.encode(f"{t_i + 1} {t}") # TODO: Реализация для prompt2
+            part_line = self.tokenizer.encode(f"{t_i + 1} {t} ") # TODO: Реализация для prompt2
             prompt_tokens += part_line
             tokens_prompt = TokensPrompt(prompt_token_ids=prompt_tokens)
             signal.alarm(120)

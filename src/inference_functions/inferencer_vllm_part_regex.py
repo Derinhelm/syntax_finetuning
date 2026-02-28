@@ -36,12 +36,12 @@ class LLMInferencerVllmPartRegex:
             {"role": "assistant", "content": ""}
         ]
 
-        prompt = tokenizer.apply_chat_template(
+        prompt = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             continue_final_message=True,
         )
-        source_tokens = tokenizer.encode(prompt)
+        source_tokens = self.tokenizer.encode(prompt)
         prompt_tokens = deepcopy(source_tokens)
 
         # Guided decoding by Grammar
@@ -90,6 +90,6 @@ class LLMInferencerVllmPartRegex:
 
         source_len = len(source_tokens)
         pred_tokens = prompt_tokens[source_len:]
-        result = tokenizer.decode(pred_tokens)
-        full_output = tokenizer.decode(prompt_tokens)
+        result = self.tokenizer.decode(pred_tokens)
+        full_output = self.tokenizer.decode(prompt_tokens)
         return result, full_output, (len(source_tokens), len(pred_tokens))

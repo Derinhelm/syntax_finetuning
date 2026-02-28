@@ -1,7 +1,7 @@
 dataset:
-    path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_test.json
-    name: grct_gsd
-    representation_type: grct
+    path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_conll_short_test.json
+    name: conll_short_gsd
+    representation_type: conll_short
 models:
   - original_model_id: Qwen/Qwen3-0.6B
     peft_model_id:

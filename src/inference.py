@@ -25,6 +25,9 @@ class Parser:
         elif model_library == "vllm_xgrammar":
            from inference_functions.inferencer_vllm_xgrammar import LLMInferencerVllmXgrammar
            self.llm = LLMInferencerVllmXgrammar(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
+        elif model_library == "vllm_part_regex":
+           from inference_functions.inferencer_vllm_part_regex import LLMInferencerVllmPartRegex
+           self.llm = LLMInferencerVllmPartRegex(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
         else:
            from inference_functions.inferencer import LLMInferencer
            self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)

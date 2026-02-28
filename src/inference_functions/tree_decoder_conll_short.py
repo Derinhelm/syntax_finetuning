@@ -4,8 +4,13 @@ class TreeDecoderConllShort:
 
     def decode_tree(self, answer_output):
         try:
-            output = [line.strip().split(" ")
-                for line in answer_output.split("\n")]
+            lines = answer_output.split("\n")
+            if "\t" in lines[0]:
+                sep = "\t"
+            else:
+                sep = " "
+            output = [line.strip().split(sep)
+                for line in lines]
             res = [ { "id": line[0], "form": line[1],
                   "parent_id": line[2], "relation": line[3]
                 } for line in output]

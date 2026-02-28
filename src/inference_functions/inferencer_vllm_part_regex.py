@@ -2,7 +2,7 @@ from copy import deepcopy
 import signal
 
 import torch
-from vllm import LLM, SamplingParams
+from vllm import LLM, SamplingParams, TokensPrompt
 from vllm.sampling_params import GuidedDecodingParams
 
 from inference_functions.prompt_creating.prompt_functions import prompt2

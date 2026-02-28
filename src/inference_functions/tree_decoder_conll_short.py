@@ -4,7 +4,7 @@ class TreeDecoderConllShort:
 
     def decode_tree(self, answer_output):
         try:
-            lines = answer_output.split("\n")
+            lines = answer_output.strip().split("\n")
             if "\t" in lines[0]:
                 sep = "\t"
             else:

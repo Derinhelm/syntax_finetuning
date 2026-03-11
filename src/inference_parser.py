@@ -1,9 +1,11 @@
 import gc
 import json
+import os
 import time
 
 import torch
 
+import resource
 
 def create_decoder(representation_type):
     if representation_type == "conll_short":
@@ -114,7 +116,21 @@ def start_inference_experiment(exp):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
 
-def start_parallel_inference_experiment(exp_list):
+def start_parallel_inference_experiment(exp_list, process_i):
+    memory_limit = 20 * 1024 * 1024 * 1024  # Max - 25 GB
+    resource.setrlimit(resource.RLIMIT_AS, (memory_limit, memory_limit))
+    cpus = set(range(process_i * 128, (process_i + 1) * 128))
+    os.sched_setaffinity(0, cpus)
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(process_i)
+    time.sleep(10)
+    print(f"CPU affinity процесса {process_i}: {os.sched_getaffinity(0)}")
+    for i in range(torch.cuda.device_count()):
+        print(f" GPU {i} процесса {process_i}: {torch.cuda.get_device_name(i)}")    
+    # Мягкий и жесткий лимиты на виртуальную память
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    print(f"Виртуальная память (RLIMIT_AS):")
+    print(f"  Мягкий лимит: {soft / (1024**3):.2f} GB" if soft != resource.RLIM_INFINITY else "  Мягкий лимит: безлимитно")
+    print(f"  Жесткий лимит: {hard / (1024**3):.2f} GB" if hard != resource.RLIM_INFINITY else "  Жесткий лимит: безлимитно")
 
     for exp in exp_list:
         start_inference_experiment(exp)

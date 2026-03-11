@@ -69,7 +69,7 @@ def inference_main():
 
             processes = []
             for i in range(process_num):
-                p = mp.Process(target=start_parallel_inference_experiment, args=(exp_groups[i],))
+                p = mp.Process(target=start_parallel_inference_experiment, args=(exp_groups[i], i))
                 processes.append(p)
                 p.start()
             

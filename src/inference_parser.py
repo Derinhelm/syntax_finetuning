@@ -113,3 +113,8 @@ def start_inference_experiment(exp):
     for _ in range(3):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
+
+def start_parallel_inference_experiment(exp_list):
+
+    for exp in exp_list:
+        start_inference_experiment(exp)

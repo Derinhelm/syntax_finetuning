@@ -1,8 +1,10 @@
 import argparse
+import multiprocessing as mp
 import os
 import yaml
 
-from inference_parser import start_inference_experiment, create_adapter_name
+from inference_parser import start_inference_experiment, \
+    start_parallel_inference_experiment, create_adapter_name
 
 def inference_main():
     os.environ["VLLM_ENGINE_ITERATION_TIMEOUT_S"] = "300"
@@ -15,6 +17,8 @@ def inference_main():
     with open(config_name, 'r') as file:
         configs = yaml.safe_load(file)
     print(configs, "-" * 20, sep="\n")
+
+    is_parallel = configs.get("is_parallel", False)
 
     output_dir = configs['output_dir']
     seed = configs.get('seed', 42)
@@ -54,8 +58,24 @@ def inference_main():
                 "dataset_repr": dataset_repr, "seed": seed,
                 "dataset_path": dataset_path})
 
-    for exp in experiments:
-        start_inference_experiment(exp)
+    if not is_parallel:
+        for exp in experiments:
+            start_inference_experiment(exp)
+        else:
+            process_num = 8
+            exp_groups = [[] for _ in range(process_num)]
+            for i, item in enumerate(experiments):
+                exp_groups[i % process_num].append(item)
+
+            processes = []
+            for i in range(process_num):
+                p = mp.Process(target=start_parallel_inference_experiment, args=(exp_groups[i],))
+                processes.append(p)
+                p.start()
+            
+            # Ждем завершения всех процессов
+            for p in processes:
+                p.join()
 
 if __name__ == "__main__":
     inference_main()

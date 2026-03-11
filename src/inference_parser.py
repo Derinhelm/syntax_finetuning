@@ -1,7 +1,9 @@
-import argparse
 import gc
 import json
 import time
+
+import torch
+
 
 def create_decoder(representation_type):
     if representation_type == "conll_short":
@@ -93,3 +95,21 @@ def create_adapter_name(adapter_path):
     fragments = [fr for fr in fragments
                  if not fr.isdigit() and "checkpoint" not in fr]
     return fragments[-1]
+
+def start_inference_experiment(exp):
+    print(f"\npeft_model_id: {exp['peft_model_id']}\nadapter_name: {exp['adapter_name']}")
+    model_config = exp['model_config']
+    is_instruct = model_config['is_instruct']
+    max_tokens = model_config.get('max_tokens', 512)
+    model_library = model_config.get('model_library', 'transformers')
+    result_path = f"{exp['output_dir']}/{exp['adapter_name']}_{exp['dataset_name']}.jsonl"
+    representation_type_result = model_config.get('representation_type_result')
+    parser = Parser(exp['original_model_id'], exp['peft_model_id'], is_instruct,
+                    exp['dataset_repr'], exp['seed'], model_library, max_tokens,
+                    representation_type_result)
+    inference_dataset(parser, exp['dataset_path'], result_path, exp['index_predicate'])
+    parser.clear()
+    del parser
+    for _ in range(3):
+        gc.collect() # Сборка мусора для удаления
+    torch.cuda.empty_cache()

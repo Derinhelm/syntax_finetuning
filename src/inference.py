@@ -1,11 +1,8 @@
 import argparse
-import gc
 import os
 import yaml
 
-import torch
-
-from inference_parser import Parser, inference_dataset, create_adapter_name
+from inference_parser import start_inference_experiment, create_adapter_name
 
 def inference_main():
     os.environ["VLLM_ENGINE_ITERATION_TIMEOUT_S"] = "300"
@@ -52,25 +49,13 @@ def inference_main():
                 "index_set": index_set, "index_start": index_start,
                 "index_predicate": index_predicate,
                 "original_model_id": original_model_id,
-                "peft_model_id": peft_model_id, "adapter_name": adapter_name})
+                "peft_model_id": peft_model_id, "adapter_name": adapter_name,
+                "output_dir": output_dir, "dataset_name": dataset_name,
+                "dataset_repr": dataset_repr, "seed": seed,
+                "dataset_path": dataset_path})
 
-    for exp in peft_adapters:
-            print(f"\npeft_model_id: {exp['peft_model_id']}\nadapter_name: {exp['adapter_name']}")
-            model_config = exp['model_config']
-            is_instruct = model_config['is_instruct']
-            max_tokens = model_config.get('max_tokens', 512)
-            model_library = model_config.get('model_library', 'transformers')
-            result_path = f"{output_dir}/{exp['adapter_name']}_{dataset_name}.jsonl"
-            representation_type_result = model_config.get('representation_type_result')
-            parser = Parser(exp['original_model_id'], exp['peft_model_id'], is_instruct,
-                            dataset_repr, seed, model_library, max_tokens,
-                            representation_type_result)
-            inference_dataset(parser, dataset_path, result_path, exp['index_predicate'])
-            parser.clear()
-            del parser
-            for _ in range(3):
-                gc.collect() # Сборка мусора для удаления
-            torch.cuda.empty_cache()
+    for exp in experiments:
+        start_inference_experiment(exp)
 
 if __name__ == "__main__":
     inference_main()

@@ -27,6 +27,7 @@ def inference_main():
     dataset_name = dataset_config['name']
     dataset_repr = dataset_config['representation_type']
 
+    experiments = []
     for model_config in configs['models']:
         print(model_config)
         index_set = model_config.get('index_set', None)
@@ -47,16 +48,24 @@ def inference_main():
             print(f"config_adapters:{config_adapters}")
             peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
         for peft_model_id, adapter_name in peft_adapters:
-            print(f"\npeft_model_id: {peft_model_id}\nadapter_name: {adapter_name}")
+            experiments.append({"model_config": model_config,
+                "index_set": index_set, "index_start": index_start,
+                "index_predicate": index_predicate,
+                "original_model_id": original_model_id,
+                "peft_model_id": peft_model_id, "adapter_name": adapter_name})
+
+    for exp in peft_adapters:
+            print(f"\npeft_model_id: {exp['peft_model_id']}\nadapter_name: {exp['adapter_name']}")
+            model_config = exp['model_config']
             is_instruct = model_config['is_instruct']
             max_tokens = model_config.get('max_tokens', 512)
             model_library = model_config.get('model_library', 'transformers')
-            result_path = f"{output_dir}/{adapter_name}_{dataset_name}.jsonl"
+            result_path = f"{output_dir}/{exp['adapter_name']}_{dataset_name}.jsonl"
             representation_type_result = model_config.get('representation_type_result')
-            parser = Parser(original_model_id, peft_model_id, is_instruct,
+            parser = Parser(exp['original_model_id'], exp['peft_model_id'], is_instruct,
                             dataset_repr, seed, model_library, max_tokens,
                             representation_type_result)
-            inference_dataset(parser, dataset_path, result_path, index_predicate)
+            inference_dataset(parser, dataset_path, result_path, exp['index_predicate'])
             parser.clear()
             del parser
             for _ in range(3):

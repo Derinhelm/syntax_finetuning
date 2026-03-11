@@ -67,6 +67,7 @@ def inference_main():
             for i, item in enumerate(experiments):
                 exp_groups[i % process_num].append(item)
 
+            mp.set_start_method('spawn', force=True)
             processes = []
             for i in range(process_num):
                 p = mp.Process(target=start_parallel_inference_experiment, args=(exp_groups[i], i))

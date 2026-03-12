@@ -19,7 +19,7 @@ def inference_main():
         configs = yaml.safe_load(file)
     print(configs, "-" * 20, sep="\n")
 
-    is_parallel = configs.get("is_parallel", False)
+    parallel_config = configs.get("parallel_config", {})
 
     output_dir = configs['output_dir']
     seed = configs.get('seed', 42)
@@ -67,7 +67,7 @@ def inference_main():
                 "dataset_repr": dataset_repr, "seed": seed,
                 "dataset_path": dataset_path})
 
-    if not is_parallel:
+    if not parallel_config:
         for exp in experiments:
             start_inference_experiment(exp)
         else:
@@ -80,8 +80,10 @@ def inference_main():
              
             start_time = datetime.now().strftime("%D %H:%M:%S").replace("/", "_").replace(":", "_")
             processes = []
+            parallel_path = parallel_config["parallel_path"]
             for i in range(process_num):
-                p = mp.Process(target=start_parallel_inference_experiment, args=(exp_groups[i], i, start_time))
+                p = mp.Process(target=start_parallel_inference_experiment,
+                    args=(exp_groups[i], i, parallel_path, start_time))
                 processes.append(p)
                 p.start()
             

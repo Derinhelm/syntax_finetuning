@@ -70,7 +70,7 @@ def inference_main():
     if not parallel_config:
         for exp in experiments:
             start_inference_experiment(exp)
-        else:
+    else:
             process_num = 8
             exp_groups = [[] for _ in range(process_num)]
             for i, item in enumerate(experiments):

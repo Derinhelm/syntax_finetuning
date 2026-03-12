@@ -1,4 +1,5 @@
 import argparse
+from datetime import datetime
 import multiprocessing as mp
 import os
 import yaml
@@ -68,9 +69,11 @@ def inference_main():
                 exp_groups[i % process_num].append(item)
 
             mp.set_start_method('spawn', force=True)
+             
+            start_time = datetime.now().strftime("%D %H:%M:%S").replace("/", "_").replace(":", "_")
             processes = []
             for i in range(process_num):
-                p = mp.Process(target=start_parallel_inference_experiment, args=(exp_groups[i], i))
+                p = mp.Process(target=start_parallel_inference_experiment, args=(exp_groups[i], i, start_time))
                 processes.append(p)
                 p.start()
             

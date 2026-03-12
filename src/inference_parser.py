@@ -1,6 +1,7 @@
 import gc
 import json
 import os
+import sys
 import time
 
 import torch
@@ -116,7 +117,15 @@ def start_inference_experiment(exp):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
 
-def start_parallel_inference_experiment(exp_list, process_i):
+def start_parallel_inference_experiment(exp_list, process_i, start_time):
+    stdout_file = open(f"process_{start_time}_{process_i}.log", 'w')
+    stderr_file = open(f"process_{start_time}_{process_i}.log", 'w')
+
+    # Перенаправляем и stdout, и stderr в файл
+    sys.stdout = stdout_file
+    sys.stderr = stderr_file
+
+
     memory_limit = 20 * 1024 * 1024 * 1024  # Max - 25 GB
     resource.setrlimit(resource.RLIMIT_AS, (memory_limit, memory_limit))
     cpus = set(range(process_i * 128, (process_i + 1) * 128))
@@ -134,3 +143,6 @@ def start_parallel_inference_experiment(exp_list, process_i):
 
     for exp in exp_list:
         start_inference_experiment(exp)
+
+    stdout_file.close()
+    stderr_file.close()

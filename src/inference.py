@@ -37,18 +37,6 @@ def inference_main():
         index_finish = model_config.get('index_finish', None)
         assert not (index_set is not None and index_start is not None) # Не более одного ограничения
         assert not (index_set is not None and index_finish is not None) # Не более одного ограничения
-        index_predicate = lambda ind: True
-        if index_set is not None:
-            index_predicate = lambda ind: ind in set(index_set)
-        if index_start is not None:
-            print(f"{index_start=}")
-            if index_finish is not None:
-                index_predicate = lambda ind: (ind >= index_start) and (ind < index_finish)
-            else:
-                index_predicate = lambda ind: ind >= index_start
-        else:
-            if index_finish is not None:
-                index_predicate = lambda ind: ind < index_finish
 
         original_model_id = model_config['original_model_id']
         if "peft_model_id" in model_config:
@@ -60,7 +48,7 @@ def inference_main():
         for peft_model_id, adapter_name in peft_adapters:
             experiments.append({"model_config": model_config,
                 "index_set": index_set, "index_start": index_start,
-                "index_predicate": index_predicate,
+                "index_finish": index_finish,
                 "original_model_id": original_model_id,
                 "peft_model_id": peft_model_id, "adapter_name": adapter_name,
                 "output_dir": output_dir, "dataset_name": dataset_name,

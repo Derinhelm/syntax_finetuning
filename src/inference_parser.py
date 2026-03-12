@@ -100,6 +100,19 @@ def create_adapter_name(adapter_path):
     return fragments[-1]
 
 def start_inference_experiment(exp):
+    index_predicate = lambda ind: True
+    if exp['index_set'] is not None:
+        index_predicate = lambda ind: ind in set(exp['index_set'])
+    if exp['index_start'] is not None:
+        print(f"{exp['index_start']=}")
+        if exp['index_finish'] is not None:
+            index_predicate = lambda ind: (ind >= exp['index_start']) and (ind < exp['index_finish'])
+        else:
+            index_predicate = lambda ind: ind >= exp['index_start']
+    else:
+        if exp['index_finish'] is not None:
+            index_predicate = lambda ind: ind < exp['index_finish']
+
     print(f"\npeft_model_id: {exp['peft_model_id']}\nadapter_name: {exp['adapter_name']}")
     model_config = exp['model_config']
     is_instruct = model_config['is_instruct']
@@ -110,7 +123,7 @@ def start_inference_experiment(exp):
     parser = Parser(exp['original_model_id'], exp['peft_model_id'], is_instruct,
                     exp['dataset_repr'], exp['seed'], model_library, max_tokens,
                     representation_type_result)
-    inference_dataset(parser, exp['dataset_path'], result_path, exp['index_predicate'])
+    inference_dataset(parser, exp['dataset_path'], result_path, index_predicate)
     parser.clear()
     del parser
     for _ in range(3):

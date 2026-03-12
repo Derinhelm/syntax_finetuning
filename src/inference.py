@@ -34,13 +34,21 @@ def inference_main():
         print(model_config)
         index_set = model_config.get('index_set', None)
         index_start = model_config.get('index_start', None)
+        index_finish = model_config.get('index_finish', None)
         assert not (index_set is not None and index_start is not None) # Не более одного ограничения
+        assert not (index_set is not None and index_finish is not None) # Не более одного ограничения
         index_predicate = lambda ind: True
         if index_set is not None:
             index_predicate = lambda ind: ind in set(index_set)
         if index_start is not None:
             print(f"{index_start=}")
-            index_predicate = lambda ind: ind >= index_start
+            if index_finish is not None:
+                index_predicate = lambda ind: (ind >= index_start) and (ind < index_finish)
+            else:
+                index_predicate = lambda ind: ind >= index_start
+        else:
+            if index_finish is not None:
+                index_predicate = lambda ind: ind < index_finish
 
         original_model_id = model_config['original_model_id']
         if "peft_model_id" in model_config:

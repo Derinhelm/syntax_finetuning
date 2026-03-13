@@ -131,8 +131,8 @@ def start_inference_experiment(exp):
     torch.cuda.empty_cache()
 
 def start_parallel_inference_experiment(exp_list, process_i, parallel_path, start_time):
-    stdout_file = open(f"{parallel_path}/process_{start_time}_{process_i}.log", 'w')
-    stderr_file = open(f"{parallel_path}/process_{start_time}_{process_i}.log", 'w')
+    stdout_file = open(f"{parallel_path}/process_{start_time}_{process_i}.out", 'w')
+    stderr_file = open(f"{parallel_path}/process_{start_time}_{process_i}.err", 'w')
 
     # Перенаправляем и stdout, и stderr в файл
     sys.stdout = stdout_file

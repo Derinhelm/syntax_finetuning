@@ -66,7 +66,7 @@ def inference_main():
 
             mp.set_start_method('spawn', force=True)
              
-            start_time = datetime.now().strftime("%D %H:%M:%S").replace("/", "_").replace(":", "_")
+            start_time = datetime.now().strftime("%D %H:%M:%S").replace("/", "_").replace(":", "_").replace(" ", "_")
             processes = []
             parallel_path = parallel_config["parallel_path"]
             for i in range(process_num):

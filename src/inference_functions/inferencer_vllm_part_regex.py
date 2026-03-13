@@ -16,6 +16,7 @@ class LLMInferencerVllmPartRegex:
         assert peft_model_id is None
         self.model = LLM(model=original_model_id, dtype=torch.float16,
             max_model_len=max_tokens, seed=seed,
+            tensor_parallel_size=1,
             enable_prefix_caching=True,)
         self.max_tokens = max_tokens
         self.seed = seed

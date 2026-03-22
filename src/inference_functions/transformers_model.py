@@ -37,7 +37,7 @@ class TransformersModel:
             early_stopping=True,
         )
 
-    def create_output(self, original_input_ids):
+    def create_output(self, original_input_ids, input_tokens):
         input_ids = torch.tensor([original_input_ids]).to(self.model.device)
         with torch.no_grad():
             gen_outputs = self.model.generate(

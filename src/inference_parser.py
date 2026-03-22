@@ -19,7 +19,7 @@ def create_decoder(representation_type):
 class Parser:
     def __init__(self, original_model_id, peft_model_id,
                  is_instruct, representation_type, seed, model_library, max_tokens,
-                 representation_type_result):
+                 representation_type_result, logit_parameters):
         if model_library == "guidance":
            from inference_functions.inferencer_guidance import LLMInferencerGuidance
            self.llm = LLMInferencerGuidance(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
@@ -31,7 +31,7 @@ class Parser:
            self.llm = LLMInferencerVllmPartRegex(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
         else:
            from inference_functions.inferencer import LLMInferencer
-           self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
+           self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens, logit_parameters)
         self.tree_decoder = create_decoder(representation_type)
         if representation_type_result is not None:
             self.tree_decoder_result = create_decoder(representation_type_result)
@@ -122,7 +122,7 @@ def start_inference_experiment(exp):
     representation_type_result = model_config.get('representation_type_result')
     parser = Parser(exp['original_model_id'], exp['peft_model_id'], is_instruct,
                     exp['dataset_repr'], exp['seed'], model_library, max_tokens,
-                    representation_type_result)
+                    representation_type_result, logit_parameters=exp['logit_parameters'])
     inference_dataset(parser, exp['dataset_path'], result_path, index_predicate)
     parser.clear()
     del parser

@@ -1,0 +1,15 @@
+dataset:
+    path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_test.json
+    name: grct_gsd
+    representation_type: grct
+models:
+  - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
+    peft_model_id: Derinhelm/RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    is_instruct: True
+    name: RuadaptQwen3_Hybrid
+    model_library: vllm
+    max_tokens: 5000
+output_dir: /content/pred_results
+logit_parameters:
+    name: bracket_params
+

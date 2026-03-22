@@ -29,6 +29,8 @@ def inference_main():
     dataset_name = dataset_config['name']
     dataset_repr = dataset_config['representation_type']
 
+    logit_parameters = dataset_config.get("logit_parameters") # TODO: Сделать множественным параметром
+
     experiments = []
     for model_config in configs['models']:
         print(model_config)
@@ -53,7 +55,8 @@ def inference_main():
                 "peft_model_id": peft_model_id, "adapter_name": adapter_name,
                 "output_dir": output_dir, "dataset_name": dataset_name,
                 "dataset_repr": dataset_repr, "seed": seed,
-                "dataset_path": dataset_path})
+                "dataset_path": dataset_path,
+                "logit_parameters": logit_parameters})
 
     if not parallel_config:
         for exp in experiments:

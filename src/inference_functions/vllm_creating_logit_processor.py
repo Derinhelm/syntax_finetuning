@@ -86,7 +86,7 @@ def create_logit_processor(logit_params, tokenizer):
 
     #print(op_code, end_code, eos_code)
 
-    logit_processor = AlternatingLogitsProcessor(op_code, end_code, eos_code, bracket_tokens)
+    logit_processor = BracketLogitsProcessor(op_code, end_code, eos_code, bracket_tokens)
     logit_processor.set_tokenizer(tokenizer)
     logit_processor.set_tokenizer(tokenizer)
     return logit_processor

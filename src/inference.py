@@ -31,7 +31,7 @@ def inference_main():
     dataset_name = dataset_config['name']
     dataset_repr = dataset_config['representation_type']
 
-    logit_parameters = dataset_config.get("logit_parameters") # TODO: Сделать множественным параметром
+    logit_parameters = configs.get("logit_parameters") # TODO: Сделать множественным параметром
     if logit_parameters is None:
         logit_parameters = [None]
     elif not isinstance(logit_parameters, list):

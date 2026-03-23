@@ -19,7 +19,7 @@ class LLMInferencer:
             from inference_functions.vllm_model import VllmModel
             if logit_parameters is not None:
                assert peft_model_id is not None
-               logit_processor = create_logit_processor(logit_parameters, self.tokenizer)
+               logit_processor = create_logit_processor(logit_parameters, self.tokenizer.tokenizer)
             else:
                logit_processor = None
             self.model = VllmModel(original_model_id, peft_model_id, seed, max_tokens, logit_processor)

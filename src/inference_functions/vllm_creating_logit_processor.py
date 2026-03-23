@@ -13,9 +13,9 @@ class BracketLogitsProcessor:
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
 
-    def restrict_end(self, logits):
+    def restrict_end(self, logits, bracket_diff):
         for token_text, token_id in self.bracket_codes:
-            if "]" in token_text:
+            if bracket_diff + token_text.count("[") - token_text.count("]") <= 1:
               logits[token_id] = float('-inf')
               #print(token_id, token_text)
         return logits
@@ -61,9 +61,8 @@ class BracketLogitsProcessor:
                 if generated_text[-1] == "[": # After "[" any bracket subtoken is restricted
                     logits = self.restrict_all(logits)
                     #print("Restriction for bracket after open bracket")
-                elif op_amount - end_amount <= 1:
-                    logits = self.restrict_end(logits)
-                    #print("Restriction for ] because of small amount of [")
+                logits = self.restrict_end(logits, op_amount - end_amount)
+                #print("Restriction for ] because of small amount of [")
         #print()
         return logits
 

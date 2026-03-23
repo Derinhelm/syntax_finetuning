@@ -118,7 +118,8 @@ def start_inference_experiment(exp):
     is_instruct = model_config['is_instruct']
     max_tokens = model_config.get('max_tokens', 512)
     model_library = model_config.get('model_library', 'transformers')
-    result_path = f"{exp['output_dir']}/{exp['adapter_name']}_{exp['dataset_name']}_{exp['seed']}.jsonl" # TODO: Какие параметры указывать в названии - сделать параметр (?)
+    logits_flag = logit_parameters is not None
+    result_path = f"{exp['output_dir']}/{exp['adapter_name']}_{exp['dataset_name']}_{exp['seed']}_logits_{logits_flag}.jsonl" # TODO: Какие параметры указывать в названии - сделать параметр (?)
     representation_type_result = model_config.get('representation_type_result')
     parser = Parser(exp['original_model_id'], exp['peft_model_id'], is_instruct,
                     exp['dataset_repr'], exp['seed'], model_library, max_tokens,

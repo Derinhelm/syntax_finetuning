@@ -30,9 +30,15 @@ def inference_main():
     dataset_repr = dataset_config['representation_type']
 
     logit_parameters = dataset_config.get("logit_parameters") # TODO: Сделать множественным параметром
+    if logit_parameters is None:
+        logit_parameters = [None]
+    elif not isinstance(logit_parameters, list):
+        logit_parameters = [logit_parameters]
+    logit_parameters = [lp if lp != 'None' else None for lp in logit_parameters]
 
     experiments = []
     for model_config in configs['models']:
+      for logit_parameters_value in logit_parameters:
         print(model_config)
         index_set = model_config.get('index_set', None)
         index_start = model_config.get('index_start', None)
@@ -56,7 +62,7 @@ def inference_main():
                 "output_dir": output_dir, "dataset_name": dataset_name,
                 "dataset_repr": dataset_repr, "seed": seed,
                 "dataset_path": dataset_path,
-                "logit_parameters": logit_parameters})
+                "logit_parameters": logit_parameters_value})
 
     if not parallel_config:
         for exp in experiments:

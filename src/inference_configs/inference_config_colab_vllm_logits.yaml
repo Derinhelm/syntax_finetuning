@@ -6,10 +6,10 @@ models:
   - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
     peft_model_id: Derinhelm/RuadaptQwen3_4B_Hybrid_syntagrus_grct
     is_instruct: True
-    name: RuadaptQwen3_Hybrid
+    name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     model_library: vllm
     max_tokens: 5000
 output_dir: /content/pred_results
 logit_parameters:
-    name: bracket_params
-
+    - name: bracket_params
+    - None

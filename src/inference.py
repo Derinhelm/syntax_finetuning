@@ -36,7 +36,7 @@ def inference_main():
         logit_parameters = [None]
     elif not isinstance(logit_parameters, list):
         logit_parameters = [logit_parameters]
-    logit_parameters = [lp if lp != 'None' else None for lp in logit_parameters]
+    logit_parameters = [(lp if lp != 'None' else None) for lp in logit_parameters]
 
     experiments = []
     for model_config in configs['models']:

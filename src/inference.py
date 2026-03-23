@@ -22,7 +22,9 @@ def inference_main():
     parallel_config = configs.get("parallel_config", {})
 
     output_dir = configs['output_dir']
-    seed = configs.get('seed', 42)
+    seeds = configs.get('seed', 42)
+    if not isinstance(seeds, list):
+        seeds = [seeds]
 
     dataset_config = configs['dataset']
     dataset_path = dataset_config['path']
@@ -39,7 +41,8 @@ def inference_main():
     experiments = []
     for model_config in configs['models']:
       for logit_parameters_value in logit_parameters:
-        print(model_config)
+       for seed in seeds:
+        #print(model_config)
         index_set = model_config.get('index_set', None)
         index_start = model_config.get('index_start', None)
         index_finish = model_config.get('index_finish', None)
@@ -51,7 +54,7 @@ def inference_main():
             peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
         else:
             config_adapters = model_config['peft_group']
-            print(f"config_adapters:{config_adapters}")
+            #print(f"config_adapters:{config_adapters}")
             peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
         for peft_model_id, adapter_name in peft_adapters:
             experiments.append({"model_config": model_config,
@@ -63,6 +66,8 @@ def inference_main():
                 "dataset_repr": dataset_repr, "seed": seed,
                 "dataset_path": dataset_path,
                 "logit_parameters": logit_parameters_value})
+            print(experiments[-1])
+        print(len(experiments))
 
     if not parallel_config:
         for exp in experiments:

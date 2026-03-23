@@ -1,6 +1,12 @@
+import signal
+
 from vllm import LLM, SamplingParams, TokensPrompt
 from vllm.lora.request import LoRARequest
 import torch
+
+def timeout_handler(signum, frame): # TODO: - убрать дублирование
+    raise TimeoutError("Время выполнения истекло!")
+
 
 class VllmModel:
     def __init__(self, original_model_id, peft_model_id, seed, max_tokens, logit_processor):
@@ -18,6 +24,7 @@ class VllmModel:
         self.max_tokens = max_tokens
         self.peft_model_id = peft_model_id # TODO
         self.logit_processor = logit_processor
+        signal.signal(signal.SIGALRM, timeout_handler)
 
     def create_output(self, input_ids, input_tokens):
         if self.logit_processor is not None:
@@ -30,9 +37,11 @@ class VllmModel:
             seed=self.seed,
             logits_processors = [self.logit_processor] if self.logit_processor is not None else None
         )
+        signal.alarm(120)
         outputs = self.llm.generate(
            [tokens_prompt],
            sampling_params=sampling_params,
            lora_request=LoRARequest("lora_adapter", 1, self.peft_model_id),
         )
+        signal.alarm(0)
         return outputs[0].prompt_token_ids + list(outputs[0].outputs[0].token_ids)

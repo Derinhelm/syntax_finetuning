@@ -90,8 +90,9 @@ def inference_main():
                 p.start()
             
             # Ждем завершения всех процессов
-            for p in processes:
+            for p_i, p in enumerate(processes):
                 p.join()
+                print(f"Process {p_i} finished: {p.exitcode}\n{p}")
 
 if __name__ == "__main__":
     inference_main()

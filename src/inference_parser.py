@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+import traceback
 
 import torch
 
@@ -155,8 +156,12 @@ def start_parallel_inference_experiment(exp_list, process_i, parallel_path, star
     print(f"  Мягкий лимит: {soft / (1024**3):.2f} GB" if soft != resource.RLIM_INFINITY else "  Мягкий лимит: безлимитно")
     print(f"  Жесткий лимит: {hard / (1024**3):.2f} GB" if hard != resource.RLIM_INFINITY else "  Жесткий лимит: безлимитно")
 
-    for exp in exp_list:
-        start_inference_experiment(exp)
+    try:
+        for exp in exp_list:
+            start_inference_experiment(exp)
+    except Exception as e:
+        print(traceback.print_exc())
+        print(f"Error: {e}")
 
     stdout_file.close()
     stderr_file.close()

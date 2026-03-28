@@ -40,7 +40,7 @@ def inference_main():
 
     experiments = []
     for model_config in configs['models']:
-      for logit_parameters_value in logit_parameters:
+      for cur_logit_parameters in logit_parameters:
        for seed in seeds:
         #print(model_config)
         index_set = model_config.get('index_set', None)
@@ -65,7 +65,7 @@ def inference_main():
                 "output_dir": output_dir, "dataset_name": dataset_name,
                 "dataset_repr": dataset_repr, "seed": seed,
                 "dataset_path": dataset_path,
-                "logit_parameters": logit_parameters_value})
+                "logit_parameters": cur_logit_parameters})
             print(experiments[-1])
         print(len(experiments))
 

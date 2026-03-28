@@ -51,5 +51,5 @@ class TransformersModel:
             )
 
         output_ids = gen_outputs[0]
-        return output_ids
-
+        extra_info = None
+        return output_ids, extra_info

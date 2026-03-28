@@ -44,4 +44,8 @@ class VllmModel:
            lora_request=LoRARequest("lora_adapter", 1, self.peft_model_id),
         )
         signal.alarm(0)
-        return outputs[0].prompt_token_ids + list(outputs[0].outputs[0].token_ids)
+        if self.logit_processor is not None:
+            extra_info = list(outputs[0].outputs[0].token_ids)
+        else:
+            extra_info = None
+        return outputs[0].prompt_token_ids + list(outputs[0].outputs[0].token_ids), extra_info

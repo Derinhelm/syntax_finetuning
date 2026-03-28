@@ -41,5 +41,6 @@ class LLMInferencerGuidance:
         result = full_output[len(prompt):]
         token_amount = (None, None)
         print(full_output)
-        return result, full_output, token_amount
+        extra_info = None
+        return result, full_output, token_amount, extra_info
 

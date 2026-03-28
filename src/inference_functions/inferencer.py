@@ -26,19 +26,16 @@ class LLMInferencer:
         else:
             print(f"Error model_library:{model_library}")
 
-
-
     def get_llm_output(self, input_text, input_tokens):
         inputs = self.tokenizer.encode_input(input_text)
         input_ids = inputs['input_ids']
         if input_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
             input_ids = input_ids[:-1]
-        output = self.model.create_output(input_ids, input_tokens)
+        output, extra_info = self.model.create_output(input_ids, input_tokens)
         full_output = self.tokenizer.tokenizer.decode(output)
         result_ids = output[len(input_ids):]
         if result_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
             result_ids = result_ids[:-1]
         result = self.tokenizer.decode(result_ids).rstrip().lstrip()
         token_amount = (len(input_ids), len(result_ids))
-        return result, full_output, token_amount
-
+        return result, full_output, token_amount, extra_info

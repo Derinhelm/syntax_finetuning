@@ -55,5 +55,6 @@ class LLMInferencerVllmXgrammar:
         #print(f"res: {outputs[0].outputs[0].text}")
         result = outputs[0].outputs[0].text
         full_output = outputs[0].prompt + result
-        return result, full_output, (len(outputs[0].prompt_token_ids), len(outputs[0].outputs[0].token_ids))
+        extra_info = None
+        return result, full_output, (len(outputs[0].prompt_token_ids), len(outputs[0].outputs[0].token_ids)), extra_info
 

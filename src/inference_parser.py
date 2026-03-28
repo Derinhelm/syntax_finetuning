@@ -43,13 +43,13 @@ class Parser:
     def parse(self, input_text, input_tokens=None):
         ts = time.time()
         try:
-            answer_output, full_output, token_amount = self.llm.get_llm_output(input_text, input_tokens)
+            answer_output, full_output, token_amount, extra_info = self.llm.get_llm_output(input_text, input_tokens)
         except Exception as e:
             print(f"Ошибка: {e}")
-            answer_output, full_output, token_amount = None, None, (None, None)
+            answer_output, full_output, token_amount, extra_info = None, None, (None, None), None
         llm_time = time.time() - ts
         res = self.tree_decoder_result.decode_tree(answer_output)
-        return answer_output, full_output, res, llm_time, token_amount
+        return answer_output, full_output, res, llm_time, token_amount, extra_info
         
     def clear(self):
         del self.llm
@@ -80,12 +80,13 @@ def inference_dataset(parser, filepath, result_filepath, index_predicate):
             print(new_d['gold_tree'])
             input_tokens = [t['form'] for t in new_d['gold_tree']
                 if '.' not in t['id']]
-            llm_output, full_output, pred_tree, llm_time, token_amount = parser.parse(d['input'], input_tokens)
+            llm_output, full_output, pred_tree, llm_time, token_amount, extra_info = parser.parse(d['input'], input_tokens)
             new_d['pred_output'] = llm_output
             new_d['full_pred_output'] = full_output
             new_d['pred_tree'] = pred_tree
             new_d['llm_time'] = llm_time
             new_d['input_tokens'], new_d['output_tokens'] = token_amount
+            new_d['extra_info'] = extra_info
             res.append(new_d)
             print(f"{d_i}/{len(data)}. {time.time() - ts}")
         if len(res) - last_unsaved_i >= 10:

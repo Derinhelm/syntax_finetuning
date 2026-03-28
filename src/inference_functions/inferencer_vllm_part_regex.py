@@ -93,4 +93,5 @@ class LLMInferencerVllmPartRegex:
         pred_tokens = prompt_tokens[source_len:]
         result = self.tokenizer.decode(pred_tokens)
         full_output = self.tokenizer.decode(prompt_tokens)
-        return result, full_output, (len(source_tokens), len(pred_tokens))
+        extra_info = None
+        return result, full_output, (len(source_tokens), len(pred_tokens)), extra_info

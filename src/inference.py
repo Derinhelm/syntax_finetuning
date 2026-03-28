@@ -2,6 +2,7 @@ import argparse
 from datetime import datetime
 import multiprocessing as mp
 import os
+import time
 import yaml
 
 from inference_parser import start_inference_experiment, \
@@ -89,10 +90,15 @@ def inference_main():
                 processes.append(p)
                 p.start()
             
-            # Ждем завершения всех процессов
-            for p_i, p in enumerate(processes):
-                p.join()
-                print(f"Process {p_i} finished: {p.exitcode}\n{p}")
+            while any(p.is_alive() or p.exitcode != 0 for p in processes):
+                for i, p in enumerate(processes):
+                    if not p.is_alive() and p.exitcode != 0:
+                        print(f"Error {i} process: {p.exitcode}")
+                        processes[i] = mp.Process(target=start_parallel_inference_experiment,
+                            args=(exp_groups[i], i, parallel_path, start_time))
+                        processes[i].start()
+                        print(f"Process {i} is restarted")
+                time.sleep(30)
 
 if __name__ == "__main__":
     inference_main()

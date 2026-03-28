@@ -9,9 +9,11 @@ models:
     name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     model_library: vllm
     max_tokens: 5000
+    index_finish: 30
 output_dir: /content/pred_results
 logit_parameters:
-    - name: bracket_params
+    - name: logits_with_root
       optional_constraints:
         - root
+    - name: main_logits
     - None

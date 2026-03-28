@@ -213,11 +213,13 @@ class GenerationContext:
         self.max_op_bracket = max_op_bracket
 
 class BracketLogitsProcessor:
-    def __init__(self, tokenizer, eos_id, first_root=False):
+    def __init__(self, tokenizer, eos_id, optional_constraints):
         self.max_op_bracket = None
         self.tokenizer = tokenizer
         vocab = tokenizer.get_vocab()
         partial_bracket_codes = [(k, v) for k, v in vocab.items() if "[" in k or "]" in k]
+
+        first_root = "root" in optional_constraints
 
         self.force_first_constraints = ForceFirstTokenConstraint(partial_bracket_codes)
         self.force_root_constraints = ForceRootPrefixConstraint(first_root, self.tokenizer)
@@ -264,5 +266,6 @@ class BracketLogitsProcessor:
 
 def create_logit_processor(logit_params, tokenizer):
     eos_code = 2 # TODO: Сделать константу, используется в других местах
-    logit_processor = BracketLogitsProcessor(tokenizer, eos_code)
+    optional_constraints = logit_params.get("optional_constraints", set())
+    logit_processor = BracketLogitsProcessor(tokenizer, eos_code, optional_constraints)
     return logit_processor

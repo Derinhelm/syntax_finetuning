@@ -1,6 +1,6 @@
 dataset:
-    path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_grct_test.json
-    name: grct_gsd
+    path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_test.json
+    name: grct_syntagrus
     representation_type: grct
 models:
   - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
@@ -12,4 +12,6 @@ models:
 output_dir: /content/pred_results
 logit_parameters:
     - name: bracket_params
+      optional_constraints:
+        - root
     - None

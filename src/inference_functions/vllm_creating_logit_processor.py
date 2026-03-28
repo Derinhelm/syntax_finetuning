@@ -202,6 +202,20 @@ class RestrictErrorTokenConstraint(Constraint):
         return logits
 
 
+class RestrictUnbalancedEOSConstraint(Constraint):
+    """"""
+    
+    def __init__(self, eos_id):
+        self.eos_id = eos_id
+        
+    def check(self, context):
+        return context.op_amount != context.end_amount
+    
+    def __call__(self, logits, context):
+        print("Restriction for eos (because of unbalancing)")
+        logits[self.eos_id] = -torch.inf
+        return logits
+
 class GenerationContext:
     def __init__(self, token_ids, generated_text, max_op_bracket):
         self.token_ids = token_ids
@@ -236,6 +250,7 @@ class BracketLogitsProcessor:
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes)
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
+        self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_id)
 
     def set_max_op_bracket(self, max_op_bracket): 
         self.max_op_bracket = max_op_bracket * 2
@@ -268,6 +283,8 @@ class BracketLogitsProcessor:
                 logits = self.restrict_open_constraints(logits, context)
             if self.restrict_bracket_after_open_constraints.check(context):
                 logits = self.restrict_bracket_after_open_constraints(logits, context)
+            if self.restrict_unbalanced_eos_constraints.check(context):
+                logits = self.restrict_unbalanced_eos_constraints(logits, context)
             logits = self.restrict_balance_constraints(logits, context)
         print()
         return logits

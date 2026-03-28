@@ -74,17 +74,20 @@ class ForceEndConstraint(Constraint):
         self.partial_bracket_codes = partial_bracket_codes
         
     def check(self, context):
-        return context.op_amount == context.max_op_bracket and context.end_amount != context.max_op_bracket and context.generated_text[-1] == "]"
+        return context.op_amount == context.max_op_bracket and \
+            context.end_amount != context.max_op_bracket and \
+            context.generated_text[-1] == "]"
         # Generate some last "]"
 
     def __call__(self, logits, context):
         bracket_diff = context.op_amount - context.end_amount
-        for token_text, token_id in self.partial_bracket_codes:
-            if set(token_text) != {"["}:
-                logits[token_id] = float('-inf')
-            elif bracket_diff - len(token_text) < 0: # ] больше, чем можно
-                logits[token_id] = float('-inf')
-        print("Allowing only ] and similar")
+        print("Forcing last ]")
+        codes_with_logits = [(token_text, token_id, float(logits[token_id]))
+                             for token_text, token_id in self.partial_bracket_codes]
+        logits[:] = -torch.inf
+        for token_text, token_id, token_logit in codes_with_logits:
+            if set(token_text) == {"]"} and bracket_diff - len(token_text) >= 0:
+                logits[token_id] = token_logit
         return logits
 
 class ForceFinishConstraint(Constraint):

@@ -74,8 +74,8 @@ class ForceEndConstraint(Constraint):
         self.partial_bracket_codes = partial_bracket_codes
         
     def check(self, context):
-        return context.op_amount == context.max_op_bracket and \
-            context.end_amount != context.max_op_bracket and \
+        return context.check_open() and \
+            not context.check_end() and \
             context.generated_text[-1] == "]"
         # Generate some last "]"
 
@@ -96,7 +96,7 @@ class ForceFinishConstraint(Constraint):
         self.eos_id = eos_id
     
     def check(self, context):
-        return context.op_amount == context.max_op_bracket and context.end_amount == context.max_op_bracket # Finish generating
+        return context.check_open() and context.check_end() # Finish generating
     
     def __call__(self, logits, context):
         logits[:self.eos_id] = float('-inf')
@@ -135,7 +135,7 @@ class RestrictBalanceBracketConstraint(Constraint):
         bracket_diff = context.op_amount - context.end_amount
         for token_text, token_id in self.partial_bracket_codes:
           new_bracket_diff = bracket_diff + token_text.count("[") - token_text.count("]")
-          full_open = context.op_amount == context.max_op_bracket
+          full_open = context.check_open()
           # full_open - сгенерированы все возможные открытые скобки
           # new_bracket_diff может быть отрицательной, для "]]]]"
           if (not full_open and new_bracket_diff < 1) or \
@@ -152,7 +152,7 @@ class RestrictOpenConstraint(Constraint):
         self.partial_bracket_codes = partial_bracket_codes
         
     def check(self, context):
-        return context.op_amount == context.max_op_bracket and context.end_amount != context.max_op_bracket
+        return context.check_open() and not context.check_end()
     
     def __call__(self, logits, context):
         print("Restriction for [")
@@ -212,6 +212,12 @@ class GenerationContext:
         print(f"op_amount: {self.op_amount}, end_amount: {self.end_amount}")
         self.max_op_bracket = max_op_bracket
 
+    def check_open(self):
+        return self.op_amount == self.max_op_bracket
+    
+    def check_end(self):
+        return self.end_amount == self.max_op_bracket
+
 class BracketLogitsProcessor:
     def __init__(self, tokenizer, eos_id, optional_constraints):
         self.max_op_bracket = None
@@ -231,7 +237,7 @@ class BracketLogitsProcessor:
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
 
-    def set_max_op_bracket(self, max_op_bracket): # TODO: в контекст, т.к. используется в ForceClosingConstraint, а его нельзя создавать до set_max_op_bracket
+    def set_max_op_bracket(self, max_op_bracket): 
         self.max_op_bracket = max_op_bracket * 2
 
     def set_tokenizer(self, tokenizer):
@@ -242,6 +248,9 @@ class BracketLogitsProcessor:
 
         generated_text = self.tokenizer.decode(token_ids)
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket)
+        # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
+        # а его нельзя создавать до set_max_op_bracket
+
         
         logits = logits.clone()
         if self.force_first_constraints.check(context):

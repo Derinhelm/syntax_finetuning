@@ -47,14 +47,13 @@ class ForceFirstTokenConstraint(Constraint):
         return logits
         
 class ForceRootPrefixConstraint(Constraint):
-     def __init__(self, first_root, tokenizer):
-         self.first_root = first_root
-         print(f"first_root: {self.first_root}")
+     def __init__(self, applying_first_root, tokenizer):
+         self.applying_first_root = applying_first_root
          self.root_prefix = "[root["
          self.tokenizer = tokenizer
 
      def check(self, context):
-         return self.first_root and len(context.generated_text) <= 6
+         return self.applying_first_root and len(context.generated_text) <= 6
          # "[root[" - 6 symbols
          
      def __call__(self, logits, context): # TODO: можно ли убрать context ?
@@ -70,12 +69,15 @@ class ForceRootPrefixConstraint(Constraint):
 class ForceEndConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes):
+    def __init__(self, partial_bracket_codes, applying_max_amount):
         self.partial_bracket_codes = partial_bracket_codes
+        self.applying_max_amount = applying_max_amount
         
     def check(self, context):
-        return context.check_open() and \
-            not context.check_end() and \
+        if not self.applying_max_amount:
+            return False
+        return context.check_all_open() and \
+            not context.check_all_end() and \
             context.generated_text[-1] == "]"
         # Generate some last "]"
 
@@ -92,11 +94,14 @@ class ForceEndConstraint(Constraint):
 
 class ForceFinishConstraint(Constraint):
     """"""
-    def __init__(self, eos_id):
+    def __init__(self, eos_id, applying_max_amount):
         self.eos_id = eos_id
+        self.applying_max_amount = applying_max_amount
     
     def check(self, context):
-        return context.check_open() and context.check_end() # Finish generating
+        if not self.applying_max_amount:
+            return False
+        return context.check_all_open() and context.check_all_end() # Finish generating
     
     def __call__(self, logits, context):
         logits[:self.eos_id] = float('-inf')
@@ -125,8 +130,9 @@ class RestrictBracketAfterOpenConstraint(Constraint):
 class RestrictBalanceBracketConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes):
+    def __init__(self, partial_bracket_codes, applying_max_amount):
         self.partial_bracket_codes = partial_bracket_codes
+        self.applying_max_amount = applying_max_amount
         
     def check(self, context):
         return True
@@ -135,11 +141,11 @@ class RestrictBalanceBracketConstraint(Constraint):
         bracket_diff = context.op_amount - context.end_amount
         for token_text, token_id in self.partial_bracket_codes:
           new_bracket_diff = bracket_diff + token_text.count("[") - token_text.count("]")
-          full_open = context.check_open()
+          full_open = self.applying_max_amount and context.check_all_open()
           # full_open - сгенерированы все возможные открытые скобки
-          # new_bracket_diff может быть отрицательной, для "]]]]"
           if (not full_open and new_bracket_diff < 1) or \
               (full_open and new_bracket_diff < 0):
+              # new_bracket_diff может быть отрицательной, для "]]]]"
               logits[token_id] = float('-inf')
               #print(f"Restriction for {token_text} because of small amount of [")
               
@@ -148,11 +154,14 @@ class RestrictBalanceBracketConstraint(Constraint):
 class RestrictOpenConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes):
+    def __init__(self, partial_bracket_codes, applying_max_amount):
         self.partial_bracket_codes = partial_bracket_codes
+        self.applying_max_amount = applying_max_amount
         
     def check(self, context):
-        return context.check_open() and not context.check_end()
+        if not self.applying_max_amount:
+            return False
+        return context.check_all_open() and not context.check_all_end()
     
     def __call__(self, logits, context):
         print("Restriction for [")
@@ -226,10 +235,10 @@ class GenerationContext:
         print(f"op_amount: {self.op_amount}, end_amount: {self.end_amount}")
         self.max_op_bracket = max_op_bracket
 
-    def check_open(self):
+    def check_all_open(self):
         return self.op_amount == self.max_op_bracket
     
-    def check_end(self):
+    def check_all_end(self):
         return self.end_amount == self.max_op_bracket
 
 class BracketLogitsProcessor:
@@ -239,16 +248,19 @@ class BracketLogitsProcessor:
         vocab = tokenizer.get_vocab()
         partial_bracket_codes = [(k, v) for k, v in vocab.items() if "[" in k or "]" in k]
 
-        first_root = "root" in optional_constraints
+        applying_first_root = "root" in optional_constraints
+        print(f"applying_first_root: {applying_first_root}")
+        applying_max_amount = "max_amount" in optional_constraints
+        print(f"applying_max_amount: {applying_max_amount}")
 
         self.force_first_constraints = ForceFirstTokenConstraint(partial_bracket_codes)
-        self.force_root_constraints = ForceRootPrefixConstraint(first_root, self.tokenizer)
-        self.force_finish_constraints = ForceFinishConstraint(eos_id)
-        self.force_end_constraints = ForceEndConstraint(partial_bracket_codes)
+        self.force_root_constraints = ForceRootPrefixConstraint(applying_first_root, self.tokenizer)
+        self.force_finish_constraints = ForceFinishConstraint(eos_id, applying_max_amount)
+        self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
         
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes)
-        self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes)
+        self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_id)
 

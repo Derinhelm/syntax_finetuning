@@ -12,8 +12,15 @@ models:
     index_finish: 30
 output_dir: /content/pred_results
 logit_parameters:
+    - name: logits_with_root_max_amount
+      optional_constraints:
+        - root
+        - max_amount
     - name: logits_with_root
       optional_constraints:
         - root
+    - name: logits_with_max_amount
+      optional_constraints:
+        - max_amount
     - name: main_logits
     - None

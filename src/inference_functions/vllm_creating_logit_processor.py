@@ -285,7 +285,8 @@ class BracketLogitsProcessor:
                 logits = self.restrict_bracket_after_open_constraints(logits, context)
             if self.restrict_unbalanced_eos_constraints.check(context):
                 logits = self.restrict_unbalanced_eos_constraints(logits, context)
-            logits = self.restrict_balance_constraints(logits, context)
+            if self.restrict_balance_constraints.check(context):
+                logits = self.restrict_balance_constraints(logits, context)
         print()
         return logits
 

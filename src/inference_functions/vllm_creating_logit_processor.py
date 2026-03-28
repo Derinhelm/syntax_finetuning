@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import string
 from typing import List, Tuple
 
+import torch
+
 
 class Constraint(ABC):
     """Базовый класс для всех ограничений"""
@@ -31,14 +33,17 @@ class ForceFirstTokenConstraint(Constraint):
         
     def check(self, context):
     # First subtoken has to be "["
-    # TODO: or startswith "["
         return len(context.token_ids) == 0
     
     def __call__(self, logits, context):
-        print("Restriction for first [")
-        for token_text, token_id in self.partial_bracket_codes:
+        print("Forcing first [")
+        codes_with_logits = [(token_text, token_id, float(logits[token_id]))
+                             for token_text, token_id in self.partial_bracket_codes]
+        logits[:] = -torch.inf
+
+        for token_text, token_id, token_logit in codes_with_logits:
             if token_text[0] == "[":
-                logits[token_id] = float('-inf')
+                logits[token_id] = token_logit
         return logits
         
 class ForceRootPrefixConstraint(Constraint):

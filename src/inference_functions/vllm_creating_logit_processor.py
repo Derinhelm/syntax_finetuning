@@ -26,8 +26,8 @@ class Constraint(ABC):
 class ForceFirstTokenConstraint(Constraint):
     """Первый токен должен быть '['"""
     
-    def __init__(self, op_code):
-        self.op_code = op_code
+    def __init__(self, partial_bracket_codes):
+        self.partial_bracket_codes = partial_bracket_codes
         
     def check(self, context):
     # First subtoken has to be "["
@@ -35,8 +35,10 @@ class ForceFirstTokenConstraint(Constraint):
         return len(context.token_ids) == 0
     
     def __call__(self, logits, context):
-        logits[:self.op_code] = float('-inf')
-        logits[self.op_code + 1:] = float('-inf')
+        print("Restriction for first [")
+        for token_text, token_id in self.partial_bracket_codes:
+            if token_text[0] == "[":
+                logits[token_id] = float('-inf')
         return logits
         
 class ForceRootPrefixConstraint(Constraint):
@@ -205,7 +207,7 @@ class BracketLogitsProcessor:
         vocab = tokenizer.get_vocab()
         partial_bracket_codes = [(k, v) for k, v in vocab.items() if "[" in k or "]" in k]
 
-        self.force_first_constraints = ForceFirstTokenConstraint(op_code)
+        self.force_first_constraints = ForceFirstTokenConstraint(partial_bracket_codes)
         self.force_root_constraints = ForceRootPrefixConstraint(first_root, self.tokenizer)
         self.force_finish_constraints = ForceFinishConstraint(eos_id)
         self.force_end_constraints = ForceEndConstraint(end_code)

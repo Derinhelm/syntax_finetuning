@@ -65,17 +65,21 @@ class ForceRootPrefixConstraint(Constraint):
 class ForceEndConstraint(Constraint):
     """"""
     
-    def __init__(self, end_code): # TODO: Разрешить "]]"
-        self.end_code = end_code
+    def __init__(self, partial_bracket_codes):
+        self.partial_bracket_codes = partial_bracket_codes
         
     def check(self, context):
         return context.op_amount == context.max_op_bracket and context.end_amount != context.max_op_bracket and context.generated_text[-1] == "]"
         # Generate some last "]"
 
     def __call__(self, logits, context):
-        logits[:self.end_code] = float('-inf')
-        logits[self.end_code + 1:] = float('-inf')
-        print("Allowing only ]")
+        bracket_diff = context.op_amount - context.end_amount
+        for token_text, token_id in self.partial_bracket_codes:
+            if set(token_text) != {"["}:
+                logits[token_id] = float('-inf')
+            elif bracket_diff - len(token_text) < 0: # ] больше, чем можно
+                logits[token_id] = float('-inf')
+        print("Allowing only ] and similar")
         return logits
 
 class ForceFinishConstraint(Constraint):
@@ -201,7 +205,7 @@ class GenerationContext:
         self.max_op_bracket = max_op_bracket
 
 class BracketLogitsProcessor:
-    def __init__(self, tokenizer, op_code, end_code, eos_id, first_root=False):
+    def __init__(self, tokenizer, eos_id, first_root=False):
         self.max_op_bracket = None
         self.tokenizer = tokenizer
         vocab = tokenizer.get_vocab()
@@ -210,7 +214,7 @@ class BracketLogitsProcessor:
         self.force_first_constraints = ForceFirstTokenConstraint(partial_bracket_codes)
         self.force_root_constraints = ForceRootPrefixConstraint(first_root, self.tokenizer)
         self.force_finish_constraints = ForceFinishConstraint(eos_id)
-        self.force_end_constraints = ForceEndConstraint(end_code)
+        self.force_end_constraints = ForceEndConstraint(partial_bracket_codes)
         
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes)
@@ -251,19 +255,6 @@ class BracketLogitsProcessor:
 
 
 def create_logit_processor(logit_params, tokenizer):
-    vocab = tokenizer.get_vocab()
-    #print(bracket_tokens)
-
-    op_code = tokenizer.encode("[")
-    assert len(op_code) == 1
-    op_code = op_code[0]
-    end_code = tokenizer.encode("]")
-    assert len(end_code) == 1
-    end_code = end_code[0]
-
     eos_code = 2 # TODO: Сделать константу, используется в других местах
-
-    #print(op_code, end_code, eos_code)
-
-    logit_processor = BracketLogitsProcessor(tokenizer, op_code, end_code, eos_code)
+    logit_processor = BracketLogitsProcessor(tokenizer, eos_code)
     return logit_processor

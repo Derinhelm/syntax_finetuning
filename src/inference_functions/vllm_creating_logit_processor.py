@@ -259,7 +259,7 @@ class BracketLogitsProcessor:
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
         
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
-        self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes)
+        self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_id)

@@ -65,10 +65,12 @@ def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
             if lines:
                 last_ready_index = json.loads(lines[-1])["index"]
                 index_predicate = lambda ind2: ind2 > last_ready_index and index_predicate_param(ind2)
+            print(f"{result_filepath} exists, last_ready_index: {last_ready_index}")
     except FileNotFoundError:
         with open(result_filepath, 'x') as f:
             pass # Creating file, if not exist
         index_predicate = index_predicate_param
+        print(f"Creating {result_filepath}")
     with open(filepath, 'r') as f:
         data = json.load(f)
     res = []

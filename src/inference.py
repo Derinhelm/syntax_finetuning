@@ -89,15 +89,22 @@ def inference_main():
                     args=(exp_groups[i], i, parallel_path, start_time))
                 processes.append(p)
                 p.start()
+                print(f"Process {i}. is_alive: {p.is_alive()}, params: {p.__dict__}")
+                time.sleep(200)
             
             while any(p.is_alive() or p.exitcode != 0 for p in processes):
                 for i, p in enumerate(processes):
                     if not p.is_alive() and p.exitcode != 0:
-                        print(f"Error {i} process: {p.exitcode}")
+                        cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        print(f"{cur_time}. Error {i} process: {p.exitcode}")
                         processes[i] = mp.Process(target=start_parallel_inference_experiment,
                             args=(exp_groups[i], i, parallel_path, start_time))
                         processes[i].start()
-                        print(f"Process {i} is restarted")
+                        cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        print(f"{cur_time}. Process {i} is restarted")
+                        time.sleep(10)
+                        print(f"Process {i}. is_alive: {p.is_alive()}, params: {p.__dict__}")
+
                 time.sleep(30)
 
 if __name__ == "__main__":

@@ -156,6 +156,7 @@ def start_parallel_inference_experiment(exp_list, process_i, parallel_path, star
     memory_limit = 150 * 1024 * 1024 * 1024
     resource.setrlimit(resource.RLIMIT_AS, (memory_limit, memory_limit))
     cpus = set(range(process_i * 16, (process_i + 1) * 16))
+    print(cpus)
     os.sched_setaffinity(0, cpus)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(process_i)
     time.sleep(10)

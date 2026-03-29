@@ -14,9 +14,11 @@ class LLMInferencerVllmPartRegex:
     def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens):
         self.model_library = "vllm_xgrammar"
         assert peft_model_id is None
+        print(f"max_tokens: {max_tokens}")
         self.model = LLM(model=original_model_id, dtype=torch.float16,
             max_model_len=max_tokens, seed=seed,
             tensor_parallel_size=1,
+            gpu_memory_utilization=0.8,
             enable_prefix_caching=True,)
         self.max_tokens = max_tokens
         self.seed = seed

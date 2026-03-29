@@ -168,6 +168,26 @@ def start_parallel_inference_experiment(exp_list, process_i, parallel_path, star
     print(f"  Мягкий лимит: {soft / (1024**3):.2f} GB" if soft != resource.RLIM_INFINITY else "  Мягкий лимит: безлимитно")
     print(f"  Жесткий лимит: {hard / (1024**3):.2f} GB" if hard != resource.RLIM_INFINITY else "  Жесткий лимит: безлимитно")
 
+    import torch
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    print(f"Current device: {torch.cuda.current_device()}")
+    print(f"Device name: {torch.cuda.get_device_name(0)}")
+
+    # Информация о памяти
+    total_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3
+    print(f"Total GPU memory: {total_memory:.2f} GB")
+
+    # Текущее использование
+    allocated = torch.cuda.memory_allocated() / 1024**3
+    reserved = torch.cuda.memory_reserved() / 1024**3
+    print(f"Currently allocated: {allocated:.2f} GB")
+    print(f"Currently reserved: {reserved:.2f} GB")
+    print(f"Free (theoretical): {total_memory - allocated:.2f} GB")
+
+    torch.cuda.synchronize()
+    torch.cuda.empty_cache()
+    import gc
+    gc.collect()
     try:
         for exp in exp_list:
             start_inference_experiment(exp)

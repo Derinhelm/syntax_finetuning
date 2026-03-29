@@ -29,7 +29,8 @@ def creating_model(parameters):
             #torch_dtype=torch.bfloat16,
             torch_dtype=torch.float16,
             trust_remote_code=True,
-            device_map="auto",
+            #device_map="auto",
+            device_map={"": 0}, # TODO
         )
 
     # PREPARE MODEL

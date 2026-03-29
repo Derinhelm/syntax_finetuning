@@ -100,6 +100,10 @@ class ForceFinishConstraint(Constraint):
     
     def check(self, context):
         if not self.applying_max_amount:
+            # Ограничений на количество скобок нет
+            if context.op_amount == context.end_amount:
+            # Сгенерирована законченная скобочная последовательность, дальше нельзя генерировать
+                return True
             return False
         return context.check_all_open() and context.check_all_end() # Finish generating
     
@@ -141,14 +145,18 @@ class RestrictBalanceBracketConstraint(Constraint):
         bracket_diff = context.op_amount - context.end_amount
         for token_text, token_id in self.partial_bracket_codes:
           new_bracket_diff = bracket_diff + token_text.count("[") - token_text.count("]")
-          full_open = self.applying_max_amount and context.check_all_open()
-          # full_open - сгенерированы все возможные открытые скобки
-          if (not full_open and new_bracket_diff < 1) or \
-              (full_open and new_bracket_diff < 0):
-              # new_bracket_diff может быть отрицательной, для "]]]]"
-              logits[token_id] = float('-inf')
-              #print(f"Restriction for {token_text} because of small amount of [")
-              
+          if self.applying_max_amount: # Есть ограничение по количеству открытых скобок
+            if not context.check_all_open(): # И не все [ сгенерированы
+                # То есть нельзя делать diff = 0
+                if new_bracket_diff < 1:
+                    logits[token_id] = float('-inf')
+            else: # Все [ сгенерированы, можно diff = 0
+                if new_bracket_diff < 0:
+                    logits[token_id] = float('-inf')
+          else:
+            # Ограничений по количеству скобок нет, можно уходить в ноль (тогда потом будет force end)
+                if new_bracket_diff < 0:
+                    logits[token_id] = float('-inf')
         return logits
 
 class RestrictOpenConstraint(Constraint):

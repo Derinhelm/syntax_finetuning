@@ -1,6 +1,6 @@
-
 import argparse
 import os
+import traceback
 import yaml
 
 from conllu import parse
@@ -63,10 +63,20 @@ if __name__ == "__main__":
         print(pred_filename)
         try:
             pred_trees = get_pred_trees(pred_filename, format)
+            if len(sentences) != len(pred_trees):
+                print(f"Gold sents: {len(sentences)}, pred sents: {len(pred_trees)}")
+                gold_sent_ids = set(range(len(sentences)))
+                pred_sent_ids = {s['index'] for s in pred_trees}
+                #print(list(gold_sent_ids)[:10])
+                #print(list(pred_sent_ids)[:10])
+                print(f"Extra: {pred_sent_ids - gold_sent_ids}")
+                print(f"Lost: {gold_sent_ids - pred_sent_ids}")
+
             assert len(sentences) == len(pred_trees)
             config_uas[pred_filename], config_las[pred_filename] = [], []
 
             for sent_i, sent_r in enumerate(sentences):
+              try:
                 if isinstance(pred_trees[sent_i]["pred_tree"], list):
                     gold_tree = [{'id': str(t['id']), 'form': t['form'],
                         'parent_id': str(t['head']), 'relation': t['deprel'],
@@ -80,6 +90,8 @@ if __name__ == "__main__":
                     sent_uas, sent_las = None, None
                 config_uas[pred_filename].append(sent_uas)
                 config_las[pred_filename].append(sent_las)
+              except Exception as e:
+                print(sent_i, e)
 
             del pred_trees
             gc.collect()
@@ -87,3 +99,5 @@ if __name__ == "__main__":
             print_mean_metrics(config_uas[pred_filename], config_las[pred_filename])
         except Exception as e:
             print(f"Error: {e}")
+            print(traceback.print_exc())
+

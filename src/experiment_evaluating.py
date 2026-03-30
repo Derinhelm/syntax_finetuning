@@ -69,12 +69,13 @@ if __name__ == "__main__":
                 pred_sent_ids = {s['index'] for s in pred_trees}
                 #print(list(gold_sent_ids)[:10])
                 #print(list(pred_sent_ids)[:10])
-                print(f"Extra: {pred_sent_ids - gold_sent_ids}")
-                print(f"Lost: {gold_sent_ids - pred_sent_ids}")
+                print(f"Extra: {sorted(list(pred_sent_ids - gold_sent_ids))}")
+                print(f"Lost: {sorted(list(gold_sent_ids - pred_sent_ids))}")
 
             assert len(sentences) == len(pred_trees)
             config_uas[pred_filename], config_las[pred_filename] = [], []
-
+            pred_trees_dict = {tree['index']:tree for tree in pred_trees}
+            assert len(pred_trees_dict) == len(pred_trees)
             for sent_i, sent_r in enumerate(sentences):
               try:
                 if isinstance(pred_trees[sent_i]["pred_tree"], list):
@@ -83,7 +84,8 @@ if __name__ == "__main__":
                         'pos': t['upos'], 'feats': t['feats']} for t in sentences[sent_i]]
                     gold_text = sentences[sent_i].metadata['text']
                     gold_tree = preprocess_tree(gold_tree)
-                    pred_tree = preprocess_tree(pred_trees[sent_i]["pred_tree"])
+                    pred_tree = preprocess_tree(pred_trees_dict[sent_i]["pred_tree"])
+                    		#pred_trees[sent_i]["pred_tree"])
                     sent_uas, sent_las = create_statistics(gold_text, gold_tree,
                         pred_tree, metric_type)
                 else: # Предложение с некорректным результатом

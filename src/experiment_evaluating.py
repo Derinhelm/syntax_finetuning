@@ -45,6 +45,7 @@ if __name__ == "__main__":
     
     format = config.get("format", "jsonl")
     metric_type = config.get("metric_type", "difference")
+    result_path = config.get("result_name", "result.json")
 
     pred_filenames = []
     for file_directory in config['pred_directories']:
@@ -59,6 +60,7 @@ if __name__ == "__main__":
     
     
     config_uas, config_las = {}, {}
+    results = {}
     for pred_filename in pred_filenames:
         print(pred_filename)
         try:
@@ -99,7 +101,14 @@ if __name__ == "__main__":
             gc.collect()
 
             print_mean_metrics(config_uas[pred_filename], config_las[pred_filename])
+            short_filename = pred_filename.split("/")[-1].split(".")[0]
+            results[f"{short_filename}_uas"] = config_uas[pred_filename]
+            results[f"{short_filename}_las"] = config_las[pred_filename]
+
         except Exception as e:
             print(f"Error: {e}")
             print(traceback.print_exc())
+
+    with open(result_path, 'w') as f:
+        json.dump(results, f, indent=4) # Using indent for pretty-printing
 

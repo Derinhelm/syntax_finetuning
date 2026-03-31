@@ -13,7 +13,7 @@ def create_edges(tree):
     for t in tree:
         parent_node_form = id_form.get(t["parent_id"], "None")
         node_form = id_form[t["id"]]
-        unlabeled_edges.append((node_form, parent_node_form))
-        labeled_edges.append((node_form, parent_node_form, t['relation']))
+        unlabeled_edges.append((node_form.strip(), parent_node_form.strip()))
+        labeled_edges.append((node_form.strip(), parent_node_form.strip(), t['relation'].strip()))
     assert len(unlabeled_edges) == len(labeled_edges)
     return unlabeled_edges, labeled_edges

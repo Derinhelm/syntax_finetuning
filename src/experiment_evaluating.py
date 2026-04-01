@@ -61,7 +61,7 @@ if __name__ == "__main__":
     
     config_uas, config_las = {}, {}
     results = {}
-    for pred_filename in pred_filenames:
+    for pred_filename in sorted(pred_filenames):
         print(pred_filename)
         try:
             pred_trees = get_pred_trees(pred_filename, format)

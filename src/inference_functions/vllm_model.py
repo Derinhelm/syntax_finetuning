@@ -19,6 +19,7 @@ class VllmModel:
             dtype=torch.float16,
             enable_lora=True,
             skip_tokenizer_init=True,
+            enforce_eager=True, # Для воспроизводимости
         )
         self.seed = seed
         self.max_tokens = max_tokens

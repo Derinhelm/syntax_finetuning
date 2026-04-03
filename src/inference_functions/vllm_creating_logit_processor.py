@@ -230,7 +230,7 @@ class RestrictUnbalancedEOSConstraint(Constraint):
     
     def __call__(self, logits, context):
         print("Restriction for eos (because of unbalancing)")
-        for eos_id in self.eos_id:
+        for eos_id in self.eos_ids:
             logits[eos_id] = -torch.inf
         return logits
 

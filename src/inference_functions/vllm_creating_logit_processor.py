@@ -271,7 +271,7 @@ class BracketLogitsProcessor:
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
-        eos_ids = [eos_id, tokenizers[model_name].eos_token_id]
+        eos_ids = [eos_id, tokenizer[model_name].eos_token_id]
         print(f"eos_ids: {eos_ids}")
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
 

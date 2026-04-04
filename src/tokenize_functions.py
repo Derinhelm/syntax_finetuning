@@ -7,6 +7,7 @@ class BaseTokenizer:
             model_name, trust_remote_code=True)
         self.tokenizer.pad_token_id = 0
         self.tokenizer.bos_token_id = 1
+        self.tokenizer.old_eos_token_id = self.tokenizer.eos_token_id # TODO: Потом убрать?
         self.tokenizer.eos_token_id = 2
         self.tokenizer.padding_side = "left"
         print("padding_side\t" + str(self.tokenizer.padding_side))
@@ -47,6 +48,7 @@ class InstructTokenizer:
             model_name, trust_remote_code=True)
         self.tokenizer.pad_token_id = 0
         self.tokenizer.bos_token_id = 1
+        self.tokenizer.old_eos_token_id = self.tokenizer.eos_token_id # TODO: Потом убрать?
         self.tokenizer.eos_token_id = 2
         self.tokenizer.padding_side = "left"
         print("padding_side\t" + str(self.tokenizer.padding_side))

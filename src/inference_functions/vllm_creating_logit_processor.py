@@ -251,7 +251,7 @@ class GenerationContext:
         return self.end_amount == self.max_op_bracket
 
 class BracketLogitsProcessor:
-    def __init__(self, tokenizer, eos_id, optional_constraints):
+    def __init__(self, tokenizer, optional_constraints):
         self.max_op_bracket = None
         self.tokenizer = tokenizer
         vocab = tokenizer.get_vocab()
@@ -264,14 +264,15 @@ class BracketLogitsProcessor:
 
         self.force_first_constraints = ForceFirstTokenConstraint(partial_bracket_codes)
         self.force_root_constraints = ForceRootPrefixConstraint(applying_first_root, self.tokenizer)
-        self.force_finish_constraints = ForceFinishConstraint(eos_id, applying_max_amount)
+        self.force_finish_constraints = ForceFinishConstraint(tokenizer.eos_token_id,
+            applying_max_amount)
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
         
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
-        eos_ids = [eos_id, tokenizer.eos_token_id]
+        eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         print(f"eos_ids: {eos_ids}")
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
 
@@ -315,7 +316,6 @@ class BracketLogitsProcessor:
 
 
 def create_logit_processor(logit_params, tokenizer):
-    eos_code = 2 # TODO: Сделать константу, используется в других местах
     optional_constraints = logit_params.get("optional_constraints", set())
-    logit_processor = BracketLogitsProcessor(tokenizer, eos_code, optional_constraints)
+    logit_processor = BracketLogitsProcessor(tokenizer, optional_constraints)
     return logit_processor

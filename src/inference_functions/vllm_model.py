@@ -39,6 +39,9 @@ class VllmModel:
             logits_processors = [self.logit_processor] if self.logit_processor is not None else None
         )
         signal.alarm(120)
+        self.llm.llm_engine.scheduler[0].waiting.clear()  # Очистить ожидающие
+        self.llm.llm_engine.scheduler[0].running.clear()  # Очистить выполняющиеся
+        self.llm.llm_engine.scheduler[0].swapped.clear()  # Очистить swap
         outputs = self.llm.generate(
            [tokens_prompt],
            sampling_params=sampling_params,

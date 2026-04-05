@@ -94,13 +94,19 @@ class ForceEndConstraint(Constraint):
 
 class ForceFinishConstraint(Constraint):
     """"""
-    def __init__(self, eos_id, applying_max_amount):
+    def __init__(self, eos_id, applying_max_amount, soft_max_amount):
         self.eos_id = eos_id
         self.applying_max_amount = applying_max_amount
+        self.soft_max_amount = soft_max_amount
     
     def check(self, context):
         if not self.applying_max_amount:
             # Ограничений на количество скобок нет
+            if context.op_amount == context.end_amount:
+            # Сгенерирована законченная скобочная последовательность, дальше нельзя генерировать
+                return True
+            return False
+        if self.soft_max_amount: # TODO: проверить логику
             if context.op_amount == context.end_amount:
             # Сгенерирована законченная скобочная последовательность, дальше нельзя генерировать
                 return True
@@ -134,9 +140,10 @@ class RestrictBracketAfterOpenConstraint(Constraint):
 class RestrictBalanceBracketConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes, applying_max_amount):
+    def __init__(self, partial_bracket_codes, applying_max_amount, soft_max_amount):
         self.partial_bracket_codes = partial_bracket_codes
         self.applying_max_amount = applying_max_amount
+        self.soft_max_amount = soft_max_amount
         
     def check(self, context):
         return True
@@ -153,7 +160,7 @@ class RestrictBalanceBracketConstraint(Constraint):
             if not inf_flag:
                 new_bracket_diff = bracket_diff + \
                     token_text.count("[") - token_text.count("]")
-                if self.applying_max_amount: # Есть ограничение по количеству открытых скобок
+                if self.applying_max_amount and not self.soft_max_amount: # Есть жесткое ограничение по количеству открытых скобок
                     if not context.check_all_open(): # И не все [ сгенерированы
                         # То есть нельзя делать diff = 0
                         if new_bracket_diff < 1:
@@ -270,16 +277,21 @@ class BracketLogitsProcessor:
         applying_first_root = "root" in optional_constraints
         print(f"applying_first_root: {applying_first_root}")
         applying_max_amount = "max_amount" in optional_constraints
-        print(f"applying_max_amount: {applying_max_amount}")
+        print(f"applying_max_amount: {applying_max_amount}") # Ровно заданное количество [
+        soft_max_amount = "soft_max_amount" in optional_constraints
+        print(f"soft_max_amount: {soft_max_amount}") # Не более заданного количества [
+        if soft_max_amount:
+            applying_max_amount = True
 
         self.force_first_constraints = ForceFirstTokenConstraint(partial_bracket_codes)
         self.force_root_constraints = ForceRootPrefixConstraint(applying_first_root, self.tokenizer)
         self.force_finish_constraints = ForceFinishConstraint(tokenizer.eos_token_id,
-            applying_max_amount)
+            applying_max_amount, soft_max_amount)
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
         
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
-        self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes, applying_max_amount)
+        self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes,
+            applying_max_amount, soft_max_amount)
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]

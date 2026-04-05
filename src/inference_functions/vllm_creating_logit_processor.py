@@ -268,7 +268,8 @@ class GenerationContext:
         return self.end_amount == self.max_op_bracket
 
 class BracketLogitsProcessor:
-    def __init__(self, tokenizer, optional_constraints):
+    def __init__(self, tokenizer, logit_params):
+        optional_constraints = logit_params.get("optional_constraints", set())
         self.max_op_bracket = None
         self.tokenizer = tokenizer
         vocab = tokenizer.get_vocab()
@@ -297,9 +298,12 @@ class BracketLogitsProcessor:
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         print(f"eos_ids: {eos_ids}")
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
+        self.mul_coeff = logit_params.get("mul_coeff", 1)
+        self.add_coeff = logit_params.get("add_coeff", 0)
 
     def set_max_op_bracket(self, max_op_bracket): 
-        self.max_op_bracket = max_op_bracket * 2
+        self.max_op_bracket = (self.mul_coeff * max_op_bracket + \
+            self.add_coeff) * 2
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -338,6 +342,5 @@ class BracketLogitsProcessor:
 
 
 def create_logit_processor(logit_params, tokenizer):
-    optional_constraints = logit_params.get("optional_constraints", set())
-    logit_processor = BracketLogitsProcessor(tokenizer, optional_constraints)
+    logit_processor = BracketLogitsProcessor(tokenizer, logit_params)
     return logit_processor

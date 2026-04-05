@@ -144,19 +144,29 @@ class RestrictBalanceBracketConstraint(Constraint):
     def __call__(self, logits, context):
         bracket_diff = context.op_amount - context.end_amount
         for token_text, token_id in self.partial_bracket_codes:
-          new_bracket_diff = bracket_diff + token_text.count("[") - token_text.count("]")
-          if self.applying_max_amount: # Есть ограничение по количеству открытых скобок
-            if not context.check_all_open(): # И не все [ сгенерированы
-                # То есть нельзя делать diff = 0
-                if new_bracket_diff < 1:
-                    logits[token_id] = float('-inf')
-            else: # Все [ сгенерированы, можно diff = 0
-                if new_bracket_diff < 0:
-                    logits[token_id] = float('-inf')
-          else:
-            # Ограничений по количеству скобок нет, можно уходить в ноль (тогда потом будет force end)
-                if new_bracket_diff < 0:
-                    logits[token_id] = float('-inf')
+            inf_flag = False
+            for i in range(1, len(token_text)):
+                token_slice = token_text[:i]
+                if bracket_diff + token_slice.count("[") - token_slice.count("]") < 1:
+                    # Ошибка вида "[Остается][" при добавлении "]["
+                    inf_flag = True
+            if not inf_flag:
+                new_bracket_diff = bracket_diff + \
+                    token_text.count("[") - token_text.count("]")
+                if self.applying_max_amount: # Есть ограничение по количеству открытых скобок
+                    if not context.check_all_open(): # И не все [ сгенерированы
+                        # То есть нельзя делать diff = 0
+                        if new_bracket_diff < 1:
+                            inf_flag = True
+                    else: # Все [ сгенерированы, можно diff = 0
+                        if new_bracket_diff < 0:
+                            inf_flag = True
+                else:
+                # Ограничений по количеству скобок нет, можно уходить в ноль (тогда потом будет force end)
+                    if new_bracket_diff < 0:
+                        inf_flag = True
+            if inf_flag:
+                logits[token_id] = float('-inf')
         return logits
 
 class RestrictOpenConstraint(Constraint):

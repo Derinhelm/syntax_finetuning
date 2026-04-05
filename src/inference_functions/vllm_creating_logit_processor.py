@@ -201,7 +201,8 @@ class RestrictErrorTokenConstraint(Constraint):
     
     def __init__(self, partial_bracket_codes, tokenizer):
         self.error_indexes = []
-        for token_text, token_id in partial_bracket_codes:
+        vocab = tokenizer.get_vocab()
+        for token_text, token_id in vocab.items():
             error_token_flag = False
             decode_token_text = tokenizer.decode([token_id])
             for t_i, t in enumerate(decode_token_text):
@@ -225,6 +226,11 @@ class RestrictErrorTokenConstraint(Constraint):
                 
             if error_token_flag:
                 self.error_indexes.append((decode_token_text, token_id))
+        think_start_id = tokenizer.convert_tokens_to_ids("<think>")
+        think_end_id = tokenizer.convert_tokens_to_ids("</think>")
+        start_id = tokenizer.convert_tokens_to_ids("<|im_start|>")
+
+        self.error_indexes += [think_start_id, think_end_id, start_id]
         print(f"Error subtoken amount: {len(self.error_indexes)}")
         
     def check(self, context):

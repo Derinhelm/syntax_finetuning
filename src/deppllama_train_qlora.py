@@ -183,7 +183,8 @@ def conduct_experiment(parameters):
         res_name = parameters.output_model_dataset_path.split("/")[-1] # TODO
         output_dir = parameters.output_experiment_path
         result_path = f"{output_dir}/pred_{res_name}.jsonl"
-        inference_dataset(parser, dataset_path, result_path, None)
+        index_predicate = lambda ind: True
+        inference_dataset(parser, dataset_path, result_path, index_predicate)
         parser.clear()
         del parser
         for _ in range(3):

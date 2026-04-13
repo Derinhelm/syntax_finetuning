@@ -7,6 +7,9 @@ import resource
 
 from inference_parser import start_inference_experiment
 
+def choose_single_function(): # For the future
+    return start_inference_experiment
+
 
 def start_parallel_inference_experiment(exp_list, process_i, parallel_path, start_time):
     stdout_file = open(f"{parallel_path}/process_{start_time}_{process_i}.out", 'w')
@@ -52,9 +55,11 @@ def start_parallel_inference_experiment(exp_list, process_i, parallel_path, star
     torch.cuda.empty_cache()
     import gc
     gc.collect()
+
+    single_function = choose_single_function()
     try:
         for exp in exp_list:
-            start_inference_experiment(exp)
+            single_function(exp)
     except Exception as e:
         print(traceback.print_exc())
         print(f"Error: {e}")

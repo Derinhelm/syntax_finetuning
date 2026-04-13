@@ -8,7 +8,9 @@ import time
 import yaml
 
 from inference_parser import start_inference_experiment, \
-    start_parallel_inference_experiment, create_adapter_name
+    create_adapter_name
+
+from start_process import start_parallel_inference_experiment
 
 def run_all_experiments(parallel_config, experiments,
         single_func, parallel_func):

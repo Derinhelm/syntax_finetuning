@@ -2,13 +2,14 @@ import argparse
 from collections import OrderedDict
 import copy
 import itertools
-import random
 import os
 import yaml
 
 from config import DatasetConfig, ModelConfig
-from deppllama_train_qlora import conduct_experiment
 from parameters import Parameters
+
+from single_function_executor import FineTuningExecutor
+from start_experiments import run_all_experiments
 
 parser = argparse.ArgumentParser()
 parser.add_argument("config_name", nargs='?', default='/src/src/configs/config.yaml')
@@ -17,6 +18,11 @@ config_name = parser_args.config_name
 
 with open(config_name, 'r') as file:
     configs = yaml.safe_load(file)
+
+
+parallel_config = {}
+if "parallel_config" in configs:
+    parallel_config = configs.pop("parallel_config")
 
 parameters = Parameters(config_name)
 dataset_configs, model_configs = [], []
@@ -74,8 +80,8 @@ for model_i, model_config in enumerate(model_configs):
 
 print(f"Experiment amount: {len(experiments)}")
 
-for exp in experiments:
-    print("-" * 10, cur_parameters.__dict__, sep='\n')
-    conduct_experiment(cur_parameters)
+function_executor = FineTuningExecutor() # TODO: сделать выбор
+run_all_experiments(parallel_config, experiments,
+        function_executor)
 
 print("Finish")

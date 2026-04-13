@@ -45,6 +45,7 @@ s_params = list(itertools.product(*several_parameters.values()))
 if not s_params:
     s_params = [{}]
 
+experiments = []
 for model_i, model_config in enumerate(model_configs):
     for dataset_i, dataset_config in enumerate(dataset_configs):
         parameters.model_config = model_config 
@@ -56,18 +57,25 @@ for model_i, model_config in enumerate(model_configs):
             yaml.dump(configs, file, default_flow_style=False)
 
         for experiment_number, experiment_params in enumerate(s_params):
-            print(f"Model {model_i} from {len(model_configs)}")
-            print(f"Dataset {dataset_i} from {len(dataset_configs)}")
-            print(f"Experiment {experiment_number} from {len(s_params)}")
-            print(experiment_params)
-            print(several_param_names)
+            #print(f"Model {model_i} from {len(model_configs)}")
+            #print(f"Dataset {dataset_i} from {len(dataset_configs)}")
+            #print(f"Experiment {experiment_number} from {len(s_params)}")
+            #print(experiment_params)
+            #print(several_param_names)
             assert len(experiment_params) == len(several_param_names)
             cur_parameters = copy.deepcopy(parameters)
             for param_i, param in enumerate(experiment_params):
                 cur_parameters.__setattr__(several_param_names[param_i], param)
             cur_parameters.experiment_number = experiment_number
-            print("-" * 10, cur_parameters.__dict__, sep='\n')
+            #print("-" * 10, cur_parameters.__dict__, sep='\n')
 
             os.makedirs(cur_parameters.output_experiment_path)
-            conduct_experiment(cur_parameters)
+            experiments.append(cur_parameters)
+
+print(f"Experiment amount: {len(experiments)}")
+
+for exp in experiments:
+    print("-" * 10, cur_parameters.__dict__, sep='\n')
+    conduct_experiment(cur_parameters)
+
 print("Finish")

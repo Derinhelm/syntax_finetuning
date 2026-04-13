@@ -8,7 +8,7 @@ from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
 from tokenize_functions import InstructTokenizer, BaseTokenizer
-from inference import Parser, inference_dataset
+from inference_parser import Parser, inference_dataset
 
 import torch
 

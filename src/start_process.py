@@ -5,13 +5,8 @@ import traceback
 
 import resource
 
-from inference_parser import start_inference_experiment
-
-def choose_single_function(): # For the future
-    return start_inference_experiment
-
-
-def start_parallel_inference_experiment(exp_list, process_i, parallel_path, start_time):
+def start_parallel_experiment(exp_list, process_i,
+        parallel_path, start_time, function_executor):
     stdout_file = open(f"{parallel_path}/process_{start_time}_{process_i}.out", 'w')
     stderr_file = open(f"{parallel_path}/process_{start_time}_{process_i}.err", 'w')
 
@@ -56,10 +51,9 @@ def start_parallel_inference_experiment(exp_list, process_i, parallel_path, star
     import gc
     gc.collect()
 
-    single_function = choose_single_function()
     try:
         for exp in exp_list:
-            single_function(exp)
+            function_executor(exp)
     except Exception as e:
         print(traceback.print_exc())
         print(f"Error: {e}")

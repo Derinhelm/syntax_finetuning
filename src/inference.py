@@ -4,12 +4,10 @@ import argparse
 import os
 import yaml
 
-from inference_parser import start_inference_experiment, \
-    create_adapter_name
+from inference_parser import create_adapter_name
 
+from single_function_executor import InferenceExecutor
 from start_experiments import run_all_experiments
-from start_process import start_parallel_inference_experiment
-
 
 
 def inference_main():
@@ -74,8 +72,9 @@ def inference_main():
             print(experiments[-1])
         print(len(experiments))
 
+    function_executor = InferenceExecutor() # TODO: сделать выбор
     run_all_experiments(parallel_config, experiments,
-        start_inference_experiment, start_parallel_inference_experiment)
+        function_executor)
 
 if __name__ == "__main__":
     inference_main()

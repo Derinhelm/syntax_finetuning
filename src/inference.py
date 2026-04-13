@@ -10,10 +10,11 @@ import yaml
 from inference_parser import start_inference_experiment, \
     start_parallel_inference_experiment, create_adapter_name
 
-def run_all_experiments(parallel_config, experiments):
+def run_all_experiments(parallel_config, experiments,
+        single_func, parallel_func):
     if not parallel_config:
         for exp in experiments:
-            start_inference_experiment(exp)
+            single_func(exp)
     else:
             process_num = 8
             exp_groups = [[] for _ in range(process_num)]
@@ -26,7 +27,7 @@ def run_all_experiments(parallel_config, experiments):
             processes = []
             parallel_path = parallel_config["parallel_path"]
             for i in range(process_num):
-                p = mp.Process(target=start_parallel_inference_experiment,
+                p = mp.Process(target=parallel_func,
                     args=(exp_groups[i], i, parallel_path, start_time))
                 processes.append(p)
                 p.start()
@@ -38,7 +39,7 @@ def run_all_experiments(parallel_config, experiments):
                     if not p.is_alive() and p.exitcode != 0:
                         cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         print(f"{cur_time}. Error {i} process: {p.exitcode}")
-                        processes[i] = mp.Process(target=start_parallel_inference_experiment,
+                        processes[i] = mp.Process(target=parallel_func,
                             args=(exp_groups[i], i, parallel_path, start_time))
                         processes[i].start()
                         cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -111,7 +112,8 @@ def inference_main():
             print(experiments[-1])
         print(len(experiments))
 
-    run_all_experiments(parallel_config, experiments)
+    run_all_experiments(parallel_config, experiments,
+        start_inference_experiment, start_parallel_inference_experiment)
 
 if __name__ == "__main__":
     inference_main()

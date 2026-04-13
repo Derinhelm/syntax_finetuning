@@ -177,7 +177,8 @@ def conduct_experiment(parameters):
         model_library = "transformers" # TODO: ???
         max_tokens = 3000 # TODO
         parser = Parser(original_model_id, peft_model_id, is_instruct,
-                            dataset_repr, seed, model_library, max_tokens)
+                            dataset_repr, seed, model_library, max_tokens,
+                            dataset_repr, None)
         dataset_path = parameters.dataset_config.test_file_path
         res_name = parameters.output_model_dataset_path.split("/")[-1] # TODO
         output_dir = parameters.output_experiment_path

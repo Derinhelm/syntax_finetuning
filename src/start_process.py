@@ -7,8 +7,8 @@ import resource
 
 def start_parallel_experiment(exp_list, process_i,
         parallel_path, start_time, function_executor):
-    stdout_file = open(f"{parallel_path}/process_{start_time}_{process_i}.out", 'w')
-    stderr_file = open(f"{parallel_path}/process_{start_time}_{process_i}.err", 'w')
+    stdout_file = open(f"{parallel_path}/process_{start_time}_{process_i}.out", 'a')
+    stderr_file = open(f"{parallel_path}/process_{start_time}_{process_i}.err", 'a')
 
     # Перенаправляем и stdout, и stderr в файл
     sys.stdout = stdout_file

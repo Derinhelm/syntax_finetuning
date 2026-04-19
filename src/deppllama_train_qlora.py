@@ -9,7 +9,7 @@ from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
 from inference_parser import Parser, inference_dataset
-from metric_functions.evaluate_one import evaluate_one_experiment
+from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mean_metrics
 from tokenize_functions import InstructTokenizer, BaseTokenizer
 
 from conllu import parse
@@ -208,5 +208,6 @@ def conduct_experiment(parameters):
         results = {}
         results[f"{short_filename}_uas"] = expir_res_uas
         results[f"{short_filename}_las"] = expir_res_las
+        results[f"{short_filename}_mean"] = calculate_mean_metrics(expir_res_uas, expir_res_las)
         with open(metric_path, 'w') as f:
             json.dump(results, f, indent=4) # Using indent for pretty-printing

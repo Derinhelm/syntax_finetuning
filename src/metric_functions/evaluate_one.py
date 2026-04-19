@@ -6,6 +6,19 @@ from metric_functions.category_calculating \
 from metric_functions.data_preparing import preprocess_tree
 
 
+def calculate_mean_metrics(uas_metrics, las_metrics):
+    good_uas = [r for r in uas_metrics if r is not None]
+    good_las = [r for r in las_metrics if r is not None]
+    mean_res = {}
+    mean_res["uas_right"] = sum(good_uas) / len(good_uas)
+    mean_res["uas_all"] = sum(good_uas) / len(uas_metrics)
+    mean_res["las_right"] = sum(good_las) / len(good_las)
+    mean_res["las_all"] = sum(good_las) / len(las_metrics)
+    mean_res["wrong_amount"] = len(uas_metrics) - len(good_uas)
+    mean_res["all_amount"] = len(uas_metrics)
+    return mean_res
+
+
 def get_pred_trees(pred_filename, pred_format):
     if pred_format == "jsonl":
         pred_trees = []

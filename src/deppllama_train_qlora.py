@@ -195,8 +195,9 @@ def conduct_experiment(parameters):
         torch.cuda.empty_cache()
 
         metric_path = f"{output_dir}/metrics_{res_name}.jsonl"
+        conll_test_file_path = parameters.dataset_config.conll_test_file_path
 
-        with open(dataset_path, 'r') as file:
+        with open(conll_test_file_path, 'r') as file:
             content = file.read()
         gold_sentences = parse(content)
 

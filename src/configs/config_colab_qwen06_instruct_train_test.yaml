@@ -2,6 +2,8 @@ dataset_config:
   train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_train.json
   dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_dev.json
   test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_test.json
+  conll_test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_conll_test.conllu
+  # conll_test_file_path is used for metric evaluation 
   treebank_repr: grct
 model_config:
   model_name: Qwen/Qwen3-0.6B

@@ -59,7 +59,6 @@ if __name__ == "__main__":
     sentences = parse(content)
     
     
-    config_uas, config_las = {}, {}
     results = {}
     for pred_filename in sorted(pred_filenames):
         print(pred_filename)
@@ -75,7 +74,7 @@ if __name__ == "__main__":
                 print(f"Lost: {sorted(list(gold_sent_ids - pred_sent_ids))}")
 
             assert len(sentences) == len(pred_trees)
-            config_uas[pred_filename], config_las[pred_filename] = [], []
+            expir_res_uas, expir_res_las = [], []
             pred_trees_dict = {tree['index']:tree for tree in pred_trees}
             assert len(pred_trees_dict) == len(pred_trees)
             for sent_i, sent_r in enumerate(sentences):
@@ -92,18 +91,18 @@ if __name__ == "__main__":
                         pred_tree, metric_type)
                 else: # Предложение с некорректным результатом
                     sent_uas, sent_las = None, None
-                config_uas[pred_filename].append(sent_uas)
-                config_las[pred_filename].append(sent_las)
+                expir_res_uas.append(sent_uas)
+                expir_res_las.append(sent_las)
               except Exception as e:
                 print(sent_i, e)
 
             del pred_trees
             gc.collect()
 
-            print_mean_metrics(config_uas[pred_filename], config_las[pred_filename])
+            print_mean_metrics(expir_res_uas, expir_res_las)
             short_filename = pred_filename.split("/")[-1].split(".")[0]
-            results[f"{short_filename}_uas"] = config_uas[pred_filename]
-            results[f"{short_filename}_las"] = config_las[pred_filename]
+            results[f"{short_filename}_uas"] = expir_res_uas
+            results[f"{short_filename}_las"] = expir_res_las
 
         except Exception as e:
             print(f"Error: {e}")

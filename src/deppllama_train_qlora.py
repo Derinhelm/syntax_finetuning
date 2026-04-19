@@ -1,3 +1,4 @@
+import json
 import gc
 import transformers
 from transformers import set_seed
@@ -7,9 +8,11 @@ import yaml
 from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
-from tokenize_functions import InstructTokenizer, BaseTokenizer
 from inference_parser import Parser, inference_dataset
+from metric_functions.evaluate_one import evaluate_one_experiment
+from tokenize_functions import InstructTokenizer, BaseTokenizer
 
+from conllu import parse
 import torch
 
 from transformers import TrainerCallback
@@ -191,3 +194,18 @@ def conduct_experiment(parameters):
             gc.collect() # Сборка мусора для удаления
         torch.cuda.empty_cache()
 
+        metric_path = f"{output_dir}/metrics_{res_name}.jsonl"
+
+        with open(dataset_path, 'r') as file:
+            content = file.read()
+        gold_sentences = parse(content)
+
+        expir_res_uas, expir_res_las = evaluate_one_experiment(
+            gold_sentences, result_path, "jsonl", "difference_easy")
+        
+        short_filename = metric_path.split("/")[-1].split(".")[0]
+        results = {}
+        results[f"{short_filename}_uas"] = expir_res_uas
+        results[f"{short_filename}_las"] = expir_res_las
+        with open(metric_path, 'w') as f:
+            json.dump(results, f, indent=4) # Using indent for pretty-printing

@@ -27,7 +27,7 @@ if __name__ == "__main__":
         print(config)
     gold_path = config["gold_file"]
     
-    format = config.get("format", "jsonl")
+    pred_format = config.get("format", "jsonl")
     metric_type = config.get("metric_type", "difference")
     result_path = config.get("result_name", "result.json")
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         print(pred_filename)
         try:
             expir_res_uas, expir_res_las = evaluate_one_experiment(
-                gold_sentences, pred_filename, metric_type)
+                gold_sentences, pred_filename, pred_format, metric_type)
             print_mean_metrics(expir_res_uas, expir_res_las)
             short_filename = pred_filename.split("/")[-1].split(".")[0]
             results[f"{short_filename}_uas"] = expir_res_uas

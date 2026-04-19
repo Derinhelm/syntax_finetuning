@@ -6,8 +6,8 @@ from metric_functions.category_calculating \
 from metric_functions.data_preparing import preprocess_tree
 
 
-def get_pred_trees(pred_filename, format):
-    if format == "jsonl":
+def get_pred_trees(pred_filename, pred_format):
+    if pred_format == "jsonl":
         pred_trees = []
         with open(pred_filename, 'r', encoding='utf-8') as f:
             for line_num, line in enumerate(f, 1):         
@@ -18,8 +18,9 @@ def get_pred_trees(pred_filename, format):
             pred_trees = json.load(f)
     return pred_trees
 
-def evaluate_one_experiment(gold_sentences, pred_filename, metric_type):
-    pred_trees = get_pred_trees(pred_filename, format)
+def evaluate_one_experiment(gold_sentences, pred_filename,
+        pred_format, metric_type):
+    pred_trees = get_pred_trees(pred_filename, pred_format)
     if len(gold_sentences) != len(pred_trees):
         print(f"Gold sents: {len(gold_sentences)}, pred sents: {len(pred_trees)}")
         gold_sent_ids = set(range(len(gold_sentences)))

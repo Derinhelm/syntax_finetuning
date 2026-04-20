@@ -51,6 +51,16 @@ def start_parallel_experiment(exp_list, process_i,
     import gc
     gc.collect()
 
+    process_id = os.getpid()
+    cache_dir = f"/tmp/torch_cache_process_{process_id}"
+    os.makedirs(cache_dir, exist_ok=True)
+
+    # Разные кэши для разных компонентов:
+    os.environ['TORCH_COMPILE_CACHE'] = cache_dir  # для torch.compile
+    os.environ['TRANSFORMERS_CACHE'] = cache_dir   # для transformers
+    os.environ['TORCH_HOME'] = cache_dir           # для torch
+    os.environ['HF_HOME'] = cache_dir              # для huggingface
+
     try:
         for exp in exp_list:
             function_executor(exp)

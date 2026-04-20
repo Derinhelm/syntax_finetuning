@@ -14,6 +14,7 @@ from tokenize_functions import InstructTokenizer, BaseTokenizer
 
 from conllu import parse
 import torch
+import torch._dynamo
 
 from transformers import TrainerCallback
 
@@ -164,8 +165,11 @@ def conduct_experiment(parameters):
     with open(f"{parameters.output_experiment_path}/config_experiment.yaml", 'w') as file:
         yaml.dump(parameters, file, default_flow_style=False)
 
+    torch.cuda.synchronize()
     del t
     del model
+    if torch.__version__ >= "2":
+        torch._dynamo.reset()
     for _ in range(3):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()

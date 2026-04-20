@@ -21,6 +21,7 @@ def start_parallel_experiment(exp_list, process_i,
     print(cpus)
     os.sched_setaffinity(0, cpus)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(process_i)
+    os.environ["LOCAL_RANK"] = "-1"
     time.sleep(10)
     print(f"CPU affinity процесса {process_i}: {os.sched_getaffinity(0)}")
     for i in range(torch.cuda.device_count()):

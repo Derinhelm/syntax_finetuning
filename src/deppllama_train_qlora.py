@@ -117,6 +117,7 @@ def conduct_experiment(parameters):
         seed=parameters.seed,
         per_device_eval_batch_size=parameters.model_config.per_device_eval_batch_size,
         torch_empty_cache_steps=parameters.model_config.torch_empty_cache_steps,
+        ddp_backend=None,
     )
     print(training_arguments)
 

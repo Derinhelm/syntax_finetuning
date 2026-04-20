@@ -1,5 +1,6 @@
 import json
 import gc
+import os
 import transformers
 from transformers import set_seed
 import time
@@ -184,6 +185,7 @@ def conduct_experiment(parameters):
         seed = parameters.seed
         model_library = "vllm" # TODO: ???
         max_tokens = 3000 # TODO
+        os.environ["VLLM_USE_V1"] = "0"
         parser = Parser(original_model_id, peft_model_id, is_instruct,
                             dataset_repr, seed, model_library, max_tokens,
                             dataset_repr, None)

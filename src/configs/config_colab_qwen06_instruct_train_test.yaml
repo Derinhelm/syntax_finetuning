@@ -10,7 +10,7 @@ model_config:
   is_instruct: True
   torch_empty_cache_steps: 2
   per_device_eval_batch_size: 2
-root_output_dir_path: /content/syntax_finetuning/results
+root_output_dir_path: /content/results
 epochs: 2
 eval_steps: 10
 save_steps: 5

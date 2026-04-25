@@ -20,12 +20,14 @@ import torch._dynamo
 from transformers import TrainerCallback
 
 class LoRACallback(TrainerCallback):
-    def on_save(self, args, state, control, **kwargs):
+    def on_epoch_end(self, args, state, control, **kwargs):
         # Сохраняем только адаптеры
         if state.is_world_process_zero:
             model = kwargs['model']
-            model.save_pretrained(args.output_dir, save_only_model=True)
-
+            epoch_dir = os.path.join(args.output_dir, f"epoch_{int(state.epoch)}")
+            os.makedirs(epoch_dir, exist_ok=True)
+            model.save_pretrained(epoch_dir)
+            print(f"LoRA adapter saved at {epoch_dir}")
 
 class MemoryOptimizedTrainer(transformers.Trainer):
     def __init__(self, *args, **kwargs):
@@ -108,11 +110,13 @@ def conduct_experiment(parameters):
         logging_strategy = "steps",
         logging_steps=1,
         optim="paged_adamw_32bit",
-        eval_strategy= "steps" if parameters.eval_steps is not None else "epoch",
+        eval_strategy = "steps" if parameters.eval_steps is not None else "epoch",
         eval_steps = parameters.eval_steps if parameters.eval_steps is not None else None,
-        save_strategy= "epoch" if parameters.save_epoch_adapters else "no",
+        save_strategy = "steps" if parameters.save_steps is not None else "no",
+        save_steps =  parameters.save_steps if parameters.save_steps is not None else 500, # 500 is default
+        save_total_limit=1 if parameters.save_steps is not None else None,
+        resume_from_checkpoint=True if parameters.save_steps is not None else False,
         output_dir=parameters.output_experiment_path,
-        save_total_limit=parameters.save_total_limit,
         group_by_length=parameters.group_by_length,
         label_names=["labels"],
         seed=parameters.seed,
@@ -159,7 +163,7 @@ def conduct_experiment(parameters):
     print("after compile")
 
     ts = time.time()
-    trainer.train()
+    trainer.train(resume_from_checkpoint=parameters.save_steps is not None)
     print(f"Training time:{time.time() - ts}")
 
     t.tokenizer.save_pretrained(parameters.output_experiment_path)

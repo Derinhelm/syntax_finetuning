@@ -12,8 +12,9 @@ model_config:
   per_device_eval_batch_size: 2
 root_output_dir_path: /content/syntax_finetuning/results
 epochs: 2
-eval_steps: 50
+eval_steps: 25
+save_steps: 20
 init_lora_weights: loftq
 save_epoch_adapters: True
-batch_size: 16
+batch_size: 2 # В пробной обучающей выборке 200 элементов
 

@@ -115,7 +115,6 @@ def conduct_experiment(parameters):
         save_strategy = "steps" if parameters.save_steps is not None else "no",
         save_steps =  parameters.save_steps if parameters.save_steps is not None else 500, # 500 is default
         save_total_limit=1 if parameters.save_steps is not None else None,
-        resume_from_checkpoint=True if parameters.save_steps is not None else False,
         output_dir=parameters.output_experiment_path,
         group_by_length=parameters.group_by_length,
         label_names=["labels"],
@@ -162,8 +161,16 @@ def conduct_experiment(parameters):
         model = torch.compile(model)
     print("after compile")
 
+    checkpoint_exists = False
+    if parameters.save_steps is not None and \
+            os.path.exists(parameters.output_experiment_path):
+        checkpoints = [d for d in os.listdir(parameters.output_experiment_path)
+                    if d.startswith("checkpoint-")]
+        checkpoint_exists = len(checkpoints) > 0
+
+
     ts = time.time()
-    trainer.train(resume_from_checkpoint=parameters.save_steps is not None)
+    trainer.train(resume_from_checkpoint=checkpoint_exists)
     print(f"Training time:{time.time() - ts}")
 
     t.tokenizer.save_pretrained(parameters.output_experiment_path)

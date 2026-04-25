@@ -14,6 +14,9 @@ from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mea
 from tokenize_functions import InstructTokenizer, BaseTokenizer
 
 from conllu import parse
+
+import matplotlib.pyplot as plt
+
 import torch
 import torch._dynamo
 
@@ -76,6 +79,31 @@ def remove_example_by_length(lst, target_length):
 #============================================
 #                   MAIN
 #============================================
+
+def plot_experiment(log_history, output_dir):
+    steps, losses, eval_steps, eval_losses = [], [], [], []
+    infinity = []
+    
+    for e in log_history:
+        if 'loss' in e:
+            steps.append(e['step'])
+            losses.append(e['loss'])
+        if 'eval_loss' in e:
+            eval_steps.append(e['step'])
+            eval_losses.append(e['eval_loss'])
+        
+        if e.get('grad_norm') in (float('inf'), 'Infinity', 'inf'):
+            infinity.append(e)
+    
+    json.dump(infinity, open(f"{output_dir}/infinity_logs.json", 'w'), indent=2)
+    
+    if steps:
+        plt.plot(steps, losses, 'b-', label='train_loss')
+        if eval_steps:
+            plt.plot(eval_steps, eval_losses, 'ro-', label='eval_loss')
+        plt.legend()
+        plt.savefig(f"{output_dir}/loss.jpg", format="jpg")
+        plt.close()
 
 def conduct_experiment(parameters):
     set_seed(parameters.seed)
@@ -183,6 +211,8 @@ def conduct_experiment(parameters):
     model.save_pretrained(parameters.output_experiment_path)
     with open(f"{parameters.output_experiment_path}/config_experiment.yaml", 'w') as file:
         yaml.dump(parameters, file, default_flow_style=False)
+
+    plot_experiment(trainer.state.log_history, parameters.output_experiment_path)
 
     torch.cuda.synchronize()
     del t

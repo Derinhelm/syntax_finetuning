@@ -173,6 +173,9 @@ def conduct_experiment(parameters):
     trainer.train(resume_from_checkpoint=checkpoint_exists)
     print(f"Training time:{time.time() - ts}")
 
+    with open(f"{parameters.output_experiment_path}/full_log_history.json", 'w') as f:
+        json.dump(trainer.state.log_history, f, indent=2)
+
     t.tokenizer.save_pretrained(parameters.output_experiment_path)
     model.save_pretrained(parameters.output_experiment_path)
     with open(f"{parameters.output_experiment_path}/config_experiment.yaml", 'w') as file:

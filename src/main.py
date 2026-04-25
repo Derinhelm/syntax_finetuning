@@ -57,7 +57,7 @@ def finetuning_main():
         for dataset_i, dataset_config in enumerate(dataset_configs):
             parameters.model_config = model_config 
             parameters.dataset_config = dataset_config
-            os.makedirs(parameters.output_model_dataset_path)
+            os.makedirs(parameters.output_model_dataset_path, exist_ok=True)
 
             config_dir_path = parameters.config_dir_path
             with open(config_dir_path, 'w') as file:
@@ -76,7 +76,7 @@ def finetuning_main():
                 cur_parameters.experiment_number = experiment_number
                 #print("-" * 10, cur_parameters.__dict__, sep='\n')
 
-                os.makedirs(cur_parameters.output_experiment_path)
+                os.makedirs(cur_parameters.output_experiment_path, exist_ok=True)
                 experiments.append(cur_parameters)
 
     print(f"Experiment amount: {len(experiments)}")

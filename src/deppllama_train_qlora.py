@@ -24,10 +24,13 @@ class LoRACallback(TrainerCallback):
         # Сохраняем только адаптеры
         if state.is_world_process_zero:
             model = kwargs['model']
-            epoch_dir = os.path.join(args.output_dir, f"epoch_{int(state.epoch)}")
+            epoch_i = int(state.epoch)
+            epoch_dir = os.path.join(args.output_dir, f"epoch_{epoch_i}")
             os.makedirs(epoch_dir, exist_ok=True)
             model.save_pretrained(epoch_dir)
             print(f"LoRA adapter saved at {epoch_dir}")
+            with open(f"{epoch_dir}/log_history_epoch_{epoch_i}.json", 'w') as f:
+                json.dump(state.log_history, f, indent=2)
 
 class MemoryOptimizedTrainer(transformers.Trainer):
     def __init__(self, *args, **kwargs):

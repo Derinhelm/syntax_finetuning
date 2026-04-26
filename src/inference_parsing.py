@@ -41,9 +41,12 @@ def create_inference_experiments(configs):
             cur_parameters.__setattr__(several_param_names[param_i], param)
         cur_parameters.experiment_number = experiment_number
 
-        data_restriction_config = DataRestrictionConfig(model_config)
         model_config = models[cur_parameters.model_name]
-        dataset_config = dataset_configs[cur_parameters.treebank_name]
+        treebank_name = cur_parameters.treebank_parameters.treebank_name
+        dataset_config = dataset_configs[treebank_name]
+        data_restriction_config = DataRestrictionConfig(
+            cur_parameters.treebank_parameters)
+
         experiments.append({"model_config": model_config,
             "data_restriction_config": data_restriction_config,
             "root_output_dir_path": root_output_dir_path,

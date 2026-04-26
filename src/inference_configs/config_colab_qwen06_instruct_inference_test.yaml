@@ -12,7 +12,6 @@ models:
     name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     model_library: vllm
     max_tokens: 5000
-    index_finish: 30
 root_output_dir_path: /content/pred_results
 inference:
     seed:
@@ -23,5 +22,6 @@ inference:
         - name: main_logits
     model_name:
         - RuadaptQwen3_4B_Hybrid_syntagrus_grct
-    treebank_name:
-        - grct_syntagrus
+    treebank_parameters:
+        - treebank_name: grct_syntagrus
+          index_finish: 30

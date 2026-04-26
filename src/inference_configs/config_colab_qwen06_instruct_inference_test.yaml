@@ -21,3 +21,5 @@ inference:
     logit_parameters:
         - {}
         - name: main_logits
+    model_name:
+        - RuadaptQwen3_4B_Hybrid_syntagrus_grct

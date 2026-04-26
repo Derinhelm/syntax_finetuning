@@ -43,3 +43,4 @@ class InferenceParameters:
     def __init__(self):
         self.logit_parameters = {}
         self.seed = 42
+        self.model_name = None

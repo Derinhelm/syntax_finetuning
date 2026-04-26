@@ -105,7 +105,7 @@ def plot_experiment(log_history, output_dir):
         plt.savefig(f"{output_dir}/loss.jpg", format="jpg")
         plt.close()
 
-def conduct_experiment(parameters):
+def conduct_finetuning_experiment(parameters):
     set_seed(parameters.seed)
     json_train, json_dev = creating_data(parameters)
 
@@ -223,6 +223,8 @@ def conduct_experiment(parameters):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
 
+def conduct_experiment(parameters):
+    conduct_finetuning_experiment(parameters)
 
     if parameters.dataset_config.test_file_path is not None:
         original_model_id = parameters.model_config.model_name

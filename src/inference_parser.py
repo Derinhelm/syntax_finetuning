@@ -119,10 +119,8 @@ def start_inference_experiment(exp):
     index_predicate = exp['data_restriction_config'].create_index_predicate()
 
     model_config = exp['model_config']
-    print(f"\npeft_model_id: {model_config['peft_model_id']}\nadapter_name: {model_config['adapter_name']}")
-    is_instruct = model_config['is_instruct']
-    max_tokens = model_config.get('max_tokens', 512)
-    model_library = model_config.get('model_library', 'transformers')
+    print(f"\npeft_model_id: {model_config.peft_model_id}",
+          f"adapter_name: {model_config.adapter_name}", sep="\n")
     logit_params = exp['cur_parameters'].logit_parameters
     logits_name = logit_params['name'] if logit_params != {} else 'logits_None'
     dataset_name = exp['dataset_config'].treebank
@@ -130,12 +128,12 @@ def start_inference_experiment(exp):
     dataset_repr = exp['dataset_config'].treebank_repr
     seed = exp['cur_parameters'].seed
 
-    result_path = f"{exp['root_output_dir_path']}/{model_config['adapter_name']}_{dataset_name}_{seed}_{logits_name}.jsonl"
-    representation_type_result = model_config.get('representation_type_result')
-    parser = Parser(model_config['original_model_id'],
-        model_config['peft_model_id'], is_instruct,
-        dataset_repr, seed, model_library, max_tokens,
-        representation_type_result, logit_parameters=logit_params)
+    result_path = f"{exp['root_output_dir_path']}/{model_config.adapter_name}_{dataset_name}_{seed}_{logits_name}.jsonl"
+    parser = Parser(model_config.original_model_id,
+        model_config.peft_model_id, model_config.is_instruct,
+        dataset_repr, seed, model_config.model_library, model_config.max_tokens,
+        model_config.representation_type_result,
+        logit_parameters=logit_params)
     inference_dataset(parser, dataset_path, result_path, index_predicate)
     parser.clear()
     del parser

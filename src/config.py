@@ -45,3 +45,13 @@ class DataRestrictionConfig:
             if self.index_finish is not None:
                 index_predicate = lambda ind: ind < self.index_finish
         return index_predicate
+
+class InferenceModelConfig:
+    def __init__(self, inf_model_config):
+        self.is_instruct = inf_model_config['is_instruct']
+        self.max_tokens =  inf_model_config.get('max_tokens', 512)
+        self.adapter_name = inf_model_config['adapter_name']
+        self.original_model_id = inf_model_config['original_model_id']
+        self.peft_model_id = inf_model_config['peft_model_id']
+        self.model_library = inf_model_config.get('model_library', 'transformers')
+        self.representation_type_result = inf_model_config.get('representation_type_result')

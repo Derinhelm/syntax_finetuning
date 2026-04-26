@@ -6,10 +6,11 @@ from transformers import set_seed
 import time
 import yaml
 
+from config import InferenceModelConfig
 from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
-from inference_parser import Parser, inference_dataset
+from inference_parser import Parser, inference_dataset, start_inference_experiment
 from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mean_metrics
 from tokenize_functions import InstructTokenizer, BaseTokenizer
 
@@ -223,40 +224,31 @@ def conduct_finetuning_experiment(parameters):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
 
-def conduct_experiment(parameters):
-    conduct_finetuning_experiment(parameters)
+def create_inference_config_by_finetuning(parameters):
+    inf_model_dict = {
+        "original_model_id": parameters.model_config.model_name,
+        "peft_model_id": parameters.output_experiment_path,
+        "is_instruct": parameters.model_config.is_instruct,
+        "seed": parameters.seed,
+        "model_library": "vllm",
+        "max_tokens": 3000, # TODO
+        "representation_type_result": parameters.dataset_config.treebank_repr,
+        "adapter_name": parameters.model_config.model_name,
+    }
+    inference_experiment_i = 0
+    inf_config = InferenceModelConfig(inf_model_dict, inference_experiment_i)
+    return inf_config
 
-    if parameters.dataset_config.test_file_path is not None:
-        original_model_id = parameters.model_config.model_name
-        peft_model_id = parameters.output_experiment_path # TODO
-        is_instruct = parameters.model_config.is_instruct
-        dataset_repr = parameters.dataset_config.treebank_repr
-        seed = parameters.seed
-        model_library = "vllm" # TODO: ???
-        max_tokens = 3000 # TODO
-        os.environ["VLLM_USE_V1"] = "0"
-        parser = Parser(original_model_id, peft_model_id, is_instruct,
-                            dataset_repr, seed, model_library, max_tokens,
-                            dataset_repr, None)
-        dataset_path = parameters.dataset_config.test_file_path
-        res_name = parameters.output_model_dataset_path.split("/")[-1] # TODO
-        output_dir = parameters.output_experiment_path
-        result_path = f"{output_dir}/pred_{res_name}.jsonl"
-        index_predicate = lambda ind: True
-        inference_dataset(parser, dataset_path, result_path, index_predicate)
-        parser.clear()
-        del parser
-        for _ in range(3):
-            gc.collect() # Сборка мусора для удаления
-        torch.cuda.empty_cache()
-
-        metric_path = f"{output_dir}/metrics_{res_name}.jsonl"
+def conduct_evaluation(parameters):
+        res_name = parameters.output_model_dataset_path.split("/")[-1]
+        metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}.jsonl"
         conll_test_file_path = parameters.dataset_config.conll_test_file_path
 
         with open(conll_test_file_path, 'r') as file:
             content = file.read()
         gold_sentences = parse(content)
 
+        result_path = f"{parameters.output_experiment_path}/pred_{res_name}.jsonl"
         expir_res_uas, expir_res_las = evaluate_one_experiment(
             gold_sentences, result_path, "jsonl", "difference_easy")
         
@@ -266,4 +258,14 @@ def conduct_experiment(parameters):
         results[f"{short_filename}_las"] = expir_res_las
         results[f"{short_filename}_mean"] = calculate_mean_metrics(expir_res_uas, expir_res_las)
         with open(metric_path, 'w') as f:
-            json.dump(results, f, indent=4) # Using indent for pretty-printing
+            json.dump(results, f, indent=4)
+
+def conduct_experiment(parameters):
+    conduct_finetuning_experiment(parameters)
+
+    if parameters.dataset_config.test_file_path is not None:
+        os.environ["VLLM_USE_V1"] = "0"
+        inf_experiment = create_inference_config_by_finetuning(parameters)
+        start_inference_experiment(inf_experiment)
+
+        conduct_evaluation(parameters)

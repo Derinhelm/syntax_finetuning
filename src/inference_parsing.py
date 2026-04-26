@@ -1,7 +1,7 @@
 import copy
 
 from config_parsing import parse_field, get_several_config_params
-from config import DatasetConfig, DataRestrictionConfig
+from config import DatasetConfig, DataRestrictionConfig, InferenceModelConfig
 from inference_parser import create_adapter_name
 from parameters import InferenceParameters
 
@@ -41,7 +41,8 @@ def create_inference_experiments(configs):
             cur_parameters.__setattr__(several_param_names[param_i], param)
         cur_parameters.experiment_number = experiment_number
 
-        model_config = models[cur_parameters.model_parameters.model_name]
+        model_config = InferenceModelConfig(
+            models[cur_parameters.model_parameters.model_name], experiment_number)
         treebank_name = cur_parameters.treebank_parameters.treebank_name
         dataset_config = dataset_configs[treebank_name]
         data_restriction_config = DataRestrictionConfig(

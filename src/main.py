@@ -1,15 +1,13 @@
 import argparse
-from collections import OrderedDict
 import copy
-import itertools
 import os
 import yaml
 
-from config import DatasetConfig, ModelConfig
 from parameters import Parameters
 
 from single_function_executor import FineTuningExecutor
 from start_experiments import run_all_experiments
+from config_parsing import parse_datasets, parse_models, get_several_config_params
 
 def finetuning_main():
     parser = argparse.ArgumentParser()
@@ -25,32 +23,12 @@ def finetuning_main():
     if "parallel_config" in configs:
         parallel_config = configs.pop("parallel_config")
 
-    parameters = Parameters(config_name)
-    dataset_configs, model_configs = [], []
-    several_parameters = OrderedDict()
-    for param_name, param_values in configs.items():
-        if param_name == 'dataset_config':
-            if isinstance(configs['dataset_config'], list):
-                dataset_configs = [ DatasetConfig(path_c) for path_c in configs['dataset_config'] ]
-            else:
-                dataset_configs = [ DatasetConfig(configs['dataset_config']) ]
-        elif param_name == 'model_config':
-            if isinstance(configs['model_config'], list):
-                model_configs = [ ModelConfig(path_c) for path_c in configs['model_config'] ]
-            else:
-                model_configs = [ ModelConfig(configs['model_config']) ]
-        else:
-            if isinstance(param_values, list):
-                several_parameters[param_name] = param_values # Several parameters
-            else:
-                parameters.__setattr__(param_name, param_values) # One parameter
+    dataset_configs = parse_datasets(configs)
 
-    print(dataset_configs)
-    print(model_configs)
-    several_param_names = list(several_parameters.keys())
-    s_params = list(itertools.product(*several_parameters.values()))
-    if not s_params:
-        s_params = [{}]
+    model_configs = parse_models(configs)
+
+    parameters = Parameters(config_name)
+    several_param_names, s_params = get_several_config_params(configs, parameters)
 
     experiments = []
     for model_i, model_config in enumerate(model_configs):

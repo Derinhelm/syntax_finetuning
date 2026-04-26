@@ -11,11 +11,12 @@ model_config:
   torch_empty_cache_steps: 2
   per_device_eval_batch_size: 2
 root_output_dir_path: /content/results
-epochs: 2
-eval_steps: 10
-save_steps: 5
-init_lora_weights: loftq
-save_epoch_adapters: True
-micro_batch_size: 2
-batch_size: 4 # В пробной обучающей выборке 200 элементов
+finetuning:
+    epochs: 2
+    eval_steps: 10
+    save_steps: 5
+    init_lora_weights: loftq
+    save_epoch_adapters: True
+    micro_batch_size: 2
+    batch_size: 4 # В пробной обучающей выборке 200 элементов
 

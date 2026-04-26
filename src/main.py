@@ -28,7 +28,7 @@ def finetuning_main():
     model_configs = parse_field(configs, "model_config", ModelConfig)
 
     parameters = Parameters(config_name)
-    several_param_names, s_params = get_several_config_params(configs, parameters)
+    several_param_names, s_params = get_several_config_params(configs["finetuning"], parameters)
 
     experiments = []
     for model_i, model_config in enumerate(model_configs):

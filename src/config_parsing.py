@@ -7,7 +7,6 @@ def parse_field(configs, field_name, field_cls):
             field_configs = [ field_cls(path_c) for path_c in configs[field_name] ]
         else:
             field_configs = [ field_cls(configs[field_name]) ]
-        configs.pop(field_name)
     else:
         field_configs = []
     print(field_configs)

@@ -19,5 +19,5 @@ inference:
         - 1000
         - 2000
     logit_parameters:
-        - None
+        - {}
         - name: main_logits

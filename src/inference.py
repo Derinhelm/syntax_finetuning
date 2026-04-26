@@ -50,7 +50,6 @@ def inference_main():
                     assert not (index_set is not None and index_start is not None) # Не более одного ограничения
                     assert not (index_set is not None and index_finish is not None) # Не более одного ограничения
 
-                    original_model_id = model_config['original_model_id']
                     if "peft_model_id" in model_config:
                         peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
                     else:
@@ -58,11 +57,11 @@ def inference_main():
                         #print(f"config_adapters:{config_adapters}")
                         peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
                     for peft_model_id, adapter_name in peft_adapters:
+                        model_config['peft_model_id'] = peft_model_id
+                        model_config['adapter_name'] = adapter_name
                         experiments.append({"model_config": model_config,
                             "index_set": index_set, "index_start": index_start,
                             "index_finish": index_finish,
-                            "original_model_id": original_model_id,
-                            "peft_model_id": peft_model_id, "adapter_name": adapter_name,
                             "output_dir": output_dir,
                             "seed": seed,
                             "dataset_config": dataset_config,

@@ -1,0 +1,29 @@
+dataset:
+    path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_test.json
+    name: grct_syntagrus
+    representation_type: grct
+models:
+  - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
+    peft_model_id: Derinhelm/RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    is_instruct: True
+    name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    model_library: vllm
+    max_tokens: 5000
+    index_finish: 30
+output_dir: /content/pred_results
+logit_parameters:
+    - name: logits_with_root_max_amount
+      optional_constraints:
+        - root
+        - max_amount
+    - name: logits_with_root
+      optional_constraints:
+        - root
+    - name: logits_with_max_amount
+      optional_constraints:
+        - max_amount
+    - name: logits_with_soft_max_amount
+      optional_constraints:
+        - soft_max_amount
+    - name: main_logits
+    - None

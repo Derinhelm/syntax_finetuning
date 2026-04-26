@@ -4,11 +4,11 @@ import argparse
 import os
 import yaml
 
+from config_parsing import parse_field
 from inference_parser import create_adapter_name
-
 from single_function_executor import InferenceExecutor
 from start_experiments import run_all_experiments
-
+from config import DatasetConfig
 
 def inference_main():
     os.environ["VLLM_ENGINE_ITERATION_TIMEOUT_S"] = "300"
@@ -29,10 +29,7 @@ def inference_main():
     if not isinstance(seeds, list):
         seeds = [seeds]
 
-    dataset_config = configs['dataset']
-    dataset_path = dataset_config['path']
-    dataset_name = dataset_config['name']
-    dataset_repr = dataset_config['representation_type']
+    dataset_configs = parse_field(configs, "dataset", DatasetConfig)
 
     logit_parameters = configs.get("logit_parameters") # TODO: Сделать множественным параметром
     if logit_parameters is None:
@@ -43,34 +40,35 @@ def inference_main():
 
     experiments = []
     for model_config in configs['models']:
-      for cur_logit_parameters in logit_parameters:
-       for seed in seeds:
-        #print(model_config)
-        index_set = model_config.get('index_set', None)
-        index_start = model_config.get('index_start', None)
-        index_finish = model_config.get('index_finish', None)
-        assert not (index_set is not None and index_start is not None) # Не более одного ограничения
-        assert not (index_set is not None and index_finish is not None) # Не более одного ограничения
+        for dataset_i, dataset_config in enumerate(dataset_configs):
+            for cur_logit_parameters in logit_parameters:
+                for seed in seeds:
+                    #print(model_config)
+                    index_set = model_config.get('index_set', None)
+                    index_start = model_config.get('index_start', None)
+                    index_finish = model_config.get('index_finish', None)
+                    assert not (index_set is not None and index_start is not None) # Не более одного ограничения
+                    assert not (index_set is not None and index_finish is not None) # Не более одного ограничения
 
-        original_model_id = model_config['original_model_id']
-        if "peft_model_id" in model_config:
-            peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
-        else:
-            config_adapters = model_config['peft_group']
-            #print(f"config_adapters:{config_adapters}")
-            peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
-        for peft_model_id, adapter_name in peft_adapters:
-            experiments.append({"model_config": model_config,
-                "index_set": index_set, "index_start": index_start,
-                "index_finish": index_finish,
-                "original_model_id": original_model_id,
-                "peft_model_id": peft_model_id, "adapter_name": adapter_name,
-                "output_dir": output_dir, "dataset_name": dataset_name,
-                "dataset_repr": dataset_repr, "seed": seed,
-                "dataset_path": dataset_path,
-                "logit_parameters": cur_logit_parameters})
-            print(experiments[-1])
-        print(len(experiments))
+                    original_model_id = model_config['original_model_id']
+                    if "peft_model_id" in model_config:
+                        peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
+                    else:
+                        config_adapters = model_config['peft_group']
+                        #print(f"config_adapters:{config_adapters}")
+                        peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
+                    for peft_model_id, adapter_name in peft_adapters:
+                        experiments.append({"model_config": model_config,
+                            "index_set": index_set, "index_start": index_start,
+                            "index_finish": index_finish,
+                            "original_model_id": original_model_id,
+                            "peft_model_id": peft_model_id, "adapter_name": adapter_name,
+                            "output_dir": output_dir,
+                            "seed": seed,
+                            "dataset_config": dataset_config,
+                            "logit_parameters": cur_logit_parameters})
+                        print(experiments[-1])
+                    print(len(experiments))
 
     function_executor = InferenceExecutor() # TODO: сделать выбор
     run_all_experiments(parallel_config, experiments,

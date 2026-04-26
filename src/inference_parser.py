@@ -140,3 +140,4 @@ def start_inference_experiment(exp):
     for _ in range(3):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
+    return result_path

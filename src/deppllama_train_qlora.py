@@ -249,8 +249,8 @@ def create_inference_config_by_finetuning(parameters):
             }
     return inf_parameters
 
-def conduct_evaluation(parameters):
-        res_name = parameters.output_model_dataset_path.split("/")[-1]
+def conduct_evaluation(parameters, result_path):
+        res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
         metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}.jsonl"
         conll_test_file_path = parameters.dataset_config.conll_test_file_path
 
@@ -258,7 +258,6 @@ def conduct_evaluation(parameters):
             content = file.read()
         gold_sentences = parse(content)
 
-        result_path = f"{parameters.output_experiment_path}/pred_{res_name}.jsonl"
         expir_res_uas, expir_res_las = evaluate_one_experiment(
             gold_sentences, result_path, "jsonl", "difference_easy")
         
@@ -276,6 +275,6 @@ def conduct_experiment(parameters):
     if parameters.dataset_config.test_file_path is not None:
         os.environ["VLLM_USE_V1"] = "0"
         inf_experiment = create_inference_config_by_finetuning(parameters)
-        start_inference_experiment(inf_experiment)
+        result_path = start_inference_experiment(inf_experiment)
 
-        conduct_evaluation(parameters)
+        conduct_evaluation(parameters, result_path)

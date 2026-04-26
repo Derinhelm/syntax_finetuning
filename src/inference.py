@@ -8,7 +8,7 @@ from config_parsing import parse_field
 from inference_parser import create_adapter_name
 from single_function_executor import InferenceExecutor
 from start_experiments import run_all_experiments
-from config import DatasetConfig
+from config import DatasetConfig, DataRestrictionConfig
 
 def inference_main():
     os.environ["VLLM_ENGINE_ITERATION_TIMEOUT_S"] = "300"
@@ -44,11 +44,7 @@ def inference_main():
             for cur_logit_parameters in logit_parameters:
                 for seed in seeds:
                     #print(model_config)
-                    index_set = model_config.get('index_set', None)
-                    index_start = model_config.get('index_start', None)
-                    index_finish = model_config.get('index_finish', None)
-                    assert not (index_set is not None and index_start is not None) # Не более одного ограничения
-                    assert not (index_set is not None and index_finish is not None) # Не более одного ограничения
+                    data_restriction_config = DataRestrictionConfig(model_config)
 
                     if "peft_model_id" in model_config:
                         peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
@@ -60,8 +56,7 @@ def inference_main():
                         model_config['peft_model_id'] = peft_model_id
                         model_config['adapter_name'] = adapter_name
                         experiments.append({"model_config": model_config,
-                            "index_set": index_set, "index_start": index_start,
-                            "index_finish": index_finish,
+                            "data_restriction_config": data_restriction_config,
                             "output_dir": output_dir,
                             "seed": seed,
                             "dataset_config": dataset_config,

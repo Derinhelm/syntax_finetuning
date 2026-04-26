@@ -19,3 +19,13 @@ class DatasetConfig:
 
     def __repr__(self):
         return f"({self.train_file_path}, {self.dev_file_path}, {self.treebank})"
+
+class DataRestrictionConfig:
+    def __init__(self, restr_config):
+        self.index_set = restr_config.get('index_set', None)
+        self.index_start = restr_config.get('index_start', None)
+        self.index_finish = restr_config.get('index_finish', None)
+        assert not (self.index_set is not None and
+                    self.index_start is not None) # Не более одного ограничения
+        assert not (self.index_set is not None and
+                    self.index_finish is not None) # Не более одного ограничения

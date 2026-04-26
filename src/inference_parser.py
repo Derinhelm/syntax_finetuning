@@ -119,7 +119,7 @@ def start_inference_experiment(exp):
     index_predicate = exp['data_restriction_config'].create_index_predicate()
 
     model_config = exp['model_config']
-    print(f"\npeft_model_id: {exp['peft_model_id']}\nadapter_name: {model_config['adapter_name']}")
+    print(f"\npeft_model_id: {model_config['peft_model_id']}\nadapter_name: {model_config['adapter_name']}")
     is_instruct = model_config['is_instruct']
     max_tokens = model_config.get('max_tokens', 512)
     model_library = model_config.get('model_library', 'transformers')

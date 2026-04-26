@@ -9,6 +9,9 @@ def create_inference_experiments(configs):
     root_output_dir_path = configs['root_output_dir_path']
 
     dataset_configs = parse_field(configs, "dataset", DatasetConfig)
+    assert len(set(dc['treebank'] for dc in dataset_configs)) == len(dataset_configs)
+    # Все treebank различны
+    dataset_configs = {dc['treebank']: dc for dc in dataset_configs}
 
     parameters = InferenceParameters()
     several_param_names, s_params = get_several_config_params(
@@ -22,7 +25,8 @@ def create_inference_experiments(configs):
             models[model_name] = model_config
         else:
             config_adapters = model_config['peft_group']
-            peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
+            peft_adapters = [(a, create_adapter_name(a))
+                             for a in config_adapters]
             for peft_model_id, adapter_name in peft_adapters:
                 adapter_model_dict = copy.deepcopy(model_config)
                 adapter_model_dict['peft_model_id'] = peft_model_id
@@ -30,20 +34,19 @@ def create_inference_experiments(configs):
                 models[model_name] = adapter_model_dict
 
     experiments = []
-    for dataset_i, dataset_config in enumerate(dataset_configs):
-            for experiment_number, experiment_params in enumerate(s_params):
-                assert len(experiment_params) == len(several_param_names)
-                cur_parameters = copy.deepcopy(parameters)
-                for param_i, param in enumerate(experiment_params):
-                    cur_parameters.__setattr__(several_param_names[param_i], param)
-                cur_parameters.experiment_number = experiment_number
+    for experiment_number, experiment_params in enumerate(s_params):
+        assert len(experiment_params) == len(several_param_names)
+        cur_parameters = copy.deepcopy(parameters)
+        for param_i, param in enumerate(experiment_params):
+            cur_parameters.__setattr__(several_param_names[param_i], param)
+        cur_parameters.experiment_number = experiment_number
 
-                data_restriction_config = DataRestrictionConfig(model_config)
-                model_name = cur_parameters.model_name
-                model_config = models[model_name]
-                experiments.append({"model_config": model_config,
-                    "data_restriction_config": data_restriction_config,
-                    "root_output_dir_path": root_output_dir_path,
-                    "dataset_config": dataset_config,
-                    "cur_parameters": cur_parameters})
+        data_restriction_config = DataRestrictionConfig(model_config)
+        model_config = models[cur_parameters.model_name]
+        dataset_config = dataset_configs[cur_parameters.treebank_name]
+        experiments.append({"model_config": model_config,
+            "data_restriction_config": data_restriction_config,
+            "root_output_dir_path": root_output_dir_path,
+            "dataset_config": dataset_config,
+            "cur_parameters": cur_parameters})
     return experiments

@@ -17,7 +17,7 @@ class LLMInferencer:
             self.model = TransformersModel(original_model_id, peft_model_id, seed, max_tokens)
         elif model_library == "vllm":
             from inference_functions.vllm_model import VllmModel
-            if logit_parameters is not None:
+            if logit_parameters != {}:
                assert peft_model_id is not None
                logit_processor = create_logit_processor(logit_parameters, self.tokenizer.tokenizer)
             else:

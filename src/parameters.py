@@ -38,3 +38,8 @@ class Parameters:
     @property 
     def config_dir_path(self):
         return self.root_output_dir_path + "/" + self.config_name.split('/')[-1]
+
+class InferenceParameters:
+    def __init__(self):
+        self.logit_parameters = {}
+        self.seed = 42

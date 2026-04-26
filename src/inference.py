@@ -1,14 +1,16 @@
 import os
 os.environ["VLLM_USE_V1"] = "0"
 import argparse
+import copy
 import os
 import yaml
 
-from config_parsing import parse_field
+from config_parsing import parse_field, get_several_config_params
+from config import DatasetConfig, DataRestrictionConfig
 from inference_parser import create_adapter_name
+from parameters import InferenceParameters
 from single_function_executor import InferenceExecutor
 from start_experiments import run_all_experiments
-from config import DatasetConfig, DataRestrictionConfig
 
 def inference_main():
     os.environ["VLLM_ENGINE_ITERATION_TIMEOUT_S"] = "300"
@@ -25,24 +27,23 @@ def inference_main():
     parallel_config = configs.get("parallel_config", {})
 
     output_dir = configs['output_dir']
-    seeds = configs.get('seed', 42)
-    if not isinstance(seeds, list):
-        seeds = [seeds]
 
     dataset_configs = parse_field(configs, "dataset", DatasetConfig)
 
-    logit_parameters = configs.get("logit_parameters") # TODO: Сделать множественным параметром
-    if logit_parameters is None:
-        logit_parameters = [None]
-    elif not isinstance(logit_parameters, list):
-        logit_parameters = [logit_parameters]
-    logit_parameters = [(lp if lp != 'None' else None) for lp in logit_parameters]
+    parameters = InferenceParameters(config_name)
+    several_param_names, s_params = get_several_config_params(
+        configs["inference"], parameters)
 
     experiments = []
     for model_config in configs['models']:
         for dataset_i, dataset_config in enumerate(dataset_configs):
-            for cur_logit_parameters in logit_parameters:
-                for seed in seeds:
+            for experiment_number, experiment_params in enumerate(s_params):
+                    assert len(experiment_params) == len(several_param_names)
+                    cur_parameters = copy.deepcopy(parameters)
+                    for param_i, param in enumerate(experiment_params):
+                        cur_parameters.__setattr__(several_param_names[param_i], param)
+                    cur_parameters.experiment_number = experiment_number
+
                     #print(model_config)
                     data_restriction_config = DataRestrictionConfig(model_config)
 
@@ -58,9 +59,8 @@ def inference_main():
                         experiments.append({"model_config": model_config,
                             "data_restriction_config": data_restriction_config,
                             "output_dir": output_dir,
-                            "seed": seed,
                             "dataset_config": dataset_config,
-                            "logit_parameters": cur_logit_parameters})
+                            "cur_parameters": cur_parameters})
                         print(experiments[-1])
                     print(len(experiments))
 

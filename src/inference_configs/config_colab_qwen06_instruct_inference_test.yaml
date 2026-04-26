@@ -14,5 +14,10 @@ models:
     max_tokens: 5000
     index_finish: 30
 output_dir: /content/pred_results
-logit_parameters:
-    - None
+inference:
+    seed:
+        - 1000
+        - 2000
+    logit_parameters:
+        - None
+        - name: main_logits

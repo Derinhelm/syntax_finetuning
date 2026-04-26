@@ -33,36 +33,37 @@ def inference_main():
     parameters = InferenceParameters(config_name)
     several_param_names, s_params = get_several_config_params(
         configs["inference"], parameters)
+    
+    models = []
+    for model_config in configs['models']:
+        if "peft_model_id" in model_config:
+            model_config['adapter_name'] = model_config['name']
+            models.append(model_config)
+        else:
+            config_adapters = model_config['peft_group']
+            peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
+            for peft_model_id, adapter_name in peft_adapters:
+                adapter_model_dict = copy.deepcopy(model_config)
+                adapter_model_dict['peft_model_id'] = peft_model_id
+                adapter_model_dict['adapter_name'] = adapter_name
+                models.append(adapter_model_dict)
 
     experiments = []
-    for model_config in configs['models']:
+    for model_config in models:
         for dataset_i, dataset_config in enumerate(dataset_configs):
             for experiment_number, experiment_params in enumerate(s_params):
-                    assert len(experiment_params) == len(several_param_names)
-                    cur_parameters = copy.deepcopy(parameters)
-                    for param_i, param in enumerate(experiment_params):
-                        cur_parameters.__setattr__(several_param_names[param_i], param)
-                    cur_parameters.experiment_number = experiment_number
+                assert len(experiment_params) == len(several_param_names)
+                cur_parameters = copy.deepcopy(parameters)
+                for param_i, param in enumerate(experiment_params):
+                    cur_parameters.__setattr__(several_param_names[param_i], param)
+                cur_parameters.experiment_number = experiment_number
 
-                    #print(model_config)
-                    data_restriction_config = DataRestrictionConfig(model_config)
-
-                    if "peft_model_id" in model_config:
-                        peft_adapters = [(model_config['peft_model_id'], model_config['name'])]
-                    else:
-                        config_adapters = model_config['peft_group']
-                        #print(f"config_adapters:{config_adapters}")
-                        peft_adapters = [(a, create_adapter_name(a)) for a in config_adapters]
-                    for peft_model_id, adapter_name in peft_adapters:
-                        model_config['peft_model_id'] = peft_model_id
-                        model_config['adapter_name'] = adapter_name
-                        experiments.append({"model_config": model_config,
-                            "data_restriction_config": data_restriction_config,
-                            "output_dir": output_dir,
-                            "dataset_config": dataset_config,
-                            "cur_parameters": cur_parameters})
-                        print(experiments[-1])
-                    print(len(experiments))
+                data_restriction_config = DataRestrictionConfig(model_config)
+                experiments.append({"model_config": model_config,
+                    "data_restriction_config": data_restriction_config,
+                    "output_dir": output_dir,
+                    "dataset_config": dataset_config,
+                    "cur_parameters": cur_parameters})
 
     function_executor = InferenceExecutor() # TODO: сделать выбор
     run_all_experiments(parallel_config, experiments,

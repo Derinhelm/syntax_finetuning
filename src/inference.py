@@ -30,7 +30,7 @@ def inference_main():
 
     dataset_configs = parse_field(configs, "dataset", DatasetConfig)
 
-    parameters = InferenceParameters(config_name)
+    parameters = InferenceParameters()
     several_param_names, s_params = get_several_config_params(
         configs["inference"], parameters)
     

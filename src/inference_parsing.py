@@ -21,7 +21,7 @@ def create_inference_experiments(configs):
     for model_config in configs['models']:
         model_name = model_config['name']
         if "peft_model_id" in model_config:
-            model_config['adapter_name'] = model_name
+            model_config['adapter_name'] = create_adapter_name(model_name)
             models[model_name] = model_config
         else:
             config_adapters = model_config['peft_group']

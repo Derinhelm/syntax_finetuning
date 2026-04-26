@@ -10,7 +10,7 @@ from config import InferenceModelConfig, DataRestrictionConfig
 from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
-from inference_parser import start_inference_experiment
+from inference_parser import start_inference_experiment, create_adapter_name
 from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mean_metrics
 from parameters import InferenceParameters
 from tokenize_functions import InstructTokenizer, BaseTokenizer
@@ -233,7 +233,7 @@ def create_inference_config_by_finetuning(parameters):
         "model_library": "vllm",
         "max_tokens": 3000, # TODO
         "representation_type_result": parameters.dataset_config.treebank_repr,
-        "adapter_name": parameters.model_config.model_name,
+        "adapter_name": create_adapter_name(parameters.model_config.model_name),
     }
     inference_experiment_i = 0
     model_config = InferenceModelConfig(inf_model_dict, inference_experiment_i)

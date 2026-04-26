@@ -13,7 +13,7 @@ models:
     model_library: vllm
     max_tokens: 5000
     index_finish: 30
-output_dir: /content/pred_results
+root_output_dir_path: /content/pred_results
 inference:
     seed:
         - 1000

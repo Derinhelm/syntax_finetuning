@@ -26,7 +26,7 @@ def inference_main():
 
     parallel_config = configs.get("parallel_config", {})
 
-    output_dir = configs['output_dir']
+    root_output_dir_path = configs['root_output_dir_path']
 
     dataset_configs = parse_field(configs, "dataset", DatasetConfig)
 
@@ -61,7 +61,7 @@ def inference_main():
                 data_restriction_config = DataRestrictionConfig(model_config)
                 experiments.append({"model_config": model_config,
                     "data_restriction_config": data_restriction_config,
-                    "output_dir": output_dir,
+                    "root_output_dir_path": root_output_dir_path,
                     "dataset_config": dataset_config,
                     "cur_parameters": cur_parameters})
 

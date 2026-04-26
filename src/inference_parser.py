@@ -130,7 +130,7 @@ def start_inference_experiment(exp):
     dataset_repr = exp['dataset_config'].treebank_repr
     seed = exp['cur_parameters'].seed
 
-    result_path = f"{exp['output_dir']}/{model_config['adapter_name']}_{dataset_name}_{seed}_{logits_name}.jsonl"
+    result_path = f"{exp['root_output_dir_path']}/{model_config['adapter_name']}_{dataset_name}_{seed}_{logits_name}.jsonl"
     representation_type_result = model_config.get('representation_type_result')
     parser = Parser(model_config['original_model_id'],
         model_config['peft_model_id'], is_instruct,

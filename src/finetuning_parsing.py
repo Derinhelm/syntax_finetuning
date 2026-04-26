@@ -15,6 +15,7 @@ def create_finetuning_experiments(configs, config_name):
     parameters = Parameters(config_name)
     several_param_names, s_params = get_several_config_params(
         configs["finetuning"], parameters)
+    parameters.root_output_dir_path = configs['root_output_dir_path']
 
     experiments = []
     for model_i, model_config in enumerate(model_configs):

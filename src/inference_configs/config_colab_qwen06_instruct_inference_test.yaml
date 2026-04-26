@@ -20,8 +20,8 @@ inference:
     logit_parameters:
         - {}
         - name: main_logits
-    model_name:
-        - RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    model_parameters:
+        - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     treebank_parameters:
         - treebank_name: grct_syntagrus
           index_finish: 30

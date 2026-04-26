@@ -6,12 +6,13 @@ from transformers import set_seed
 import time
 import yaml
 
-from config import InferenceModelConfig
+from config import InferenceModelConfig, DataRestrictionConfig
 from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
-from inference_parser import Parser, inference_dataset, start_inference_experiment
+from inference_parser import start_inference_experiment
 from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mean_metrics
+from parameters import InferenceParameters
 from tokenize_functions import InstructTokenizer, BaseTokenizer
 
 from conllu import parse
@@ -229,15 +230,24 @@ def create_inference_config_by_finetuning(parameters):
         "original_model_id": parameters.model_config.model_name,
         "peft_model_id": parameters.output_experiment_path,
         "is_instruct": parameters.model_config.is_instruct,
-        "seed": parameters.seed,
         "model_library": "vllm",
         "max_tokens": 3000, # TODO
         "representation_type_result": parameters.dataset_config.treebank_repr,
         "adapter_name": parameters.model_config.model_name,
     }
     inference_experiment_i = 0
-    inf_config = InferenceModelConfig(inf_model_dict, inference_experiment_i)
-    return inf_config
+    model_config = InferenceModelConfig(inf_model_dict, inference_experiment_i)
+    inference_parameters = InferenceParameters()
+    inference_parameters.seed = parameters.seed
+    inference_parameters.logit_parameters = {}
+    inference_parameters.model_name = parameters.model_config.model_name
+    inf_parameters = {"model_config": model_config,
+            "data_restriction_config": DataRestrictionConfig({}),
+            "root_output_dir_path": parameters.output_experiment_path,
+            "dataset_config": parameters.dataset_config,
+            "cur_parameters": inference_parameters
+            }
+    return inf_parameters
 
 def conduct_evaluation(parameters):
         res_name = parameters.output_model_dataset_path.split("/")[-1]

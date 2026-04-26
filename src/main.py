@@ -7,7 +7,8 @@ from parameters import Parameters
 
 from single_function_executor import FineTuningExecutor
 from start_experiments import run_all_experiments
-from config_parsing import parse_datasets, parse_models, get_several_config_params
+from config_parsing import parse_field, get_several_config_params
+from config import DatasetConfig, ModelConfig
 
 def finetuning_main():
     parser = argparse.ArgumentParser()
@@ -23,9 +24,8 @@ def finetuning_main():
     if "parallel_config" in configs:
         parallel_config = configs.pop("parallel_config")
 
-    dataset_configs = parse_datasets(configs)
-
-    model_configs = parse_models(configs)
+    dataset_configs = parse_field(configs, "dataset_config", DatasetConfig)
+    model_configs = parse_field(configs, "model_config", ModelConfig)
 
     parameters = Parameters(config_name)
     several_param_names, s_params = get_several_config_params(configs, parameters)

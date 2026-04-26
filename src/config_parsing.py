@@ -1,31 +1,17 @@
 from collections import OrderedDict
 import itertools
 
-from config import DatasetConfig, ModelConfig
-
-def parse_datasets(configs):
-    if "dataset_config" in configs:
-        if isinstance(configs['dataset_config'], list):
-            dataset_configs = [ DatasetConfig(path_c) for path_c in configs['dataset_config'] ]
+def parse_field(configs, field_name, field_cls):
+    if field_name in configs:
+        if isinstance(configs[field_name], list):
+            field_configs = [ field_cls(path_c) for path_c in configs[field_name] ]
         else:
-            dataset_configs = [ DatasetConfig(configs['dataset_config']) ]
-        configs.pop("dataset_config")
+            field_configs = [ field_cls(configs[field_name]) ]
+        configs.pop(field_name)
     else:
-        dataset_configs = []
-    print(dataset_configs)
-    return dataset_configs
-
-def parse_models(configs):
-    if "model_config" in configs:
-        if isinstance(configs['model_config'], list):
-            model_configs = [ ModelConfig(path_c) for path_c in configs['model_config'] ]
-        else:
-            model_configs = [ ModelConfig(configs['model_config']) ]
-        configs.pop("model_config")
-    else:
-        model_configs = []
-    print(model_configs)
-    return model_configs
+        field_configs = []
+    print(field_configs)
+    return field_configs
 
 
 def get_several_config_params(configs, parameters):

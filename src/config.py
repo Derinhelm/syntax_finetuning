@@ -29,3 +29,19 @@ class DataRestrictionConfig:
                     self.index_start is not None) # Не более одного ограничения
         assert not (self.index_set is not None and
                     self.index_finish is not None) # Не более одного ограничения
+
+    def create_index_predicate(self):
+        index_predicate = lambda ind: True
+        if self.index_set is not None:
+            index_predicate = lambda ind: ind in set(self.index_set)
+        if self.index_start is not None:
+            print(f"{self.index_start=}")
+            if self.index_finish is not None:
+                index_predicate = lambda ind: (ind >= self.index_start) \
+                    and (ind < self.index_finish)
+            else:
+                index_predicate = lambda ind: ind >= self.index_start
+        else:
+            if self.index_finish is not None:
+                index_predicate = lambda ind: ind < self.index_finish
+        return index_predicate

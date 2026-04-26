@@ -116,20 +116,7 @@ def create_adapter_name(adapter_path):
     return fragments[-1]
 
 def start_inference_experiment(exp):
-    restr_config = exp['data_restriction_config']
-    index_predicate = lambda ind: True
-    if restr_config.index_set is not None:
-        index_predicate = lambda ind: ind in set(restr_config.index_set)
-    if restr_config.index_start is not None:
-        print(f"{restr_config.index_start=}")
-        if restr_config.index_finish is not None:
-            index_predicate = lambda ind: (ind >= restr_config.index_start) \
-                and (ind < restr_config.index_finish)
-        else:
-            index_predicate = lambda ind: ind >= restr_config.index_start
-    else:
-        if restr_config.index_finish is not None:
-            index_predicate = lambda ind: ind < restr_config.index_finish
+    index_predicate = exp['data_restriction_config'].create_index_predicate()
 
     model_config = exp['model_config']
     print(f"\npeft_model_id: {exp['peft_model_id']}\nadapter_name: {model_config['adapter_name']}")

@@ -4,15 +4,15 @@ import time
 
 from start_process import start_parallel_experiment
 
-def run_all_experiments(parallel_config, experiments,
+def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
         function_executor):
     if not parallel_config:
-        for exp in experiments:
-            function_executor(exp)
+        for exp in ft_experiments:
+            function_executor(exp, inf_experiments)
     else:
             process_num = 8
             exp_groups = [[] for _ in range(process_num)]
-            for i, item in enumerate(experiments):
+            for i, item in enumerate(ft_experiments):
                 exp_groups[i % process_num].append(item)
 
             mp.set_start_method('spawn', force=True)
@@ -22,7 +22,7 @@ def run_all_experiments(parallel_config, experiments,
             parallel_path = parallel_config["parallel_path"]
             for i in range(process_num):
                 p = mp.Process(target=start_parallel_experiment,
-                    args=(exp_groups[i], i,
+                    args=(inf_experiments, exp_groups[i], i,
                     parallel_path, start_time, function_executor))
                 processes.append(p)
                 p.start()
@@ -35,7 +35,7 @@ def run_all_experiments(parallel_config, experiments,
                         cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         print(f"{cur_time}. Error {i} process: {p.exitcode}")
                         processes[i] = mp.Process(target=start_parallel_experiment,
-                            args=(exp_groups[i], i,
+                            args=(inf_experiments, exp_groups[i], i,
                             parallel_path, start_time, function_executor))
                         processes[i].start()
                         cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

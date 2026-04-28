@@ -5,11 +5,19 @@ dataset_config:
   conll_test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_conll_test.conllu
   # conll_test_file_path is used for metric evaluation 
   treebank_repr: grct
-model_config:
+  treebank: grct_syntagrus
+model_config: # TODO: rename
   model_name: Qwen/Qwen3-0.6B
   is_instruct: True
   torch_empty_cache_steps: 2
   per_device_eval_batch_size: 2
+inference_models:
+  - original_model_id: Previous # TODO: заменить Previous и True по умолчанию
+    peft_model_id: Previous
+    is_instruct: True
+    name: Previous
+    model_library: vllm
+    max_tokens: 5000
 root_output_dir_path: /content/results
 finetuning:
     epochs: 2
@@ -19,4 +27,15 @@ finetuning:
     save_epoch_adapters: True
     micro_batch_size: 2
     batch_size: 4 # В пробной обучающей выборке 200 элементов
-
+inference:
+    seed:
+        - 1000
+        - 2000
+    logit_parameters:
+        - {}
+        - name: main_logits
+    model_parameters:
+        - model_name: Previous
+    treebank_parameters:
+        - treebank_name: grct_syntagrus
+          index_finish: 30

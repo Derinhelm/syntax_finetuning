@@ -1,11 +1,11 @@
 from deppllama_train_qlora import conduct_experiment
 from inference_parser import start_inference_experiment
 
-class InferenceExecutor:
+class InferenceExecutor: # TODO: Убрать
     def __call__(self, params):
         return start_inference_experiment(params)
 
 class FineTuningExecutor:
-    def __call__(self, params):
+    def __call__(self, params, inf_experiments):
         print("-" * 10, params.__dict__, sep='\n')
-        return conduct_experiment(params)
+        return conduct_experiment(params, inf_experiments)

@@ -8,19 +8,19 @@ from parameters import InferenceParameters
 def create_inference_experiments(configs):
     root_output_dir_path = configs['root_output_dir_path']
 
-    dataset_configs = parse_field(configs, "dataset", DatasetConfig)
-    assert len(set(dc['treebank'] for dc in dataset_configs)) == len(dataset_configs)
+    dataset_configs = parse_field(configs, "dataset_config", DatasetConfig)
+    assert len(set(dc.treebank for dc in dataset_configs)) == len(dataset_configs)
     # Все treebank различны
-    dataset_configs = {dc['treebank']: dc for dc in dataset_configs}
+    dataset_configs = {dc.treebank: dc for dc in dataset_configs}
 
     parameters = InferenceParameters()
     several_param_names, s_params = get_several_config_params(
         configs["inference"], parameters)
 
     models = {}
-    for model_config in configs['models']:
+    for model_config in configs['inference_models']:
         model_name = model_config['name']
-        if "peft_model_id" in model_config:
+        if "peft_model_id" in model_config: # TODO: может не быть для слитного ft + inf
             model_config['adapter_name'] = create_adapter_name(model_name)
             models[model_name] = model_config
         else:
@@ -42,8 +42,8 @@ def create_inference_experiments(configs):
         cur_parameters.experiment_number = experiment_number
 
         model_config = InferenceModelConfig(
-            models[cur_parameters.model_parameters.model_name], experiment_number)
-        treebank_name = cur_parameters.treebank_parameters.treebank_name
+            models[cur_parameters.model_parameters['model_name']], experiment_number)
+        treebank_name = cur_parameters.treebank_parameters['treebank_name']
         dataset_config = dataset_configs[treebank_name]
         data_restriction_config = DataRestrictionConfig(
             cur_parameters.treebank_parameters)

@@ -1,3 +1,4 @@
+import copy
 import json
 import gc
 import os
@@ -225,29 +226,19 @@ def conduct_finetuning_experiment(parameters):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
 
-def create_inference_config_by_finetuning(parameters):
-    inf_model_dict = {
-        "original_model_id": parameters.model_config.model_name,
-        "peft_model_id": parameters.output_experiment_path,
-        "is_instruct": parameters.model_config.is_instruct,
-        "model_library": "vllm",
-        "max_tokens": 3000, # TODO
-        "representation_type_result": parameters.dataset_config.treebank_repr,
-        "adapter_name": create_adapter_name(parameters.model_config.model_name),
-    }
-    inference_experiment_i = 0
-    model_config = InferenceModelConfig(inf_model_dict, inference_experiment_i)
-    inference_parameters = InferenceParameters()
-    inference_parameters.seed = parameters.seed
-    inference_parameters.logit_parameters = {}
-    inference_parameters.model_name = parameters.model_config.model_name
-    inf_parameters = {"model_config": model_config,
-            "data_restriction_config": DataRestrictionConfig({}),
-            "root_output_dir_path": parameters.output_experiment_path,
-            "dataset_config": parameters.dataset_config,
-            "cur_parameters": inference_parameters
-            }
-    return inf_parameters
+def create_inference_config_by_finetuning(parameters, inf_exp_param):
+    inf_exp = copy.deepcopy(inf_exp_param)
+    # TODO: assert, если поля не пустые
+    inf_exp["model_config"].original_model_id = parameters.model_config.model_name
+    inf_exp["model_config"].peft_model_id = parameters.output_experiment_path
+    inf_exp["model_config"].is_instruct = parameters.model_config.is_instruct
+    inf_exp["model_config"].representation_type_result = \
+        parameters.dataset_config.treebank_repr
+    inf_exp["model_config"].adapter_name = \
+        create_adapter_name(inf_exp["model_config"].original_model_id)
+
+    inf_exp["cur_parameters"].model_name = parameters.model_config.model_name
+    return inf_exp
 
 def conduct_evaluation(output_experiment_path, dataset_config, result_path):
         res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
@@ -269,13 +260,15 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path):
         with open(metric_path, 'w') as f:
             json.dump(results, f, indent=4)
 
-def conduct_experiment(parameters):
-    conduct_finetuning_experiment(parameters)
+def conduct_experiment(parameters, inf_experiments):
+    conduct_finetuning_experiment(parameters) # Нужен "Пустой случай"
 
-    if parameters.dataset_config.test_file_path is not None:
+    if inf_experiments != []:
         os.environ["VLLM_USE_V1"] = "0"
-        inf_experiment = create_inference_config_by_finetuning(parameters)
-        result_path = start_inference_experiment(inf_experiment)
+        for inf_exp in inf_experiments:
+            inf_experiment = create_inference_config_by_finetuning(
+                parameters, inf_exp)
+            result_path = start_inference_experiment(inf_experiment)
 
-        conduct_evaluation(parameters.output_experiment_path,
-            parameters.dataset_config, result_path)
+            conduct_evaluation(parameters.output_experiment_path,
+                parameters.dataset_config, result_path)

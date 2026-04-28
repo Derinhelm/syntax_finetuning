@@ -1,11 +1,11 @@
 import argparse
 import yaml
 
-
+from inference_parsing import create_inference_experiments
+from finetuning_parsing import create_finetuning_experiments
 from single_function_executor import FineTuningExecutor
 from start_experiments import run_all_experiments
 
-from finetuning_parsing import create_finetuning_experiments
 
 def finetuning_main():
     parser = argparse.ArgumentParser()
@@ -20,12 +20,13 @@ def finetuning_main():
     if "parallel_config" in configs:
         parallel_config = configs.pop("parallel_config")
 
-    experiments = create_finetuning_experiments(configs, config_name)
+    ft_experiments = create_finetuning_experiments(configs, config_name)
+    print(f"FT experiment amount: {len(ft_experiments)}")
 
-    print(f"Experiment amount: {len(experiments)}")
+    inf_experiments = create_inference_experiments(configs)
 
     function_executor = FineTuningExecutor() # TODO: сделать выбор
-    run_all_experiments(parallel_config, experiments,
+    run_all_experiments(parallel_config, ft_experiments, inf_experiments,
             function_executor)
 
     print("Finish")

@@ -110,6 +110,8 @@ def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
     print(time.time() - ts)
 
 def create_adapter_name(adapter_path):
+    if adapter_path is None:
+        return None
     fragments = adapter_path.split("/")
     fragments = [fr for fr in fragments
                  if not fr.isdigit() and "checkpoint" not in fr]

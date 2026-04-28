@@ -5,7 +5,7 @@ import traceback
 
 import resource
 
-def start_parallel_experiment(exp_list, process_i,
+def start_parallel_experiment(inf_experiments, exp_list, process_i,
         parallel_path, start_time, function_executor):
     stdout_file = open(f"{parallel_path}/process_{start_time}_{process_i}.out", 'a')
     stderr_file = open(f"{parallel_path}/process_{start_time}_{process_i}.err", 'a')
@@ -64,7 +64,7 @@ def start_parallel_experiment(exp_list, process_i,
 
     try:
         for exp in exp_list:
-            function_executor(exp)
+            function_executor(exp, inf_experiments)
     except Exception as e:
         print(traceback.print_exc())
         print(f"Error: {e}")

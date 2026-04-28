@@ -108,6 +108,16 @@ def plot_experiment(log_history, output_dir):
         plt.savefig(f"{output_dir}/loss.jpg", format="jpg")
         plt.close()
 
+def mark_ready(directory):
+    """Помечает директорию как готовую, создавая файл READY"""
+    ready_file = os.path.join(directory, "READY")
+    with open(ready_file, 'w') as f:
+        f.write(f"Completed at {time.ctime()}\n")
+
+def is_ready(directory):
+    """Проверяет, готова ли директория"""
+    return os.path.exists(os.path.join(directory, "READY"))
+
 def conduct_finetuning_experiment(parameters):
     set_seed(parameters.seed)
     json_train, json_dev = creating_data(parameters)
@@ -263,14 +273,16 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path):
             json.dump(results, f, indent=4)
 
 def conduct_experiment(parameters, inf_experiments):
-    conduct_finetuning_experiment(parameters) # Нужен "Пустой случай"
+    if not is_ready(parameters.output_experiment_path):
+        conduct_finetuning_experiment(parameters) # Нужен "Пустой случай"
 
-    if inf_experiments != []:
-        os.environ["VLLM_USE_V1"] = "0"
-        for inf_exp in inf_experiments:
-            inf_experiment = create_inference_config_by_finetuning(
-                parameters, inf_exp)
-            result_path = start_inference_experiment(inf_experiment)
+        if inf_experiments != []:
+            os.environ["VLLM_USE_V1"] = "0"
+            for inf_exp in inf_experiments:
+                inf_experiment = create_inference_config_by_finetuning(
+                    parameters, inf_exp)
+                result_path = start_inference_experiment(inf_experiment)
 
-            conduct_evaluation(parameters.output_experiment_path,
-                parameters.dataset_config, result_path)
+                conduct_evaluation(parameters.output_experiment_path,
+                    parameters.dataset_config, result_path)
+        mark_ready(parameters.output_experiment_path)

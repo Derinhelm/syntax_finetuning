@@ -14,6 +14,8 @@ class Parameters:
         self.treebank_parameters = None
         self.model_config = None
         self.root_output_dir_path = None
+        self.output_model_dataset_path = None
+        self.output_experiment_path = None
         self.experiment_number = None
         self.epochs = 1
         self.group_by_length = False
@@ -33,16 +35,6 @@ class Parameters:
     @property
     def gradient_accumulation_steps(self):
         return self.batch_size // self.micro_batch_size
-
-    @property
-    def output_model_dataset_path(self):
-        return create_output_model_dataset_path(
-            self.model_config, self.dataset_config,
-            self.root_output_dir_path)
-
-    @property
-    def output_experiment_path(self):
-        return f"{self.output_model_dataset_path}/{self.experiment_number}"
 
 
 class InferenceParameters:

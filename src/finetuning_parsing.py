@@ -48,9 +48,15 @@ def create_finetuning_experiments(configs, config_name):
 
         cur_parameters.model_config = \
             models[cur_parameters.model_parameters['model_name']] # TODO: Сделать класс
-
         cur_parameters.dataset_config = \
             datasets[cur_parameters.treebank_parameters['treebank_name']]
+
+        cur_parameters.output_model_dataset_path = create_output_model_dataset_path(
+            cur_parameters.model_config, cur_parameters.dataset_config,
+            cur_parameters.root_output_dir_path)
+        cur_parameters.output_experiment_path = \
+            f"{cur_parameters.output_model_dataset_path}/{cur_parameters.experiment_number}"
+
         os.makedirs(cur_parameters.output_experiment_path, exist_ok=True)
         experiments.append(cur_parameters)
     return experiments

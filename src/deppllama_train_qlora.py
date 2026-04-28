@@ -238,6 +238,8 @@ def create_inference_config_by_finetuning(parameters, inf_exp_param):
         create_adapter_name(inf_exp["model_config"].original_model_id)
 
     inf_exp["cur_parameters"].model_name = parameters.model_config.model_name
+
+    inf_exp["root_output_dir_path"] = parameters.output_experiment_path
     return inf_exp
 
 def conduct_evaluation(output_experiment_path, dataset_config, result_path):

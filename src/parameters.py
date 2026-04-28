@@ -4,6 +4,8 @@ class Parameters:
     def __init__(self, config_name):
         self.config_name = config_name
         self.dataset_config = None
+        self.model_parameters = None
+        self.treebank_parameters = None
         self.model_config = None
         self.root_output_dir_path = None
         self.experiment_number = None
@@ -44,3 +46,5 @@ class InferenceParameters:
         self.logit_parameters = {}
         self.seed = 42
         self.model_name = None
+        self.model_parameters = None
+        self.treebank_parameters = None

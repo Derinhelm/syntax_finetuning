@@ -4,24 +4,19 @@ import yaml
 
 from parameters import Parameters, create_output_model_dataset_path
 
-from config_parsing import parse_field, get_several_config_params
-from config import DatasetConfig, ModelConfig
+from config_parsing import get_several_config_params
 
 
-def create_finetuning_experiments(configs, config_name):
-    dataset_configs = parse_field(configs, "dataset_config", DatasetConfig)
-    datasets = {d.treebank: d for d in dataset_configs}
-
-    model_configs = parse_field(configs, "model_config", ModelConfig)
-    models = {m.model_name: m for m in model_configs}
+def create_finetuning_experiments(configs, config_name,
+    models, datasets):
 
     parameters = Parameters(config_name)
     several_param_names, s_params = get_several_config_params(
         configs["finetuning"], parameters)
     parameters.root_output_dir_path = configs['root_output_dir_path']
 
-    for model_config in model_configs:
-        for dataset_config in dataset_configs:
+    for model_config in models.values():
+        for dataset_config in datasets.values():
             output_model_dataset_path = create_output_model_dataset_path(
                 model_config, dataset_config,
                 parameters.root_output_dir_path)

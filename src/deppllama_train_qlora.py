@@ -249,10 +249,10 @@ def create_inference_config_by_finetuning(parameters):
             }
     return inf_parameters
 
-def conduct_evaluation(parameters, result_path):
+def conduct_evaluation(output_experiment_path, dataset_config, result_path):
         res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
-        metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}.jsonl"
-        conll_test_file_path = parameters.dataset_config.conll_test_file_path
+        metric_path = f"{output_experiment_path}/metrics_{res_name}.jsonl"
+        conll_test_file_path = dataset_config.conll_test_file_path
 
         with open(conll_test_file_path, 'r') as file:
             content = file.read()
@@ -277,4 +277,5 @@ def conduct_experiment(parameters):
         inf_experiment = create_inference_config_by_finetuning(parameters)
         result_path = start_inference_experiment(inf_experiment)
 
-        conduct_evaluation(parameters, result_path)
+        conduct_evaluation(parameters.output_experiment_path,
+            parameters.dataset_config, result_path)

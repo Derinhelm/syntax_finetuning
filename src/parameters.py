@@ -1,5 +1,11 @@
 from constants import CUTOFF_LEN
 
+def create_output_model_dataset_path(model_config, dataset_config,
+                                     root_output_dir_path):
+    clear_model_name = model_config.model_name.split(
+        '/')[-1].replace("-", "_").replace(".", "_")
+    return f"{root_output_dir_path}/{clear_model_name}_{dataset_config.treebank}"
+
 class Parameters:
     def __init__(self, config_name):
         self.config_name = config_name
@@ -30,8 +36,9 @@ class Parameters:
 
     @property
     def output_model_dataset_path(self):
-        clear_model_name = self.model_config.model_name.split('/')[-1].replace("-", "_").replace(".", "_")
-        return f"{self.root_output_dir_path}/{clear_model_name}_{self.dataset_config.treebank}"
+        return create_output_model_dataset_path(
+            self.model_config, self.dataset_config,
+            self.root_output_dir_path)
 
     @property
     def output_experiment_path(self):

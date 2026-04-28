@@ -2,7 +2,7 @@ import copy
 import os
 import yaml
 
-from parameters import Parameters
+from parameters import Parameters, create_output_model_dataset_path
 
 from config_parsing import parse_field, get_several_config_params
 from config import DatasetConfig, ModelConfig
@@ -22,9 +22,10 @@ def create_finetuning_experiments(configs, config_name):
 
     for model_config in model_configs:
         for dataset_config in dataset_configs:
-            parameters.model_config = model_config 
-            parameters.dataset_config = dataset_config
-            os.makedirs(parameters.output_model_dataset_path, exist_ok=True)
+            output_model_dataset_path = create_output_model_dataset_path(
+                model_config, dataset_config,
+                parameters.root_output_dir_path)
+            os.makedirs(output_model_dataset_path, exist_ok=True)
 
             config_dir_path = \
                 parameters.root_output_dir_path + "/" + parameters.config_name.split('/')[-1]

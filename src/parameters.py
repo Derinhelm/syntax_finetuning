@@ -36,10 +36,7 @@ class Parameters:
     @property
     def output_experiment_path(self):
         return f"{self.output_model_dataset_path}/{self.experiment_number}"
-       
-    @property 
-    def config_dir_path(self):
-        return self.root_output_dir_path + "/" + self.config_name.split('/')[-1]
+
 
 class InferenceParameters:
     def __init__(self):

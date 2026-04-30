@@ -36,7 +36,7 @@ def finetuning_main():
     print(f"FT experiment amount: {len(ft_experiments)}")
 
     inf_models = {}
-    for model_config in configs['inference_models']:
+    for model_config in configs.get('inference_models', []):
         model_name = model_config['name']
         if "peft_model_id" in model_config: # TODO: может не быть для слитного ft + inf
             model_config['adapter_name'] = create_adapter_name(model_name)

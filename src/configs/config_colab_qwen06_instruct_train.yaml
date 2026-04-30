@@ -1,0 +1,26 @@
+dataset_config:
+  train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_train.json
+  dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_dev.json
+  test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_test.json
+  conll_test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_conll_test.conllu
+  # conll_test_file_path is used for metric evaluation 
+  treebank_repr: grct
+  treebank: grct_syntagrus
+model_config: # TODO: rename
+  model_name: Qwen/Qwen3-0.6B
+  is_instruct: True
+  torch_empty_cache_steps: 2
+  per_device_eval_batch_size: 2
+root_output_dir_path: /content/results
+finetuning:
+    model_parameters:
+        - model_name: Qwen/Qwen3-0.6B
+    treebank_parameters:
+        - treebank_name: grct_syntagrus
+    epochs: 2
+    eval_steps: 10
+    save_steps: 5
+    init_lora_weights: loftq
+    save_epoch_adapters: True
+    micro_batch_size: 2
+    batch_size: 4 # В пробной обучающей выборке 200 элементов

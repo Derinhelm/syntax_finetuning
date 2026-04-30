@@ -8,6 +8,9 @@ def create_inference_experiments(configs,
         inf_models, datasets):
     root_output_dir_path = configs['root_output_dir_path']
 
+    if "inference" not in configs:
+        return []
+
     parameters = InferenceParameters()
     several_param_names, s_params = get_several_config_params(
         configs["inference"], parameters)

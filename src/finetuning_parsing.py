@@ -11,9 +11,21 @@ def create_finetuning_experiments(configs, config_name,
     models, datasets):
 
     parameters = Parameters(config_name)
+    parameters.root_output_dir_path = configs['root_output_dir_path']
+    parameters.output_experiment_path = parameters.root_output_dir_path
+
+    if "finetuning" not in configs:
+        for param_name in parameters.__dict__.keys(): # TODO:
+            if param_name != 'root_output_dir_path' and \
+                    param_name != 'output_experiment_path':
+                parameters.__setattr__(
+                    param_name, None)
+        return [parameters]
+
+
+
     several_param_names, s_params = get_several_config_params(
         configs["finetuning"], parameters)
-    parameters.root_output_dir_path = configs['root_output_dir_path']
 
     for model_config in models.values():
         for dataset_config in datasets.values():

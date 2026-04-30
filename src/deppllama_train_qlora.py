@@ -239,17 +239,20 @@ def conduct_finetuning_experiment(parameters):
 def create_inference_config_by_finetuning(parameters, inf_exp_param):
     inf_exp = copy.deepcopy(inf_exp_param)
     # TODO: assert, если поля не пустые
+    # TODO: assert, если не совпадают dataset
     inf_exp["model_config"].original_model_id = parameters.model_config.model_name
     inf_exp["model_config"].peft_model_id = parameters.output_experiment_path
     inf_exp["model_config"].is_instruct = parameters.model_config.is_instruct
     inf_exp["model_config"].representation_type_result = \
-        parameters.dataset_config.treebank_repr
+        parameters.dataset_config.treebank_repr # TODO: Согласовать dataset
     inf_exp["model_config"].adapter_name = \
         create_adapter_name(inf_exp["model_config"].original_model_id)
 
     inf_exp["cur_parameters"].model_name = parameters.model_config.model_name
 
     inf_exp["root_output_dir_path"] = parameters.output_experiment_path
+
+    inf_exp['dataset_config'] = parameters.dataset_config
     return inf_exp
 
 def conduct_evaluation(output_experiment_path, dataset_config, result_path):
@@ -274,15 +277,20 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path):
 
 def conduct_experiment(parameters, inf_experiments):
     if not is_ready(parameters.output_experiment_path):
-        conduct_finetuning_experiment(parameters) # Нужен "Пустой случай"
+        if parameters.check_none():
+            conduct_finetuning_experiment(parameters)
+    # Нужна оптимизация для "раскладывания по процессам", если только Inference
 
         if inf_experiments != []:
             os.environ["VLLM_USE_V1"] = "0"
             for inf_exp in inf_experiments:
-                inf_experiment = create_inference_config_by_finetuning(
-                    parameters, inf_exp)
+                if parameters.check_none():
+                    inf_experiment = create_inference_config_by_finetuning(
+                        parameters, inf_exp)
+                else:
+                    inf_experiment = inf_exp
                 result_path = start_inference_experiment(inf_experiment)
 
                 conduct_evaluation(parameters.output_experiment_path,
-                    parameters.dataset_config, result_path)
+                    inf_exp['dataset_config'], result_path)
         mark_ready(parameters.output_experiment_path)

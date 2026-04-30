@@ -23,8 +23,11 @@ def finetuning_main():
     if "parallel_config" in configs:
         parallel_config = configs.pop("parallel_config")
 
-    ft_model_configs = parse_field(configs, "model_config", ModelConfig)
-    ft_models = {m.model_name: m for m in ft_model_configs}
+    if "model_config" in configs:
+        ft_model_configs = parse_field(configs, "model_config", ModelConfig)
+        ft_models = {m.model_name: m for m in ft_model_configs}
+    else:
+        ft_models = {}
 
     dataset_configs = parse_field(configs, "dataset_config", DatasetConfig)
     assert len(set(dc.treebank for dc in dataset_configs)) == len(dataset_configs)
@@ -33,7 +36,8 @@ def finetuning_main():
 
     ft_experiments = create_finetuning_experiments(configs, config_name,
         ft_models, datasets)
-    print(f"FT experiment amount: {len(ft_experiments)}")
+    if not(len(ft_experiments) == 1 and ft_experiments[0].check_none()):
+        print(f"FT experiment amount: {len(ft_experiments)}")
 
     inf_models = {}
     for model_config in configs.get('inference_models', []):
@@ -53,6 +57,8 @@ def finetuning_main():
 
     inf_experiments = create_inference_experiments(configs,
         inf_models, datasets)
+    if inf_experiments != []:
+        print(f"INFERENCE experiment amount: {len(ft_experiments)}")
 
     function_executor = FineTuningExecutor() # TODO: сделать выбор
     run_all_experiments(parallel_config, ft_experiments, inf_experiments,

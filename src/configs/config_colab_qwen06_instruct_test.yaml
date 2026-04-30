@@ -7,10 +7,10 @@ dataset_config:
   treebank_repr: grct
   treebank: grct_syntagrus
 inference_models:
-  - original_model_id: Previous # TODO: заменить Previous и True по умолчанию
-    peft_model_id: Previous
+  - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
+    peft_model_id: Derinhelm/RuadaptQwen3_4B_Hybrid_syntagrus_grct
     is_instruct: True
-    name: Previous
+    name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     model_library: vllm
     max_tokens: 5000
 root_output_dir_path: /content/results/only_test
@@ -22,7 +22,7 @@ inference:
         - {}
         - name: main_logits
     model_parameters:
-        - model_name: Previous
+        - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     treebank_parameters:
         - treebank_name: grct_syntagrus
           index_finish: 30

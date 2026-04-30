@@ -4,7 +4,8 @@ import yaml
 
 from config_parsing import parse_field
 from config import DatasetConfig, ModelConfig
-from inference_parsing import create_inference_experiments, create_adapter_name
+from inference_parsing import create_inference_experiments
+from inference_parser import create_adapter_name
 from finetuning_parsing import create_finetuning_experiments
 from single_function_executor import FineTuningExecutor
 from start_experiments import run_all_experiments

@@ -13,7 +13,7 @@ inference_models:
     name: Previous
     model_library: vllm
     max_tokens: 5000
-root_output_dir_path: /content/results
+root_output_dir_path: /content/results/only_test
 inference:
     seed:
         - 1000

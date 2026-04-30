@@ -18,7 +18,7 @@ inference_models:
     name: Previous
     model_library: vllm
     max_tokens: 5000
-root_output_dir_path: /content/results
+root_output_dir_path: /content/results/train_test
 finetuning:
     model_parameters:
         - model_name: Qwen/Qwen3-0.6B

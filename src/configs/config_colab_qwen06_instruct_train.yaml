@@ -11,7 +11,7 @@ model_config: # TODO: rename
   is_instruct: True
   torch_empty_cache_steps: 2
   per_device_eval_batch_size: 2
-root_output_dir_path: /content/results
+root_output_dir_path: /content/results/only_train
 finetuning:
     model_parameters:
         - model_name: Qwen/Qwen3-0.6B

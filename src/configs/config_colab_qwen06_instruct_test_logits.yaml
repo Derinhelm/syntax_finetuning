@@ -18,6 +18,9 @@ inference:
     seed:
         - 1000
         - 2000
+    logit_parameters:
+        - {}
+        - name: main_logits
     model_parameters:
         - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     treebank_parameters:

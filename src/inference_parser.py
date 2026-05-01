@@ -59,16 +59,17 @@ class Parser:
         del self.tree_decoder
 
 def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
-    last_ready_index = None
     try:
         with open(result_filepath, 'r') as f:
+            ready_data = set()
             lines = f.readlines()
             if lines:
-                last_ready_index = json.loads(lines[-1])["index"]
-                index_predicate = lambda ind2: ind2 > last_ready_index and index_predicate_param(ind2)
+                ready_data = json.loads(lines[-1])
+                ready_indexes = {d['index'] for d in ready_data}
+                index_predicate = lambda ind2: ind2 not in ready_indexes and index_predicate_param(ind2)
             else:
                 index_predicate = index_predicate_param
-            print(f"{result_filepath} exists, last_ready_index: {last_ready_index}")
+            print(f"{result_filepath} exists, len(ready_data): {len(ready_data)}")
     except FileNotFoundError:
         with open(result_filepath, 'x') as f:
             pass # Creating file, if not exist

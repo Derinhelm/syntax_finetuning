@@ -61,15 +61,15 @@ class Parser:
 def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
     try:
         with open(result_filepath, 'r') as f:
-            ready_data = set()
+            ready_indexes = set()
             lines = f.readlines()
             if lines:
-                ready_data = json.loads(lines[-1])
-                ready_indexes = {d['index'] for d in ready_data}
+                ready_indexes = {json.loads(line)['index']
+                                 for line in lines}
                 index_predicate = lambda ind2: ind2 not in ready_indexes and index_predicate_param(ind2)
             else:
                 index_predicate = index_predicate_param
-            print(f"{result_filepath} exists, len(ready_data): {len(ready_data)}")
+            print(f"{result_filepath} exists, уже обработано {len(ready_indexes)}")
     except FileNotFoundError:
         with open(result_filepath, 'x') as f:
             pass # Creating file, if not exist

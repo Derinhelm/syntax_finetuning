@@ -96,7 +96,7 @@ def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
             new_d['extra_info'] = extra_info
             res.append(new_d)
             print(f"{d_i}/{len(data)}. {time.time() - ts}")
-        if len(res) - last_unsaved_i >= 10:
+        if len(res) - last_unsaved_i >= 5:
             with open(result_filepath, 'a', encoding='utf-8') as json_file:
                 for s_i in range(last_unsaved_i, len(res)):
                     json_file.write(json.dumps(res[s_i],

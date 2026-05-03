@@ -67,6 +67,7 @@ random.seed(23)
 
 parser = argparse.ArgumentParser(description='Transform a dataset sample')
 parser.add_argument('-c','--config', help='Config Name')
+parser.add_argument('-p','--prefix', help='Path prefix')
 args = parser.parse_args()
 
 with open(args.config, 'r') as file:
@@ -76,8 +77,8 @@ print(config)
 simple_relations = config.get("simple_relations", False)
 for representation in config["formats"]:
     for treebank_info in config["treebanks"]:
-        input_directory = treebank_info["input_directory"]
-        output_directory = treebank_info["output_directory"]
+        input_directory = args.prefix + "/" + treebank_info["input_directory"] # TODO: "/"
+        output_directory = args.prefix + "/" + treebank_info["output_directory"]
         prefix = treebank_info["prefix"]
         for sample in ["train", "dev", "test"]:
             input_files = [f"{input_directory}/{samp}"

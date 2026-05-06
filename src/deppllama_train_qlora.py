@@ -292,5 +292,5 @@ def conduct_experiment(parameters, inf_experiments):
                 result_path = start_inference_experiment(inf_experiment)
 
                 conduct_evaluation(parameters.output_experiment_path,
-                    inf_exp['dataset_config'], result_path)
+                    inf_experiment, result_path)
         mark_ready(parameters.output_experiment_path)

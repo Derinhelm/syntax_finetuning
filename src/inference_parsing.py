@@ -26,8 +26,13 @@ def create_inference_experiments(configs,
         model_config = InferenceModelConfig(
             inf_models[cur_parameters.model_parameters['model_name']],
             experiment_number)
-        treebank_name = cur_parameters.treebank_parameters['treebank_name']
-        dataset_config = datasets[treebank_name]
+            
+
+        if cur_parameters.treebank_parameters['treebank_name'] is not None:
+            treebank_name = cur_parameters.treebank_parameters['treebank_name']
+            dataset_config = datasets[treebank_name]
+        else:
+            dataset_config = None # Будет использоваться из fine-tuning
         data_restriction_config = DataRestrictionConfig(
             cur_parameters.treebank_parameters)
 

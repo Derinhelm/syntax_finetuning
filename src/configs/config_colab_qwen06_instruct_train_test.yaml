@@ -41,5 +41,5 @@ inference:
     model_parameters:
         - model_name: Previous
     treebank_parameters:
-        - treebank_name: gsd_test_grct
+        - treebank_name:
           index_finish: 30

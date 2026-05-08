@@ -1,0 +1,41 @@
+# sent_id = 2013Martovskaya_revolyutsiya.xml_66
+# text = Установка на "превосходство арийской расы" и на завоевание необходимого "жизненного пространства" развивалась и внедрялась в сознание масс постепенно, с оглядкой на реакцию окружения и в рамках тех возможностей, которые открывала конституция.
+1       Установка       установка       NOUN    _       Animacy=Inan|Case=Nom|Gender=Fem|Number=Sing    16      nsubj:pass      16:nsubj:pass   _
+2       на      на      ADP     _       _       4       case    4:case  _
+3       "       "       PUNCT   _       _       4       punct   4:punct SpaceAfter=No
+4       превосходство   превосходство   NOUN    _       Animacy=Inan|Case=Acc|Gender=Neut|Number=Sing   1       nmod    1:nmod:на:acc   _
+5       арийской        арийский        ADJ     _       Case=Gen|Degree=Pos|Gender=Fem|Number=Sing      6       amod    6:amod  _
+6       расы    раса    NOUN    _       Animacy=Inan|Case=Gen|Gender=Fem|Number=Sing    4       nmod    4:nmod:gen      SpaceAfter=No
+7       "       "       PUNCT   _       _       4       punct   4:punct _
+8       и       и       CCONJ   _       _       10      cc      10:cc   _
+9       на      на      ADP     _       _       10      case    10:case _
+10      завоевание      завоевание      NOUN    _       Animacy=Inan|Case=Acc|Gender=Neut|Number=Sing   4       conj    1:nmod:на:acc|4:conj    _
+11      необходимого    необходимый     ADJ     _       Case=Gen|Degree=Pos|Gender=Neut|Number=Sing     14      amod    14:amod _
+12      "       "       PUNCT   _       _       14      punct   14:punct        SpaceAfter=No
+13      жизненного      жизненный       ADJ     _       Case=Gen|Degree=Pos|Gender=Neut|Number=Sing     14      amod    14:amod _
+14      пространства    пространство    NOUN    _       Animacy=Inan|Case=Gen|Gender=Neut|Number=Sing   10      nmod    10:nmod:gen     SpaceAfter=No
+15      "       "       PUNCT   _       _       14      punct   14:punct        _
+16      развивалась     развивать       VERB    _       Aspect=Imp|Gender=Fem|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Pass   0       root    0:root  _
+17      и       и       CCONJ   _       _       18      cc      18:cc   _
+18      внедрялась      внедрять        VERB    _       Aspect=Imp|Gender=Fem|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Pass   16      conj    0:root|16:conj  _
+19      в       в       ADP     _       _       20      case    20:case _
+20      сознание        сознание        NOUN    _       Animacy=Inan|Case=Acc|Gender=Neut|Number=Sing   18      obl     18:obl:в:acc    _
+21      масс    масса   NOUN    _       Animacy=Inan|Case=Gen|Gender=Fem|Number=Plur    20      nmod    20:nmod:gen     _
+22      постепенно      постепенно      ADV     _       Degree=Pos      18      advmod  18:advmod       SpaceAfter=No
+23      ,       ,       PUNCT   _       _       25      punct   25:punct        _
+24      с       с       ADP     _       _       25      case    25:case _
+25      оглядкой        оглядка NOUN    _       Animacy=Inan|Case=Ins|Gender=Fem|Number=Sing    22      conj    18:obl|22:conj  _
+26      на      на      ADP     _       _       27      case    27:case _
+27      реакцию реакция NOUN    _       Animacy=Inan|Case=Acc|Gender=Fem|Number=Sing    25      nmod    25:nmod:на:acc  _
+28      окружения       окружение       NOUN    _       Animacy=Inan|Case=Gen|Gender=Neut|Number=Sing   27      nmod    27:nmod:gen     _
+29      и       и       CCONJ   _       _       31      cc      31:cc   _
+30      в       в       ADP     _       _       31      case    31:case _
+31      рамках  рамка   NOUN    _       Animacy=Inan|Case=Loc|Gender=Fem|Number=Plur    27      conj    25:nmod:на:acc|27:conj  _
+32      тех     тот     DET     _       Case=Gen|Number=Plur|PronType=Dem       33      det     33:det  _
+33      возможностей    возможность     NOUN    _       Animacy=Inan|Case=Gen|Gender=Fem|Number=Plur    31      nmod    31:nmod:gen|36:obj      SpaceAfter=No
+34      ,       ,       PUNCT   _       _       36      punct   36:punct        _
+35      которые который DET     _       Animacy=Inan|Case=Acc|Number=Plur|PronType=Rel  36      obj     33:ref  _
+36      открывала       открывать       VERB    _       Aspect=Imp|Gender=Fem|Mood=Ind|Number=Sing|Tense=Past|VerbForm=Fin|Voice=Act    33      acl:relcl       33:acl:relcl    _
+37      конституция     конституция     NOUN    _       Animacy=Inan|Case=Nom|Gender=Fem|Number=Sing    36      nsubj   36:nsubj        SpaceAfter=No
+38      .       .       PUNCT   _       _       16      punct   16:punct        _
+

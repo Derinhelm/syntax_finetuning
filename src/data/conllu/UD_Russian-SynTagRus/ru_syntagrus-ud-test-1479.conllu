@@ -1,0 +1,25 @@
+# sent_id = 2003Bolshie_peremeny.xml_38
+# text = Но уже принято решение о создании межведомственной рабочей группы, которая будет заседать в течение ближайших полутора лет каждые две недели.
+1       Но      но      CCONJ   _       _       3       cc      3:cc    _
+2       уже     уже     ADV     _       Degree=Pos      3       advmod  3:advmod        _
+3       принято принять VERB    _       Aspect=Perf|Gender=Neut|Number=Sing|Tense=Past|Variant=Short|VerbForm=Part|Voice=Pass   0       root    0:root  _
+4       решение решение NOUN    _       Animacy=Inan|Case=Nom|Gender=Neut|Number=Sing   3       nsubj:pass      3:nsubj:pass    _
+5       о       о       ADP     _       _       6       case    6:case  _
+6       создании        создание        NOUN    _       Animacy=Inan|Case=Loc|Gender=Neut|Number=Sing   4       nmod    4:nmod:о:loc    _
+7       межведомственной        межведомственный        ADJ     _       Case=Gen|Degree=Pos|Gender=Fem|Number=Sing      9       amod    9:amod  _
+8       рабочей рабочий ADJ     _       Case=Gen|Degree=Pos|Gender=Fem|Number=Sing      9       amod    9:amod  _
+9       группы  группа  NOUN    _       Animacy=Inan|Case=Gen|Gender=Fem|Number=Sing    6       nmod    6:nmod:gen|13:nsubj     SpaceAfter=No
+10      ,       ,       PUNCT   _       _       13      punct   13:punct        _
+11      которая который DET     _       Case=Nom|Gender=Fem|Number=Sing|PronType=Rel    13      nsubj   9:ref   _
+12      будет   быть    AUX     _       Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin|Voice=Act 13      aux     13:aux  _
+13      заседать        заседать        VERB    _       Aspect=Imp|VerbForm=Inf|Voice=Act       9       acl:relcl       9:acl:relcl     _
+14      в       в       ADP     _       ExtPos=ADP      18      case    18:case _
+15      течение течение NOUN    _       Animacy=Inan|Case=Acc|Gender=Neut|Number=Sing   14      fixed   14:fixed        _
+16      ближайших       ближайший       ADJ     _       Case=Gen|Degree=Pos|Number=Plur 17      amod    17:amod _
+17      полутора        полтора NUM     _       Case=Gen|NumForm=Word|NumType=Card      18      nummod  18:nummod       _
+18      лет     год     NOUN    _       Animacy=Inan|Case=Gen|Gender=Masc|Number=Plur   13      obl     13:obl:в_течение:gen    _
+19      каждые  каждый  DET     _       Animacy=Inan|Case=Acc|Number=Plur|PronType=Tot  20      det     20:det  _
+20      две     два     NUM     _       Animacy=Inan|Case=Acc|Gender=Fem|NumForm=Word|NumType=Card      21      nummod  21:nummod       _
+21      недели  неделя  NOUN    _       Animacy=Inan|Case=Gen|Gender=Fem|Number=Sing    13      obl     13:obl:gen      SpaceAfter=No
+22      .       .       PUNCT   _       _       3       punct   3:punct _
+

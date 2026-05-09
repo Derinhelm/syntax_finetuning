@@ -2,24 +2,13 @@ dataset_config:
  - train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_train.json
    dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_dev.json
    test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_test.json
-   conll_test_file_path: /content/syntax_finetuning/src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test-1479.conllu
+   conll_test_file_path: /content/syntax_finetuning/src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test-1479-6402-6489.conllu
    # conll_test_file_path is used for metric evaluation 
    treebank_repr: grct
-   treebank: syntagrus_grct_1479_metric_less_ruadapt4
- - train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_train.json
-   dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_dev.json
-   test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_test.json
-   conll_test_file_path: /content/syntax_finetuning/src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test-6402.conllu
-   # conll_test_file_path is used for metric evaluation 
-   treebank_repr: grct
-   treebank: syntagrus_grct_6402_text_after_bracket_qwen4
- - train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_train.json
-   dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_dev.json
-   test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/syntagrus/ru_simple_syntagrus_grct_test.json
-   conll_test_file_path: /content/syntax_finetuning/src/data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test-6489.conllu
-   # conll_test_file_path is used for metric evaluation 
-   treebank_repr: grct
-   treebank: syntagrus_grct_6489_wrong_grct_ruadapt4
+   treebank: syntagrus_grct_hard
+   # syntagrus_grct_1479_metric_less_ruadapt4
+   # syntagrus_grct_6402_text_after_bracket_qwen4
+   # syntagrus_grct_6489_wrong_grct_ruadapt4
 inference_models:
   - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
     peft_model_id: Derinhelm/RuadaptQwen3_4B_Hybrid_syntagrus_grct
@@ -36,6 +25,7 @@ inference:
         - name: main_logits
     model_parameters:
         - model_name: Ruadapt4
+        #- model_name: Qwen4
     treebank_parameters:
-        - treebank_name: syntagrus_grct_1479_metric_less_ruadapt4
-          index_set: [ 1479 ]
+        - treebank_name: syntagrus_grct_hard
+          index_set: [ 1479, 6402, 6489]

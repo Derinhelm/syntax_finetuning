@@ -272,6 +272,20 @@ class GenerationContext:
     def check_all_end(self):
         return self.end_amount == self.max_op_bracket
 
+class OriginalLogitsProcessor:
+    def __init__(self, tokenizer, logit_params):
+        self.logit_params = logit_params
+        self.max_op_bracket = None
+
+    def set_max_op_bracket(self, max_op_bracket): 
+        self.max_op_bracket = max_op_bracket
+
+    def set_tokenizer(self, tokenizer):
+        self.tokenizer = tokenizer
+
+    def __call__(self, token_ids, logits):
+        return logits
+
 class BracketLogitsProcessor:
     def __init__(self, tokenizer, logit_params):
         optional_constraints = logit_params.get("optional_constraints", set())
@@ -347,5 +361,8 @@ class BracketLogitsProcessor:
 
 
 def create_logit_processor(logit_params, tokenizer):
-    logit_processor = BracketLogitsProcessor(tokenizer, logit_params)
+    if logit_params.get("name", "") == "original_logits":
+        logit_processor = OriginalLogitsProcessor(tokenizer, logit_params)
+    else:
+        logit_processor = BracketLogitsProcessor(tokenizer, logit_params)
     return logit_processor

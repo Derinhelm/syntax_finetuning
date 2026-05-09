@@ -22,6 +22,7 @@ inference:
         - 42
     logit_parameters:
         - {}
+        - name: original_logits
         - name: main_logits
     model_parameters:
         - model_name: Ruadapt4

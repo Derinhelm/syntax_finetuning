@@ -137,6 +137,20 @@ class RestrictBracketAfterOpenConstraint(Constraint):
         print("Restriction for bracket after open bracket")
         return logits
         
+class RestrictTextAfterEndConstraint(Constraint):
+    def __init__(self, partial_bracket_codes):
+        self.partial_bracket_codes = partial_bracket_codes
+
+    def check(self, context):
+        return context.generated_text[-1] == "]"
+        
+    def __call__(self, logits, context):
+        for token_text, token_id in self.partial_bracket_codes:
+            if token_text[0] != "]" and token_text[0] != "[":
+                logits[token_id] = float('-inf')
+        return logits
+
+        
 class RestrictBalanceBracketConstraint(Constraint):
     """"""
     
@@ -310,6 +324,7 @@ class BracketLogitsProcessor:
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
         
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
+        self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(partial_bracket_codes)
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes,
             applying_max_amount, soft_max_amount)
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
@@ -352,6 +367,8 @@ class BracketLogitsProcessor:
                 logits = self.restrict_open_constraints(logits, context)
             if self.restrict_bracket_after_open_constraints.check(context):
                 logits = self.restrict_bracket_after_open_constraints(logits, context)
+            if self.restrict_text_after_end_constraints.check(context):
+                logits = self.restrict_text_after_end_constraints(logits, context)
             if self.restrict_unbalanced_eos_constraints.check(context):
                 logits = self.restrict_unbalanced_eos_constraints(logits, context)
             if self.restrict_balance_constraints.check(context):

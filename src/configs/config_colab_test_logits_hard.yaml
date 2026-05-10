@@ -16,6 +16,12 @@ inference_models:
     name: Ruadapt4
     model_library: vllm
     max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: Derinhelm/Qwen3_4B_syntagrus_grct
+    is_instruct: True
+    name: Qwen4
+    model_library: vllm
+    max_tokens: 5000
 root_output_dir_path: /content/results/hard_cases
 inference:
     seed:
@@ -26,7 +32,7 @@ inference:
         - name: main_logits
     model_parameters:
         - model_name: Ruadapt4
-        #- model_name: Qwen4
+        - model_name: Qwen4
     treebank_parameters:
         - treebank_name: syntagrus_grct_hard
           index_set: [ 1479, 6402, 6489]

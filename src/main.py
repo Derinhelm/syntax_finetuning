@@ -61,7 +61,7 @@ def finetuning_main():
     inf_experiments = create_inference_experiments(configs,
         inf_models, datasets)
     if inf_experiments != []:
-        print(f"INFERENCE experiment amount: {len(ft_experiments)}")
+        print(f"INFERENCE experiment amount: {len(inf_experiments)}")
 
     function_executor = FineTuningExecutor() # TODO: сделать выбор
     run_all_experiments(parallel_config, ft_experiments, inf_experiments,

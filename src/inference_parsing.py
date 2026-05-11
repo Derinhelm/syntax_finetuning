@@ -12,11 +12,16 @@ def create_inference_experiments(configs,
         return []
 
     parameters = InferenceParameters()
-    several_param_names, s_params = get_several_config_params(
-        configs["inference"], parameters)
+    if isinstance(configs["inference"], list):
+        inference_list = configs["inference"]
+    else:
+        inference_list = [configs["inference"]]
 
     experiments = []
-    for experiment_number, experiment_params in enumerate(s_params):
+    for inference_params in inference_list:
+      several_param_names, s_params = get_several_config_params(
+        inference_params, parameters)
+      for experiment_number, experiment_params in enumerate(s_params):
         assert len(experiment_params) == len(several_param_names)
         cur_parameters = copy.deepcopy(parameters)
         for param_i, param in enumerate(experiment_params):

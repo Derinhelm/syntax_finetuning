@@ -138,16 +138,21 @@ class RestrictBracketAfterOpenConstraint(Constraint):
         return logits
         
 class RestrictTextAfterEndConstraint(Constraint):
-    def __init__(self, partial_bracket_codes):
+    def __init__(self, partial_bracket_codes, eos_ids):
         self.partial_bracket_codes = partial_bracket_codes
+        self.eos_ids = eos_ids
 
     def check(self, context):
         return context.generated_text[-1] == "]"
         
-    def __call__(self, logits, context):
+    def __call__(self, logits, context): # TODO: запрет нужен для всех!!!
+        mask_tensor = torch.full(logits.shape, -float('inf'), device=logits.device)
         for token_text, token_id in self.partial_bracket_codes:
-            if token_text[0] != "]" and token_text[0] != "[":
-                logits[token_id] = float('-inf')
+            if token_text[0] == "]" or token_text[0] == "[":
+                mask_tensor[token_id] = 0
+        for token_id in self.eos_ids:
+            mask_tensor[token_id] = 0
+        logits += mask_tensor
         return logits
 
         
@@ -323,14 +328,15 @@ class BracketLogitsProcessor:
             applying_max_amount, soft_max_amount)
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
         
+        eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
+        print(f"eos_ids: {eos_ids}")
+        
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
-        self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(partial_bracket_codes)
+        self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(partial_bracket_codes, eos_ids)
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes,
             applying_max_amount, soft_max_amount)
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
-        eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
-        print(f"eos_ids: {eos_ids}")
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)

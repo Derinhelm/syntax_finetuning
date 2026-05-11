@@ -29,6 +29,9 @@ def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
             processes = []
             parallel_path = parallel_config["parallel_path"]
             for i in range(process_num):
+                print(f"Process {i}")
+                print(f"exp_groups[i]: {exp_groups[i]}")
+                print(f"inf_groups[i]: {inf_groups[i]}")
                 p = mp.Process(target=start_parallel_experiment,
                     args=(inf_groups[i], exp_groups[i], i,
                     parallel_path, start_time, function_executor))

@@ -18,7 +18,7 @@ def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
                 
             if not(len(ft_experiments) == 1 and ft_experiments[0].check_none()):
                 for i, _ in enumerate(inf_groups):
-                    inf_groups.append(inf_experiments)
+                    inf_groups[i].append(inf_experiments)
             else:
                 for i, item in enumerate(inf_experiments):
                     inf_groups[i % process_num].append(item)

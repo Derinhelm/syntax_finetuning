@@ -37,7 +37,9 @@ def finetuning_main():
 
     ft_experiments = create_finetuning_experiments(configs, config_name,
         ft_models, datasets)
-    if not(len(ft_experiments) == 1 and ft_experiments[0].check_none()):
+    if len(ft_experiments) == 1 and ft_experiments[0].check_is_none():
+        print("Creating empty ft_parameters")
+    else:
         print(f"FT experiment amount: {len(ft_experiments)}")
 
     inf_models = {}

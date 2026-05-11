@@ -277,14 +277,14 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path):
 
 def conduct_experiment(parameters, inf_experiments):
     if not is_ready(parameters.output_experiment_path):
-        if parameters.check_none():
+        if not parameters.check_is_none():
             conduct_finetuning_experiment(parameters)
     # Нужна оптимизация для "раскладывания по процессам", если только Inference
 
         if inf_experiments != []:
             os.environ["VLLM_USE_V1"] = "0"
             for inf_exp in inf_experiments:
-                if parameters.check_none():
+                if not parameters.check_is_none():
                     inf_experiment = create_inference_config_by_finetuning(
                         parameters, inf_exp)
                 else:

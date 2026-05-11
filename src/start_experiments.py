@@ -13,15 +13,18 @@ def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
             process_num = 8
             exp_groups = [[] for _ in range(process_num)]
             inf_groups = [[] for _ in range(process_num)]
-            for i, item in enumerate(ft_experiments):
-                exp_groups[i % process_num].append(item)
                 
-            if not(len(ft_experiments) == 1 and ft_experiments[0].check_none()):
-                for i, _ in enumerate(inf_groups):
-                    inf_groups[i].append(inf_experiments)
-            else:
+            if len(ft_experiments) == 1 and ft_experiments[0].check_is_none():
+                # Только inference (по процессам)
+                for i, _ in enumerate(exp_groups):
+                    exp_groups[i] = ft_experiments
                 for i, item in enumerate(inf_experiments):
                     inf_groups[i % process_num].append(item)
+            else: # ft + inference
+                for i, item in enumerate(ft_experiments):
+                    exp_groups[i % process_num].append(item)
+                for i, _ in enumerate(inf_groups): # После каждого ft - все inf
+                    inf_groups[i] = inf_experiments
 
             mp.set_start_method('spawn', force=True)
              

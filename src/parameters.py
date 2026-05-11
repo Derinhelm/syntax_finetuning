@@ -36,8 +36,8 @@ class Parameters:
     def gradient_accumulation_steps(self):
         return self.batch_size // self.micro_batch_size
 
-    def check_none(self):
-        return self.model_parameters is not None
+    def check_is_none(self):
+        return self.model_parameters is None
 
 class InferenceParameters:
     def __init__(self):

@@ -255,7 +255,7 @@ def create_inference_config_by_finetuning(parameters, inf_exp_param):
     inf_exp['dataset_config'] = parameters.dataset_config
     return inf_exp
 
-def conduct_evaluation(output_experiment_path, dataset_config, result_path):
+def conduct_evaluation(output_experiment_path, dataset_config, result_path, metric):
         res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
         metric_path = f"{output_experiment_path}/metrics_{res_name}.jsonl"
         conll_test_file_path = dataset_config.conll_test_file_path
@@ -275,7 +275,7 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path):
         with open(metric_path, 'w') as f:
             json.dump(results, f, indent=4)
 
-def conduct_experiment(parameters, inf_experiments):
+def conduct_experiment(parameters, inf_experiments, metric_list):
     if not is_ready(parameters.output_experiment_path):
         if not parameters.check_is_none():
             conduct_finetuning_experiment(parameters)
@@ -290,7 +290,7 @@ def conduct_experiment(parameters, inf_experiments):
                 else:
                     inf_experiment = inf_exp
                 result_path = start_inference_experiment(inf_experiment)
-
-                conduct_evaluation(parameters.output_experiment_path,
-                    inf_experiment['dataset_config'], result_path)
+                for metric in metric_list:
+                    conduct_evaluation(parameters.output_experiment_path,
+                        inf_experiment['dataset_config'], result_path, metric)
         mark_ready(parameters.output_experiment_path)

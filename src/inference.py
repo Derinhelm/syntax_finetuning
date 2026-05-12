@@ -27,7 +27,7 @@ def inference_main():
     
     function_executor = InferenceExecutor()
     run_all_experiments(parallel_config, inference_experiments,
-        function_executor)
+        function_executor, [])
 
 if __name__ == "__main__":
     inference_main()

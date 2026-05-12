@@ -6,6 +6,6 @@ class InferenceExecutor: # TODO: Убрать
         return start_inference_experiment(params)
 
 class FineTuningExecutor:
-    def __call__(self, params, inf_experiments):
+    def __call__(self, params, inf_experiments, metric_list):
         print("-" * 10, params.__dict__, sep='\n')
-        return conduct_experiment(params, inf_experiments)
+        return conduct_experiment(params, inf_experiments, metric_list)

@@ -63,9 +63,11 @@ def finetuning_main():
     if inf_experiments != []:
         print(f"INFERENCE experiment amount: {len(inf_experiments)}")
 
+    metric_list = configs.get('metrics', ["usual"]) # TODO
+
     function_executor = FineTuningExecutor() # TODO: сделать выбор
     run_all_experiments(parallel_config, ft_experiments, inf_experiments,
-            function_executor)
+            function_executor, metric_list)
 
     print("Finish")
 

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import re
 import string
 from typing import List, Tuple
 
@@ -275,8 +276,52 @@ class RestrictUnbalancedEOSConstraint(Constraint):
             logits[eos_id] = -torch.inf
         return logits
 
+def fold_bracket_seq(s_param):
+    s = s_param[:]
+    s = re.sub(r'[^\[\]TWC]+', lambda m: 'T', s)
+    #print(s)
+
+    s = re.sub(r'\[T\]', lambda m: 'W', s)
+    #print(s)
+
+    prev_s = ''
+    while prev_s != s:
+        prev_s = s
+        s = re.sub(r'\[TC*WC*\]', lambda m: 'C', s)
+        #print(s, prev_s)
+        s = re.sub(r'\[TC*WC*WC*\]', lambda m: 'E', s)
+        s = re.sub(r'\[TC*\]', lambda m: 'E', s)
+        s = re.sub(r'\[[W|C]*\]', lambda m: 'E', s)
+        s = re.sub(r'\[[W|C]+T[W|C]*]\]', lambda m: 'E', s)
+        s = re.sub(r'\[[W|C]*T[W|C]*T[W|C]*]\]', lambda m: 'E', s)
+
+        if 'E' in s:
+          break
+    print("fold_bracket_seq", s_param, s)
+    return s
+
+
+class RestrictUncorrectLevelConstraint(Constraint):
+
+    def __init__(self, partial_bracket_codes):
+        self.partial_bracket_codes = partial_bracket_codes
+
+    def check(self, context):
+        return True
+    
+    def __call__(self, logits, context):
+        print("Restrictions for grct levels")
+        for token_text, token_id in self.partial_bracket_codes:
+            if logits[token_id] != -torch.inf:
+                if "E" in fold_bracket_seq(context.re_text + token_text.lower()):
+                    logits[token_id] = -torch.inf
+                    print(f"Restriction for {token_id}")
+        return logits
+
+
 class GenerationContext:
-    def __init__(self, token_ids, generated_text, max_op_bracket):
+    def __init__(self, token_ids, generated_text, max_op_bracket,
+            last_processed_text, last_processed_re):
         self.token_ids = token_ids
         self.generated_text = generated_text
         print(f"generated_text: {self.generated_text}")
@@ -284,6 +329,11 @@ class GenerationContext:
         self.end_amount = self.generated_text.count("]")
         print(f"op_amount: {self.op_amount}, end_amount: {self.end_amount}")
         self.max_op_bracket = max_op_bracket
+        if last_processed_text is None:
+            last_processed_text = ""
+            last_processed_re = ""
+        new_text = self.generated_text[len(last_processed_text):]
+        self.re_text = fold_bracket_seq(last_processed_re + new_text.lower()) # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket
@@ -296,7 +346,7 @@ class OriginalLogitsProcessor:
         self.logit_params = logit_params
         self.max_op_bracket = None
 
-    def set_max_op_bracket(self, max_op_bracket): 
+    def create_new_context(self, max_op_bracket): 
         self.max_op_bracket = max_op_bracket
 
     def set_tokenizer(self, tokenizer):
@@ -338,12 +388,21 @@ class BracketLogitsProcessor:
         self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
+
+        self.restrict_uncorrect_level_constraints = RestrictUncorrectLevelConstraint(partial_bracket_codes)
+
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)
 
-    def set_max_op_bracket(self, max_op_bracket): 
+        self.last_processed_text = None
+        self.last_processed_re = None
+
+
+    def create_new_context(self, max_op_bracket): 
         self.max_op_bracket = (self.mul_coeff * max_op_bracket + \
             self.add_coeff) * 2
+        self.last_processed_text = None
+        self.last_processed_re = None
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -352,10 +411,12 @@ class BracketLogitsProcessor:
         print(token_ids)
 
         generated_text = self.tokenizer.decode(token_ids)
-        context = GenerationContext(token_ids, generated_text, self.max_op_bracket)
+        context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
+                    self.last_processed_text, self.last_processed_re)
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
-        # а его нельзя создавать до set_max_op_bracket
-
+        # а его нельзя создавать до create_new_context
+        self.last_processed_text = context.generated_text
+        self.last_processed_re = context.re_text
         
         logits = logits.clone()
         if self.force_first_constraints.check(context):
@@ -379,6 +440,8 @@ class BracketLogitsProcessor:
                 logits = self.restrict_unbalanced_eos_constraints(logits, context)
             if self.restrict_balance_constraints.check(context):
                 logits = self.restrict_balance_constraints(logits, context)
+            if self.restrict_uncorrect_level_constraints.check(context):
+                logits = self.restrict_uncorrect_level_constraints(logits, context)
         print()
         return logits
 

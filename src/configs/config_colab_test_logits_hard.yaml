@@ -27,21 +27,26 @@ inference:
   - seed:
         - 42
     logit_parameters:
-        - {}
-        - name: original_logits
+        #- {}
+        #- name: original_logits
         - name: main_logits
+        #- name: logits_with_max_amount
+        #  optional_constraints:
+        #    - max_amount
     model_parameters:
         - model_name: Ruadapt4
     treebank_parameters:
         - treebank_name: syntagrus_grct_hard
-          index_set: [ 1479, 6402]
-  - seed:
-        - 42
-    logit_parameters:
-        - name: original_logits
-        - name: main_logits
-    model_parameters:
-        - model_name: Qwen4
-    treebank_parameters:
-        - treebank_name: syntagrus_grct_hard
-          index_set: [ 6489]
+  #        index_set: [ 1479, 6402]
+          index_set: [6489]
+  #- seed:
+  #      - 42
+  #  logit_parameters:
+  #      - name: original_logits
+  #      - name: main_logits
+  #  model_parameters:
+  #      - model_name: Qwen4
+  #  treebank_parameters:
+  #      - treebank_name: syntagrus_grct_hard
+  #        index_set: [ 6489]
+metrics: []

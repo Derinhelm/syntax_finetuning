@@ -29,7 +29,7 @@ class VllmModel:
 
     def create_output(self, input_ids, input_tokens):
         if self.logit_processor is not None:
-            self.logit_processor.set_max_op_bracket(len(input_tokens))
+            self.logit_processor.create_new_context(max_op_bracket=len(input_tokens))
         tokens_prompt = TokensPrompt(prompt_token_ids=input_ids)
         sampling_params = SamplingParams(
             temperature=0,

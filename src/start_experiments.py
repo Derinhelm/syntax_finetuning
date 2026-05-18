@@ -49,7 +49,7 @@ def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
                         cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         print(f"{cur_time}. Error {i} process: {p.exitcode}")
                         processes[i] = mp.Process(target=start_parallel_experiment,
-                            args=(inf_experiments, exp_groups[i], metric_list, i,
+                            args=(inf_groups[i], exp_groups[i], metric_list, i,
                             parallel_path, start_time, function_executor))
                         processes[i].start()
                         cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

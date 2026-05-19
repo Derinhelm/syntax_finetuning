@@ -276,12 +276,12 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path, metr
             json.dump(results, f, indent=4)
 
 def conduct_experiment(parameters, inf_experiments, metric_list):
-    if not is_ready(parameters.output_experiment_path):
-        if not parameters.check_is_none():
+    if not parameters.check_is_none():
+        if not is_ready(parameters.output_experiment_path):
             conduct_finetuning_experiment(parameters)
     # Нужна оптимизация для "раскладывания по процессам", если только Inference
 
-        if inf_experiments != []:
+    if inf_experiments != []:
             os.environ["VLLM_USE_V1"] = "0"
             for inf_exp in inf_experiments:
                 if not parameters.check_is_none():
@@ -293,4 +293,5 @@ def conduct_experiment(parameters, inf_experiments, metric_list):
                 for metric in metric_list:
                     conduct_evaluation(parameters.output_experiment_path,
                         inf_experiment['dataset_config'], result_path, metric)
+    if not parameters.check_is_none():
         mark_ready(parameters.output_experiment_path)

@@ -280,7 +280,8 @@ def fold_bracket_seq(s_param):
     s = s_param[:]
     s = re.sub(r'[^\[\]TWC]+', lambda m: 'T', s)
     #print(s)
-
+    while "TT" in s:
+        s = s.replace("TT", "T")
     s = re.sub(r'\[T\]', lambda m: 'W', s)
     #print(s)
 

@@ -1,0 +1,28 @@
+dataset_config:
+ - train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Finnish-FTB/fi_ftb_grct_train.json
+   dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Finnish-FTB/fi_ftb_grct_dev.json
+   test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Finnish-FTB/fi_ftb_grct_test.json
+   conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_Finnish-FTB/fi_ftb-ud-test.conllu
+  # conll_test_file_path is used for metric evaluation 
+   treebank_repr: grct
+   treebank: fi_ftb_grct
+inference_models:
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: Derinhelm/Qwen3_0_6B_fi_ftb_grct
+    is_instruct: True
+    name: Qwen3_0_6B_fi_ftb_grct
+    model_library: vllm
+    max_tokens: 5000
+root_output_dir_path: /content/results/hard_cases
+inference:
+  - seed:
+        - 42
+    logit_parameters:
+        - name: original_logits
+        - name: main_logits
+    model_parameters:
+        - model_name: Qwen3_0_6B_fi_ftb_grct
+    treebank_parameters:
+        - treebank_name: fi_ftb_grct
+          index_set: [55, 68, 84]
+metrics: []

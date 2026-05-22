@@ -63,10 +63,12 @@ def evaluate_one_experiment(gold_sentences, pred_filename,
                     pred_tree, metric_type)
             else: # Предложение с некорректным результатом
                 sent_uas, sent_las = None, None
-            expir_res_uas.append(sent_uas)
-            expir_res_las.append(sent_las)
+
         except Exception as e:
             print(sent_i, e)
+            sent_uas, sent_las = None, None
+        expir_res_uas.append(sent_uas)
+        expir_res_las.append(sent_las)
 
     del pred_trees
     gc.collect()

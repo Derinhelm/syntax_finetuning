@@ -278,6 +278,7 @@ class RestrictUnbalancedEOSConstraint(Constraint):
 
 def fold_bracket_seq(s_param):
     s = s_param[:]
+    s = s.replace(" ", "")
     s = re.sub(r'[^\[\]TWC]+', lambda m: 'T', s)
     #print(s)
     while "TT" in s:

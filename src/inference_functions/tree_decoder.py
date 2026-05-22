@@ -1,3 +1,5 @@
+from inference_functions.vllm_creating_logit_processor import fold_bracket_seq
+
 OP = '['
 CP = ']'
 
@@ -95,6 +97,10 @@ class TreeDecoder:
 
 
     def decode_tree(self, answer_output):
+        if self.representation_type == "grct":
+            fold_seq = fold_bracket_seq(answer_output)
+            if "E" in fold_seq:
+                return f"Error level sequence. {answer_output}. {fold_seq}"
         parsing_res = self._parse(answer_output)
         if isinstance(parsing_res, Exception):
             return str(parsing_res)

@@ -49,7 +49,7 @@ class Parser:
             print(traceback.print_exc())
             answer_output, full_output, token_amount, extra_info = None, None, (None, None), None
         llm_time = time.time() - ts
-        res = self.tree_decoder_result.decode_tree(answer_output)
+        res = self.tree_decoder_result.decode_tree(answer_output, True)
         return answer_output, full_output, res, llm_time, token_amount, extra_info
         
     def clear(self):
@@ -83,7 +83,7 @@ def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
     for d_i, d in enumerate(data):
         if index_predicate(d['index']):
             new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
-            new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'])
+            new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'], False)
             print(new_d['gold_tree'])
             input_tokens = [t['form'] for t in new_d['gold_tree']
                 if '.' not in t['id']]

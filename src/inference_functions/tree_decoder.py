@@ -96,8 +96,8 @@ class TreeDecoder:
         return res
 
 
-    def decode_tree(self, answer_output):
-        if self.representation_type == "grct":
+    def decode_tree(self, answer_output, check_seq=False):
+        if self.representation_type == "grct" and check_seq:
             fold_seq = fold_bracket_seq(answer_output)
             if "E" in fold_seq:
                 return f"Error level sequence. {answer_output}. {fold_seq}"

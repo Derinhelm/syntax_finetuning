@@ -2,7 +2,7 @@ class TreeDecoderConllShort:
     def __init__(self, representation_type):
         self.representation_type = representation_type
 
-    def decode_tree(self, answer_output):
+    def decode_tree(self, answer_output, check_seq=False):
         try:
             lines = answer_output.strip().split("\n")
             if "\t" in lines[0]:

@@ -50,7 +50,7 @@ def evaluate_one_experiment(gold_sentences, pred_filename,
     assert len(pred_trees_dict) == len(pred_trees)
     for sent_i, sent_r in enumerate(gold_sentences):
         try:
-            if isinstance(pred_trees[sent_i]["pred_tree"], list):
+            if isinstance(pred_trees_dict[sent_i]["pred_tree"], list):
                 gold_tree = [{'id': str(t['id']), 'form': t['form'],
                     'parent_id': str(t['head']), 'relation': t['deprel'],
                     'pos': t['upos'], 'feats': t['feats']}

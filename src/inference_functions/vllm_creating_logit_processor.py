@@ -299,7 +299,7 @@ def fold_bracket_seq(s_param):
 
         if 'E' in s:
           break
-    print("fold_bracket_seq", s_param, s)
+    #print("fold_bracket_seq", s_param, s)
     return s
 
 
@@ -336,6 +336,7 @@ class GenerationContext:
             last_processed_re = ""
         new_text = self.generated_text[len(last_processed_text):]
         self.re_text = fold_bracket_seq(last_processed_re + new_text.lower()) # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
+        print(self.re_text)
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket

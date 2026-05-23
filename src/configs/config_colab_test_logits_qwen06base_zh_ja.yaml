@@ -1,0 +1,65 @@
+dataset_config:
+ - train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Chinese-GSD/zh_gsd_grct_train.json
+   dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Chinese-GSD/zh_gsd_grct_dev.json
+   test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Chinese-GSD/zh_gsd_grct_test.json
+   conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_Chinese-GSD/zh_gsd-ud-test.conllu
+  # conll_test_file_path is used for metric evaluation 
+   treebank_repr: grct
+   treebank: zh_gsd_grct
+ - train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Japanese-GSD/ja_gsd_grct_train.json
+   dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Japanese-GSD/ja_gsd_grct_dev.json
+   test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Japanese-GSD/ja_gsd_grct_test.json
+   conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_Japanese-GSD/ja_gsd-ud-test.conllu
+  # conll_test_file_path is used for metric evaluation 
+   treebank_repr: grct
+   treebank: ja_gsd_grct
+inference_models:
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_zh_gsd_grct
+    is_instruct: True
+    name: Qwen3_0_6B_Base_zh_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_ja_gsd_grct
+    is_instruct: True
+    name: Qwen3_0_6B_Base_ja_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+root_output_dir_path: /content/results
+inference:
+  - seed:
+        - 42
+    logit_parameters:
+        - name: original_logits
+        - name: main_logits
+          optional_constraints:
+            - soft_max_amount
+          add_coeff: 10
+        - name: root_logits
+          optional_constraints:
+            - soft_max_amount
+            - root
+          add_coeff: 10
+    model_parameters:
+        - model_name: Qwen3_0_6B_Base_zh_gsd_grct
+    treebank_parameters:
+        - treebank_name: zh_gsd_grct
+  - seed:
+        - 42
+    logit_parameters:
+        - name: original_logits
+        - name: main_logits
+          optional_constraints:
+            - soft_max_amount
+          add_coeff: 10
+        - name: root_logits
+          optional_constraints:
+            - soft_max_amount
+            - root
+          add_coeff: 10
+    model_parameters:
+        - model_name: Qwen3_0_6B_Base_ja_gsd_grct
+    treebank_parameters:
+        - treebank_name: ja_gsd_grct
+metrics: []

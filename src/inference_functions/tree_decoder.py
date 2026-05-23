@@ -97,6 +97,8 @@ class TreeDecoder:
 
 
     def decode_tree(self, answer_output, check_seq=False):
+        if answer_output is None:
+            return "None answer"
         if self.representation_type == "grct" and check_seq:
             fold_seq = fold_bracket_seq(answer_output)
             if "E" in fold_seq:

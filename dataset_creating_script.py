@@ -5,8 +5,9 @@ import gc
 import random
 import yaml
 
-from src.sentence_utils import simplify_relations, tree2string_plain, \
-    tree2string_loct, tree2string_lct, tree2string_grct
+from src.sentence_utils import simplify_relations, simplify_relations_str, \
+    tree2string_plain, tree2string_loct, \
+    tree2string_lct, tree2string_grct
 
 OP = '['
 CP = ']'
@@ -19,6 +20,7 @@ def process_treebank_sample(input_files, output_path,
   print(representation)
   print(simple_relations)
   res_list = []
+  sample_relations = set()
   for input_file in input_files:
     with open(input_file, 'r') as file:
         content = file.read()
@@ -30,6 +32,7 @@ def process_treebank_sample(input_files, output_path,
                 simplify_relations(tree)
 
         sentences = parse(content)
+        sample_relations |= { (simplify_relations_str(t['deprel']) if simple_relations else t['deprel']) for tree in sentences for t in tree }
 
         for i in range(len(trees)):
             str_input = tree2string_plain(sentences[i])
@@ -62,6 +65,8 @@ def process_treebank_sample(input_files, output_path,
   del res_list
   for _ in range(3):
       gc.collect()
+
+  return sample_relations
   
 random.seed(23)
 
@@ -80,11 +85,18 @@ for representation in config["formats"]:
         input_directory = args.prefix + "/" + treebank_info["input_directory"] # TODO: "/"
         output_directory = args.prefix + "/" + treebank_info["output_directory"]
         prefix = treebank_info["prefix"]
+        relations = set()
         for sample in ["train", "dev", "test"]:
             input_files = [f"{input_directory}/{samp}"
                 for samp in treebank_info[sample]]
             output_path = f"{output_directory}/{prefix}_{representation}_{sample}.json"
     
-            process_treebank_sample(input_files, output_path,
+            sample_relations = process_treebank_sample(input_files, output_path,
                 representation, simple_relations)
+            relations |= sample_relations
+        print(prefix)
+        print(relations)
+        rel_path = f"{output_directory}/{prefix}_{representation}_relations.yaml"
+        with open(rel_path, 'w', encoding='utf-8') as rel_file:
+            yaml.dump(sorted(list(relations)), rel_file, allow_unicode=True, default_flow_style=False)
 

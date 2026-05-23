@@ -14,8 +14,11 @@ def print_tree(node, tab = ""):
     for child in node.children:
         print_tree(child, tab=tab+"\t")
 
+def simplify_relations_str(relation):
+    return relation.split(":")[0]
+
 def simplify_relations(node):
-    node.token["deprel"] = node.token["deprel"].split(":")[0]
+    node.token["deprel"] = simplify_relations_str(node.token["deprel"])
     for child in node.children:
         simplify_relations(child)
 

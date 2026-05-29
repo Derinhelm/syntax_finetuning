@@ -1,7 +1,7 @@
 import copy
 
 def delete_point_nodes(sent_dict):
-    return [t for t in sent_dict if "." not in t["id"]]
+    return [t for t in sent_dict if "." not in t["id"] and "-" not in t["id"]]
 
 def shift_token_id(tokens_param):
     tokens = copy.deepcopy(tokens_param)

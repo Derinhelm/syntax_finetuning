@@ -46,3 +46,4 @@ class InferenceParameters:
         self.model_name = None
         self.model_parameters = None
         self.treebank_parameters = None
+        self.prompt_name = None

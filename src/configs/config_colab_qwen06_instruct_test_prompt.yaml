@@ -1,0 +1,26 @@
+dataset_config:
+  train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_train.json
+  dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_dev.json
+  test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_grct_test.json
+  conll_test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd_grct_test/test_conll_test.conllu
+  # conll_test_file_path is used for metric evaluation 
+  treebank_repr: grct
+  treebank: gsd_test_grct
+inference_models:
+  - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
+    peft_model_id: Derinhelm/RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    is_instruct: True
+    name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    model_library: vllm
+    max_tokens: 5000
+root_output_dir_path: /content/results/only_test
+inference:
+    prompt_name: prompt2
+    seed:
+        - 1000
+        - 2000
+    model_parameters:
+        - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    treebank_parameters:
+        - treebank_name: gsd_test_grct
+          index_finish: 30

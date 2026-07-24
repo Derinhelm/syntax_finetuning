@@ -1,3 +1,5 @@
+import importlib
+
 import transformers
 import torch
 
@@ -5,12 +7,24 @@ from tokenize_functions import BaseTokenizer, InstructTokenizer
 from inference_functions.vllm_creating_logit_processor import create_logit_processor
 
 class LLMInferencer:
-    def __init__(self, original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens, logit_parameters):
-        self.model_library = model_library        
+    def __init__(self, original_model_id, peft_model_id, is_instruct,
+                 seed, model_library, max_tokens, logit_parameters, prompt_name):
+        self.model_library = model_library    
         if is_instruct:
             self.tokenizer = InstructTokenizer(original_model_id)
         else:
             self.tokenizer = BaseTokenizer(original_model_id)
+
+        if prompt_name is not None:
+            module_name = "inference_functions.prompt_creating.prompt_functions"
+            module = importlib.import_module(module_name)
+            if hasattr(module, prompt_name):
+                self.prompt_fun = getattr(module, prompt_name)
+            else:
+                print(f"No prompt function {prompt_name}")
+                self.prompt_fun = lambda input_text_param, _: input_text_param
+        else:
+            self.prompt_fun = lambda input_text_param, _: input_text_param
 
         if model_library == "transformers":
             from inference_functions.transformers_model import TransformersModel
@@ -26,7 +40,11 @@ class LLMInferencer:
         else:
             print(f"Error model_library:{model_library}")
 
-    def get_llm_output(self, input_text, input_tokens):
+    def get_llm_output(self, input_text_param, input_tokens):
+        input_text = self.prompt_fun(input_text_param, input_tokens)
+        print(f"Creating prompt.\n\ninput_text_param:{input_text_param}",
+              f"input_tokens:{input_tokens}\n",
+              f"After prompt:{input_text}", sep="\n")
         inputs = self.tokenizer.encode_input(input_text)
         input_ids = inputs['input_ids']
         if input_ids[-1] == self.tokenizer.tokenizer.eos_token_id:

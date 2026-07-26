@@ -1,3 +1,4 @@
+import copy
 import signal
 
 from vllm import LLM, SamplingParams, TokensPrompt
@@ -51,12 +52,13 @@ class VllmModel:
             lora_request = None
             print("No LoRA")
         if self.stop_prefix is not None:
+            prefix_sampling_params = copy.deepcopy(sampling_params)
+            prefix_sampling_params.stop=[self.stop_prefix]
+            prefix_sampling_params.include_stop_str_in_output=True
             prefix_outputs = self.llm.generate(
                 [tokens_prompt],
-                sampling_params=sampling_params,
+                sampling_params=prefix_sampling_params,
                 lora_request=lora_request,
-                stop=[self.stop_prefix],
-                include_stop_str_in_output=True,
                 )
             prefix_ids = list(prefix_outputs[0].outputs[0].token_ids)
         else:

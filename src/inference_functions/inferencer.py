@@ -8,7 +8,8 @@ from inference_functions.vllm_creating_logit_processor import create_logit_proce
 
 class LLMInferencer:
     def __init__(self, original_model_id, peft_model_id, is_instruct,
-                 seed, model_library, max_tokens, logit_parameters, prompt_name):
+                 seed, model_library, max_tokens, logit_parameters,
+                 prompt_name, stop_prefix):
         self.model_library = model_library    
         if is_instruct:
             self.tokenizer = InstructTokenizer(original_model_id)
@@ -36,7 +37,8 @@ class LLMInferencer:
                logit_processor = create_logit_processor(logit_parameters, self.tokenizer.tokenizer)
             else:
                logit_processor = None
-            self.model = VllmModel(original_model_id, peft_model_id, seed, max_tokens, logit_processor)
+            self.model = VllmModel(original_model_id, peft_model_id,
+                seed, max_tokens, logit_processor, stop_prefix)
         else:
             print(f"Error model_library:{model_library}")
 

@@ -9,7 +9,8 @@ def timeout_handler(signum, frame): # TODO: - убрать дублирован�
 
 
 class VllmModel:
-    def __init__(self, original_model_id, peft_model_id, seed, max_tokens, logit_processor):
+    def __init__(self, original_model_id, peft_model_id, seed, max_tokens,
+                 logit_processor, stop_prefix):
         # peft_model_id should be a path to directory with lora adapter
         self.llm = LLM(
             seed=seed,
@@ -25,6 +26,8 @@ class VllmModel:
         self.max_tokens = max_tokens
         self.peft_model_id = peft_model_id # TODO
         self.logit_processor = logit_processor
+        self.stop_prefix = stop_prefix
+        print(f"stop_prefix: {stop_prefix}")
         signal.signal(signal.SIGALRM, timeout_handler)
 
     def create_output(self, input_ids, input_tokens):
@@ -47,14 +50,26 @@ class VllmModel:
         else:
             lora_request = None
             print("No LoRA")
+        if self.stop_prefix is not None:
+            prefix_outputs = self.llm.generate(
+                [tokens_prompt],
+                sampling_params=sampling_params,
+                lora_request=lora_request,
+                stop=[self.stop_prefix],
+                include_stop_str_in_output=True,
+                )
+            prefix_ids = list(prefix_outputs[0].outputs[0].token_ids)
+        else:
+            prefix_ids = [] 
+
         outputs = self.llm.generate(
-           [tokens_prompt],
+           [tokens_prompt] + prefix_ids,
            sampling_params=sampling_params,
            lora_request=lora_request,
         )
         signal.alarm(0)
         extra_info = list(outputs[0].outputs[0].token_ids)
-        full_output_ids = outputs[0].prompt_token_ids + list(outputs[0].outputs[0].token_ids)
+        full_output_ids = outputs[0].prompt_token_ids + prefix_ids + list(outputs[0].outputs[0].token_ids)
         result_ids = list(outputs[0].outputs[0].token_ids)
         if result_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
             result_ids = result_ids[:-1]

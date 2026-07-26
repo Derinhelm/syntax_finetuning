@@ -61,11 +61,14 @@ class VllmModel:
                 lora_request=lora_request,
                 )
             prefix_ids = list(prefix_outputs[0].outputs[0].token_ids)
+            tokens_prompt_with_prefix = TokensPrompt(
+                prompt_token_ids=input_ids + prefix_ids)
         else:
             prefix_ids = [] 
+            tokens_prompt_with_prefix = tokens_prompt
 
         outputs = self.llm.generate(
-           [tokens_prompt] + prefix_ids,
+           [tokens_prompt_with_prefix],
            sampling_params=sampling_params,
            lora_request=lora_request,
         )

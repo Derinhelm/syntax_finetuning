@@ -50,6 +50,10 @@ class TransformersModel:
                 early_stopping=True,  # Останавливает генерацию при первом eos_token
             )
 
-        output_ids = gen_outputs[0]
+        full_output_ids = gen_outputs[0]
+
+        result_ids = full_output_ids[len(original_input_ids):]
+        if result_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
+            result_ids = result_ids[:-1]
         extra_info = None
-        return output_ids, extra_info
+        return full_output_ids, result_ids, extra_info

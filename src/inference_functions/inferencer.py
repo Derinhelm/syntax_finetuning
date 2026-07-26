@@ -49,11 +49,9 @@ class LLMInferencer:
         input_ids = inputs['input_ids']
         if input_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
             input_ids = input_ids[:-1]
-        output, extra_info = self.model.create_output(input_ids, input_tokens)
-        full_output = self.tokenizer.tokenizer.decode(output)
-        result_ids = output[len(input_ids):]
-        if result_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
-            result_ids = result_ids[:-1]
+        full_output_ids, result_ids, extra_info = \
+            self.model.create_output(input_ids, input_tokens)
+        full_output = self.tokenizer.tokenizer.decode(full_output_ids)
         result = self.tokenizer.decode(result_ids).rstrip().lstrip()
         token_amount = (len(input_ids), len(result_ids))
         return result, full_output, token_amount, extra_info

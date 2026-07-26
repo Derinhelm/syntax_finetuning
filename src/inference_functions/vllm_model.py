@@ -54,4 +54,8 @@ class VllmModel:
         )
         signal.alarm(0)
         extra_info = list(outputs[0].outputs[0].token_ids)
-        return outputs[0].prompt_token_ids + list(outputs[0].outputs[0].token_ids), extra_info
+        full_output_ids = outputs[0].prompt_token_ids + list(outputs[0].outputs[0].token_ids)
+        result_ids = list(outputs[0].outputs[0].token_ids)
+        if result_ids[-1] == self.tokenizer.tokenizer.eos_token_id:
+            result_ids = result_ids[:-1]
+        return full_output_ids, result_ids, extra_info

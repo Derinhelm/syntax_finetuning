@@ -17,7 +17,7 @@ class VllmModel:
             max_seq_len_to_capture=4096, # TODO
             max_model_len=4096,
             dtype=torch.float16,
-            enable_lora=True,
+            enable_lora=peft_model_id is not None,
             skip_tokenizer_init=True,
             enforce_eager=True, # Для воспроизводимости
         )
@@ -42,10 +42,15 @@ class VllmModel:
         self.llm.llm_engine.scheduler[0].waiting.clear()  # Очистить ожидающие
         self.llm.llm_engine.scheduler[0].running.clear()  # Очистить выполняющиеся
         self.llm.llm_engine.scheduler[0].swapped.clear()  # Очистить swap
+        if self.peft_model_id is not None:
+            lora_request = LoRARequest("lora_adapter", 1, self.peft_model_id)
+        else:
+            lora_request = None
+            print("No LoRA")
         outputs = self.llm.generate(
            [tokens_prompt],
            sampling_params=sampling_params,
-           lora_request=LoRARequest("lora_adapter", 1, self.peft_model_id),
+           lora_request=lora_request,
         )
         signal.alarm(0)
         extra_info = list(outputs[0].outputs[0].token_ids)

@@ -134,7 +134,15 @@ def start_inference_experiment(exp):
     seed = exp['cur_parameters'].seed
     prompt_name = exp['cur_parameters'].prompt_name
 
-    result_path = f"{exp['root_output_dir_path']}/{model_config.adapter_name}_{dataset_name}_{seed}_{logits_name}_{model_config.inference_experiment_i}.jsonl"
+    exp_name = ""
+    if model_config.adapter_name is not None:
+        exp_name += f"{model_config.adapter_name}_"
+    else:
+        exp_name += f"{model_config.original_model_id}_"
+    exp_name += f"{dataset_name}_{seed}_{logits_name}_{model_config.inference_experiment_i}"
+    exp_name = exp_name.replace("/", "_")
+
+    result_path = f"{exp['root_output_dir_path']}/{exp_name}.jsonl"
     parser = Parser(model_config.original_model_id,
         model_config.peft_model_id, model_config.is_instruct,
         dataset_repr, seed, model_config.model_library, model_config.max_tokens,

@@ -48,7 +48,7 @@ def finetuning_main():
         if "peft_model_id" in model_config: # TODO: может не быть для слитного ft + inf
             model_config['adapter_name'] = create_adapter_name(model_name)
             inf_models[model_name] = model_config
-        else:
+        elif "peft_group" in model_config:
             config_adapters = model_config['peft_group']
             peft_adapters = [(a, create_adapter_name(a))
                              for a in config_adapters]
@@ -57,6 +57,8 @@ def finetuning_main():
                 adapter_model_dict['peft_model_id'] = peft_model_id
                 adapter_model_dict['adapter_name'] = adapter_name
                 inf_models[model_name] = adapter_model_dict
+        else:
+            inf_models[model_name] = model_config
 
     inf_experiments = create_inference_experiments(configs,
         inf_models, datasets)

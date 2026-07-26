@@ -8,11 +8,11 @@ dataset_config:
   treebank: gsd_test_grct
 inference_models:
   - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
-    peft_model_id: Derinhelm/RuadaptQwen3_4B_Hybrid_syntagrus_grct
     is_instruct: True
     name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     model_library: vllm
     max_tokens: 5000
+    representation_type_result: conll_short
 root_output_dir_path: /content/results/only_test
 inference:
     prompt_name: prompt2

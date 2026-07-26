@@ -45,7 +45,7 @@ def evaluate_one_experiment(gold_sentences, pred_filename,
 
     assert len(gold_sentences) == len(pred_trees)
 
-    expir_res_uas, expir_res_las = [], []
+    expir_res_uas, expir_res_las, expir_res_coeffs = [], [], []
     pred_trees_dict = {tree['index']:tree for tree in pred_trees}
     assert len(pred_trees_dict) == len(pred_trees)
     for sent_i, sent_r in enumerate(gold_sentences):
@@ -59,17 +59,18 @@ def evaluate_one_experiment(gold_sentences, pred_filename,
                 gold_tree = preprocess_tree(gold_tree)
                 pred_tree = preprocess_tree(
                     pred_trees_dict[sent_i]["pred_tree"])
-                sent_uas, sent_las = create_statistics(gold_text, gold_tree,
-                    pred_tree, metric_type)
+                sent_uas, sent_las, sent_coeff_dict = create_statistics(
+                    gold_text, gold_tree, pred_tree, metric_type)
             else: # Предложение с некорректным результатом
-                sent_uas, sent_las = None, None
+                sent_uas, sent_las, sent_coeff_dict = None, None, None
 
         except Exception as e:
             print(sent_i, e)
-            sent_uas, sent_las = None, None
+            sent_uas, sent_las, sent_coeff_dict = None, None, None
         expir_res_uas.append(sent_uas)
         expir_res_las.append(sent_las)
+        expir_res_coeffs.append(sent_coeff_dict)
 
     del pred_trees
     gc.collect()
-    return expir_res_uas, expir_res_las
+    return expir_res_uas, expir_res_las, expir_res_coeffs

@@ -15,9 +15,10 @@ inference_models:
     representation_type_result: conll_short
 root_output_dir_path: /content/results/only_test
 inference:
-    prompt_name: prompt3
-    stop_prefix: |
-      Результат:
+    prompt_name: prompt2
+    #prompt_name: prompt3
+    #stop_prefix: |
+    #  Результат:
     seed:
         - 1000
         - 2000

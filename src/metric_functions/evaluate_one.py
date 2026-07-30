@@ -10,9 +10,9 @@ def calculate_mean_metrics(uas_metrics, las_metrics):
     good_uas = [r for r in uas_metrics if r is not None]
     good_las = [r for r in las_metrics if r is not None]
     mean_res = {}
-    mean_res["uas_right"] = sum(good_uas) / len(good_uas)
+    mean_res["uas_right"] = sum(good_uas) / len(good_uas) if len(good_uas) > 0 else 0
     mean_res["uas_all"] = sum(good_uas) / len(uas_metrics)
-    mean_res["las_right"] = sum(good_las) / len(good_las)
+    mean_res["las_right"] = sum(good_las) / len(good_las) if len(good_las) > 0 else 0
     mean_res["las_all"] = sum(good_las) / len(las_metrics)
     mean_res["wrong_amount"] = len(uas_metrics) - len(good_uas)
     mean_res["all_amount"] = len(uas_metrics)

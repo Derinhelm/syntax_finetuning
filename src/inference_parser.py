@@ -140,10 +140,13 @@ def start_inference_experiment(exp):
 
     exp_name = ""
     if model_config.adapter_name is not None:
-        exp_name += f"{model_config.adapter_name}_"
+        exp_name += f"{model_config.adapter_name}"
     else:
-        exp_name += f"{model_config.original_model_id}_"
-    exp_name += f"{dataset_name}_{seed}_{logits_name}_{model_config.inference_experiment_i}"
+        exp_name += f"{model_config.original_model_id}"
+    exp_name += f"_{dataset_name}"
+    if prompt_name is not None:
+        exp_name += f"_{prompt_name}"
+    exp_name += f"_{seed}_{logits_name}_{model_config.inference_experiment_i}"
     exp_name = exp_name.replace("/", "_")
 
     result_path = f"{exp['root_output_dir_path']}/{exp_name}.jsonl"

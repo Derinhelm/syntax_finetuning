@@ -9,7 +9,7 @@ class TreeDecoderConllShort:
             lines = answer_output.strip().split("\n")
             output = [re.split(r'\s+', line.strip())
                 for line in lines]
-            output = [line for line in output if len(output) == 4]
+            output = [line for line in output if len(line) == 4]
             res = [ { "id": line[0], "form": line[1],
                   "parent_id": line[2], "relation": line[3]
                 } for line in output] # TODO: не рассматриваются случаи, когда form - из несколько слов (не очень хороший, но может быть)

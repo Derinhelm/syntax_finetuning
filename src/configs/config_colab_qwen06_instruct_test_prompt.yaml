@@ -9,21 +9,34 @@ dataset_config:
 inference_models:
   - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
     is_instruct: True
-    name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
+    name: RuadaptQwen3_4B_Hybrid_syntagrus_grct_conll_short
     model_library: vllm
     max_tokens: 5000
     representation_type_result: conll_short
+  - original_model_id: RefalMachine/RuadaptQwen3-4B-Hybrid
+    is_instruct: True
+    name: RuadaptQwen3_4B_Hybrid_syntagrus_grct_conll
+    model_library: vllm
+    max_tokens: 5000
+    representation_type_result: conll
 root_output_dir_path: /content/results/only_test
 inference:
-    prompt_name: prompt2
+  - prompt_name: prompt_short_1
     #prompt_name: prompt3
     #stop_prefix: |
     #  Результат:
     seed:
         - 1000
-        - 2000
     model_parameters:
-        - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
+        - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct_conll_short
+    treebank_parameters:
+        - treebank_name: gsd_test_grct
+          index_finish: 30
+  - prompt_name: prompt_full_1
+    seed:
+        - 1000
+    model_parameters:
+        - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct_conll
     treebank_parameters:
         - treebank_name: gsd_test_grct
           index_finish: 30

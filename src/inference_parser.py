@@ -13,6 +13,9 @@ def create_decoder(representation_type):
     if representation_type == "conll_short":
         from inference_functions.tree_decoder_conll_short import TreeDecoderConllShort
         return TreeDecoderConllShort(representation_type)
+    elif representation_type == "conll":
+        from inference_functions.tree_decoder_conll import TreeDecoderConll
+        return TreeDecoderConll(representation_type)
     else:
         from inference_functions.tree_decoder import TreeDecoder
         return TreeDecoder(representation_type)

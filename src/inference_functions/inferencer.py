@@ -44,9 +44,9 @@ class LLMInferencer:
 
     def get_llm_output(self, input_text_param, input_tokens):
         input_text = self.prompt_fun(input_text_param, input_tokens)
-        print(f"Creating prompt.\n\ninput_text_param:{input_text_param}",
-              f"input_tokens:{input_tokens}\n",
-              f"After prompt:{input_text}", sep="\n")
+        #print(f"Creating prompt.\n\ninput_text_param:{input_text_param}",
+        #      f"input_tokens:{input_tokens}\n",
+        #      f"After prompt:{input_text}", sep="\n")
         inputs = self.tokenizer.encode_input(input_text)
         input_ids = inputs['input_ids']
         if input_ids[-1] == self.tokenizer.tokenizer.eos_token_id:

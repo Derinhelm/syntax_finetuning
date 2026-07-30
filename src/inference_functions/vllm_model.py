@@ -13,13 +13,15 @@ class VllmModel:
     def __init__(self, original_model_id, peft_model_id, seed, max_tokens,
                  logit_processor, stop_prefix):
         # peft_model_id should be a path to directory with lora adapter
+        enable_lora = peft_model_id is not None
+        print(f"enable_lora: {enable_lora}")
         self.llm = LLM(
             seed=seed,
             model=original_model_id,
             max_seq_len_to_capture=4096, # TODO
             max_model_len=4096,
             dtype=torch.float16,
-            enable_lora=peft_model_id is not None,
+            enable_lora=enable_lora,
             skip_tokenizer_init=True,
             enforce_eager=True, # Для воспроизводимости
         )
@@ -50,7 +52,6 @@ class VllmModel:
             lora_request = LoRARequest("lora_adapter", 1, self.peft_model_id)
         else:
             lora_request = None
-            print("No LoRA")
         if self.stop_prefix is not None:
             prefix_sampling_params = copy.deepcopy(sampling_params)
             prefix_sampling_params.stop=[self.stop_prefix]

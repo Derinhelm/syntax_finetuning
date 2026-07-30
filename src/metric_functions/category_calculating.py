@@ -60,9 +60,13 @@ def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
     g_p_h_m_not_r = uas_numerator - las_numerator
     g_p_h_not_m = gold_len - g_not_p - g_p_not_h - g_p_h_m_r  - g_p_h_m_not_r
 
-    tok_coeff = 1 / (1 + (g_not_p + p_not_g + 2 * g_p_not_h) / (2 * (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)))
-    unlab_coeff = (g_p_h_m_not_r + g_p_h_m_r) / (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)
-    lab_coeff = g_p_h_m_r / (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)
+    if g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r != 0:
+        tok_coeff = 1 / (1 + (g_not_p + p_not_g + 2 * g_p_not_h) / (2 * (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)))
+        unlab_coeff = (g_p_h_m_not_r + g_p_h_m_r) / (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)
+        lab_coeff = g_p_h_m_r / (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)
+    else:
+        tok_coeff = 0
+        unlab_coeff, lab_coeff = None, None
 
     coeff_dict = { "tok_coeff": tok_coeff, "unlab_coeff": unlab_coeff, "lab_coeff": lab_coeff}
 

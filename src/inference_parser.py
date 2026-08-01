@@ -23,7 +23,9 @@ def create_decoder(representation_type):
 class Parser:
     def __init__(self, original_model_id, peft_model_id,
                  is_instruct, representation_type, seed, model_library, max_tokens,
-                 representation_type_result, logit_parameters, prompt_name, stop_prefix):
+                 representation_type_result,
+                 sampling_params,
+                 logit_parameters, prompt_name, stop_prefix):
         if model_library == "guidance":
            from inference_functions.inferencer_guidance import LLMInferencerGuidance
            self.llm = LLMInferencerGuidance(original_model_id, peft_model_id, is_instruct, seed, model_library, max_tokens)
@@ -36,7 +38,9 @@ class Parser:
         else:
            from inference_functions.inferencer import LLMInferencer
            self.llm = LLMInferencer(original_model_id, peft_model_id, is_instruct, seed,
-                                    model_library, max_tokens, logit_parameters,
+                                    model_library, max_tokens,
+                                    sampling_params,
+                                    logit_parameters,
                                     prompt_name, stop_prefix)
         self.tree_decoder = create_decoder(representation_type)
         if representation_type_result is not None:
@@ -137,6 +141,7 @@ def start_inference_experiment(exp):
     seed = exp['cur_parameters'].seed
     prompt_name = exp['cur_parameters'].prompt_name
     stop_prefix = exp['cur_parameters'].stop_prefix
+    sampling_params = exp['cur_parameters'].sampling_params
 
     exp_name = ""
     if model_config.adapter_name is not None:
@@ -154,6 +159,7 @@ def start_inference_experiment(exp):
         model_config.peft_model_id, model_config.is_instruct,
         dataset_repr, seed, model_config.model_library, model_config.max_tokens,
         model_config.representation_type_result,
+        sampling_params,
         logit_parameters=logit_params, prompt_name=prompt_name,
         stop_prefix=stop_prefix)
     inference_dataset(parser, dataset_path, result_path, index_predicate)

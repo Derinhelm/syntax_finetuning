@@ -22,6 +22,7 @@ inference_models:
 root_output_dir_path: /content/results/only_test
 inference:
   - prompt_name: prompt_short_1
+    sampling_params: { "temperature": 0.3, "top_p": 0.9, "top_k": 40, "max_tokens": 2048, "repetition_penalty": 1.0, "seed": 42 }
     #prompt_name: prompt3
     #stop_prefix: |
     #  Результат:

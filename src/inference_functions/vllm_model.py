@@ -10,8 +10,9 @@ def timeout_handler(signum, frame): # TODO: - убрать дублирован�
 
 
 class VllmModel:
-    def __init__(self, original_model_id, peft_model_id, seed, max_tokens,
-                 logit_processor, stop_prefix):
+    def __init__(self, original_model_id, peft_model_id, sampling_params,
+                seed, max_tokens,
+                logit_processor, stop_prefix):
         # peft_model_id should be a path to directory with lora adapter
         enable_lora = peft_model_id is not None
         print(f"enable_lora: {enable_lora}")
@@ -26,7 +27,9 @@ class VllmModel:
             enforce_eager=True, # Для воспроизводимости
         )
         self.seed = seed
-        self.max_tokens = max_tokens
+        self.max_tokens = max_tokens # TODO: В sampling_params
+        self.sampling_params_info = sampling_params
+        print(f"sampling_params: {sampling_params}")
         self.peft_model_id = peft_model_id # TODO
         self.logit_processor = logit_processor
         self.stop_prefix = stop_prefix
@@ -44,6 +47,9 @@ class VllmModel:
             seed=self.seed,
             logits_processors = [self.logit_processor] if self.logit_processor is not None else None
         )
+        for k, v in self.sampling_params_info.items():
+            sampling_params.__setattr__(k, v)
+
         signal.alarm(120)
         self.llm.llm_engine.scheduler[0].waiting.clear()  # Очистить ожидающие
         self.llm.llm_engine.scheduler[0].running.clear()  # Очистить выполняющиеся

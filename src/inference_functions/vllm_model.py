@@ -47,8 +47,9 @@ class VllmModel:
             seed=self.seed,
             logits_processors = [self.logit_processor] if self.logit_processor is not None else None
         )
-        for k, v in self.sampling_params_info.items():
-            sampling_params.__setattr__(k, v)
+        if self.sampling_params_info is not None:
+            for k, v in self.sampling_params_info.items():
+                sampling_params.__setattr__(k, v)
 
         signal.alarm(120)
         self.llm.llm_engine.scheduler[0].waiting.clear()  # Очистить ожидающие

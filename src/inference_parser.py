@@ -86,10 +86,7 @@ def get_prepared_data(result_filepath, index_predicate_param):
         print(f"Creating {result_filepath}")
     return index_predicate
 
-def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
-    index_predicate = get_prepared_data(result_filepath, index_predicate_param)
-    with open(filepath, 'r') as f:
-        data = json.load(f)
+def inference_dataset(parser, result_filepath, index_predicate, data):
     res = []
     ts = time.time()
     last_unsaved_i = 0
@@ -159,6 +156,10 @@ def start_inference_experiment(exp):
     exp_name = exp_name.replace("/", "_")
 
     result_path = f"{exp['root_output_dir_path']}/{exp_name}.jsonl"
+    index_predicate = get_prepared_data(result_path, index_predicate)
+    with open(dataset_path, 'r') as f:
+        data = json.load(f)
+
     parser = Parser(model_config.original_model_id,
         model_config.peft_model_id, model_config.is_instruct,
         dataset_repr, seed, model_config.model_library, model_config.max_tokens,
@@ -166,7 +167,7 @@ def start_inference_experiment(exp):
         sampling_params,
         logit_parameters=logit_params, prompt_name=prompt_name,
         stop_prefix=stop_prefix)
-    inference_dataset(parser, dataset_path, result_path, index_predicate)
+    inference_dataset(parser, result_path, index_predicate, data)
     parser.clear()
     del parser
     for _ in range(3):

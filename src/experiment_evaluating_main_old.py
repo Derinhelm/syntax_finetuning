@@ -40,7 +40,8 @@ if __name__ == "__main__":
         try:
             expir_res_uas, expir_res_las, expir_res_coeffs = evaluate_one_experiment(
                 gold_sentences, pred_filename, pred_format, metric_type)
-            mean_res = calculate_mean_metrics(expir_res_uas, expir_res_las)
+            mean_res = calculate_mean_metrics(expir_res_uas,
+                expir_res_las, expir_res_coeffs)
             print(f"UAS: {mean_res['uas_right'] * 100:.2f}% ({mean_res['uas_all'] * 100:.2f}%), " +
                 f"LAS: {mean_res['las_right'] * 100:.2f}% ({mean_res['las_all'] * 100:.2f}%)")
             print(mean_res['wrong_amount'], mean_res['all_amount'])#len(bad_las))

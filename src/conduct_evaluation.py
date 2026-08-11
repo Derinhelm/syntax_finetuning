@@ -21,7 +21,8 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path, metr
         
         short_filename = metric_path.split("/")[-1].split(".")[0]
         results = {}
-        results[f"{short_filename}_mean"] = calculate_mean_metrics(expir_res_uas, expir_res_las)
+        results[f"{short_filename}_mean"] = calculate_mean_metrics(expir_res_uas,
+            expir_res_las, expir_res_coeffs)
         results[f"{short_filename}_uas"] = expir_res_uas
         results[f"{short_filename}_las"] = expir_res_las
         results[f"{short_filename}_coeffs"] = expir_res_coeffs

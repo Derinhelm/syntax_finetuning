@@ -6,7 +6,7 @@ from metric_functions.category_calculating \
 from metric_functions.data_preparing import preprocess_tree
 
 
-def calculate_mean_metrics(uas_metrics, las_metrics):
+def calculate_mean_metrics(uas_metrics, las_metrics, coeffs):
     good_uas = [r for r in uas_metrics if r is not None]
     good_las = [r for r in las_metrics if r is not None]
     mean_res = {}
@@ -16,6 +16,17 @@ def calculate_mean_metrics(uas_metrics, las_metrics):
     mean_res["las_all"] = sum(good_las) / len(las_metrics)
     mean_res["wrong_amount"] = len(uas_metrics) - len(good_uas)
     mean_res["all_amount"] = len(uas_metrics)
+
+    token_coeffs = [c_dict["tok_coeff"] for c_dict in coeffs]
+    uas_parser_coeffs = [c_dict["unlab_coeff"] if c_dict["unlab_coeff"] is not None else 0
+                    for c_dict in coeffs]
+    las_parser_coeffs = [c_dict["lab_coeff"] if c_dict["lab_coeff"] is not None else 0
+                    for c_dict in coeffs]
+
+    mean_res["mean_tok_coeffs"] = sum(token_coeffs) / len(token_coeffs)
+    mean_res["mean_uas_coeffs"] = sum(uas_parser_coeffs) / len(uas_parser_coeffs)
+    mean_res["mean_las_coeffs"] = sum(las_parser_coeffs) / len(las_parser_coeffs)
+
     return mean_res
 
 

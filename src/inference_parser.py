@@ -86,26 +86,26 @@ def get_prepared_data(result_filepath, index_predicate_param):
         print(f"Creating {result_filepath}")
     return index_predicate
 
-def inference_dataset(parser, result_filepath, index_predicate, data):
+def inference_dataset(parser, result_filepath, not_ready_data, data_amount):
     res = []
     ts = time.time()
     last_unsaved_i = 0
-    for d_i, d in enumerate(data):
-        if index_predicate(d['index']):
-            new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
-            new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'], False)
-            print(new_d['gold_tree'])
-            input_tokens = [t['form'] for t in new_d['gold_tree']
-                if '.' not in t['id']]
-            llm_output, full_output, pred_tree, llm_time, token_amount, extra_info = parser.parse(d['input'], input_tokens)
-            new_d['pred_output'] = llm_output
-            new_d['full_pred_output'] = full_output
-            new_d['pred_tree'] = pred_tree
-            new_d['llm_time'] = llm_time
-            new_d['input_tokens'], new_d['output_tokens'] = token_amount
-            new_d['extra_info'] = extra_info
-            res.append(new_d)
-            print(f"{d_i}/{len(data)}. {time.time() - ts}")
+    for d_i, d in enumerate(not_ready_data):
+        new_d = { 'index': d['index'], 'input': d['input'], 'gold_output': d['output']}
+        new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'], False)
+        print(new_d['gold_tree'])
+        input_tokens = [t['form'] for t in new_d['gold_tree']
+            if '.' not in t['id']]
+        llm_output, full_output, pred_tree, llm_time, token_amount, extra_info = \
+            parser.parse(d['input'], input_tokens)
+        new_d['pred_output'] = llm_output
+        new_d['full_pred_output'] = full_output
+        new_d['pred_tree'] = pred_tree
+        new_d['llm_time'] = llm_time
+        new_d['input_tokens'], new_d['output_tokens'] = token_amount
+        new_d['extra_info'] = extra_info
+        res.append(new_d)
+        print(f"{d_i}/{data_amount}. {time.time() - ts}")
         if len(res) - last_unsaved_i >= 5:
             with open(result_filepath, 'a', encoding='utf-8') as json_file:
                 for s_i in range(last_unsaved_i, len(res)):
@@ -159,18 +159,21 @@ def start_inference_experiment(exp):
     index_predicate = get_prepared_data(result_path, index_predicate)
     with open(dataset_path, 'r') as f:
         data = json.load(f)
+    data_amount = len(data)
+    not_ready_data = [d for d in data if index_predicate(d)]
 
-    parser = Parser(model_config.original_model_id,
-        model_config.peft_model_id, model_config.is_instruct,
-        dataset_repr, seed, model_config.model_library, model_config.max_tokens,
-        model_config.representation_type_result,
-        sampling_params,
-        logit_parameters=logit_params, prompt_name=prompt_name,
-        stop_prefix=stop_prefix)
-    inference_dataset(parser, result_path, index_predicate, data)
-    parser.clear()
-    del parser
-    for _ in range(3):
-        gc.collect() # Сборка мусора для удаления
-    torch.cuda.empty_cache()
+    if len(not_ready_data) != 0:
+        parser = Parser(model_config.original_model_id,
+            model_config.peft_model_id, model_config.is_instruct,
+            dataset_repr, seed, model_config.model_library, model_config.max_tokens,
+            model_config.representation_type_result,
+            sampling_params,
+            logit_parameters=logit_params, prompt_name=prompt_name,
+            stop_prefix=stop_prefix)
+        inference_dataset(parser, result_path, not_ready_data, data_amount)
+        parser.clear()
+        del parser
+        for _ in range(3):
+            gc.collect() # Сборка мусора для удаления
+        torch.cuda.empty_cache()
     return result_path

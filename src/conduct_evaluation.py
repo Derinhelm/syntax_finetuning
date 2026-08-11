@@ -13,8 +13,11 @@ def conduct_evaluation(output_experiment_path, dataset_config, result_path, metr
             content = file.read()
         gold_sentences = parse(content)
 
+        metric_format = metric["format"]
+        metric_type = metric["metric_type"]
+
         expir_res_uas, expir_res_las, expir_res_coeffs = evaluate_one_experiment(
-            gold_sentences, result_path, "jsonl", "difference_easy")
+            gold_sentences, result_path, metric_format, metric_type)
         
         short_filename = metric_path.split("/")[-1].split(".")[0]
         results = {}

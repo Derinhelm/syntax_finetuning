@@ -67,7 +67,7 @@ class Parser:
             del self.tree_decoder_result
         del self.tree_decoder
 
-def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
+def get_prepared_data(result_filepath, index_predicate_param):
     try:
         with open(result_filepath, 'r') as f:
             ready_indexes = set()
@@ -84,6 +84,10 @@ def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
             pass # Creating file, if not exist
         index_predicate = index_predicate_param
         print(f"Creating {result_filepath}")
+    return index_predicate
+
+def inference_dataset(parser, filepath, result_filepath, index_predicate_param):
+    index_predicate = get_prepared_data(result_filepath, index_predicate_param)
     with open(filepath, 'r') as f:
         data = json.load(f)
     res = []

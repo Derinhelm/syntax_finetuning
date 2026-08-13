@@ -11,7 +11,8 @@ def create_finetuning_experiments(configs, config_name,
     models, datasets):
 
     parameters = Parameters(config_name)
-    parameters.root_output_dir_path = configs['root_output_dir_path']
+    root_output_dir_path = configs['root_output_dir_path']
+    parameters.root_output_dir_path = root_output_dir_path
     parameters.output_experiment_path = parameters.root_output_dir_path
 
     if "finetuning" not in configs:
@@ -66,4 +67,4 @@ def create_finetuning_experiments(configs, config_name,
 
         os.makedirs(cur_parameters.output_experiment_path, exist_ok=True)
         experiments.append(cur_parameters)
-    return experiments
+    return experiments, root_output_dir_path

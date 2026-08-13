@@ -2,6 +2,7 @@ import argparse
 import copy
 import yaml
 
+from collecting_metrics import collect_mean_metrics
 from config_parsing import parse_field
 from config import DatasetConfig, ModelConfig
 from inference_parsing import create_inference_experiments
@@ -35,7 +36,7 @@ def finetuning_main():
     # Все treebank различны
     datasets = {d.treebank: d for d in dataset_configs}
 
-    ft_experiments = create_finetuning_experiments(configs, config_name,
+    ft_experiments, root_output_dir_path = create_finetuning_experiments(configs, config_name,
         ft_models, datasets)
     if len(ft_experiments) == 1 and ft_experiments[0].check_is_none():
         print("Creating empty ft_parameters")
@@ -72,7 +73,8 @@ def finetuning_main():
     run_all_experiments(parallel_config, ft_experiments, inf_experiments,
             function_executor, metric_list)
 
-    print("Finish")
+    collect_mean_metrics(root_output_dir_path)
+
 
 if __name__ == "__main__":
     finetuning_main()

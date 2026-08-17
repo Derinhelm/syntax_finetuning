@@ -54,7 +54,7 @@ def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
     g_not_p = len([e for e in gold_unlabeled_edges if e[0] not in pred_nodes])
     p_not_g = len([e for e in pred_unlabeled_edges if e[0] not in gold_nodes])
     g_p_not_h = len([e for e in gold_unlabeled_edges
-        if e[0] in pred_nodes and e[1] not in pred_nodes])
+        if e[0] in pred_nodes and e[1] not in pred_nodes and "root" not in e[1]])
 
     g_p_h_m_r = las_numerator
     g_p_h_m_not_r = uas_numerator - las_numerator

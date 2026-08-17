@@ -66,7 +66,7 @@ def finetuning_main():
     if inf_experiments != []:
         print(f"INFERENCE experiment amount: {len(inf_experiments)}")
 
-    default_metrics = [{"format": "jsonl", "metric_type": "difference"}]
+    default_metrics = [{"format": "jsonl", "metric_type": "difference_easy"}]
     metric_list = configs.get('metrics', default_metrics)
 
     function_executor = FineTuningExecutor() # TODO: сделать выбор

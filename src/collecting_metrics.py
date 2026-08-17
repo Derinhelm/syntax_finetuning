@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import json
 from pathlib import Path
 
@@ -90,6 +91,57 @@ def group_loss_old2(data, exp_name, m_res, m_path_str, f_table_loss):
         
         return coeff_group_uas, coeff_group_las
 
+def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss):
+        coeff_group_func_uas  =  [ (lambda tok_coeff, u, _: tok_coeff == 1, '(1, )')
+                            , (lambda tok_coeff, unlab_coeff, _: tok_coeff < 1 and unlab_coeff == 1, '(<1, 1)')
+                            , (lambda tok_coeff, unlab_coeff, _: tok_coeff < 1 and unlab_coeff >= 0.8, '(<1, >=0.8)')
+                            , (lambda tok_coeff, unlab_coeff, _: tok_coeff < 1 and unlab_coeff < 0.8, '(<1, <0.8)')
+                           ]
+        coeff_group_func_las  =  [ (lambda tok_coeff, u, _: tok_coeff == 1, '(1, )')
+                            , (lambda tok_coeff, _, lab_coeff: tok_coeff < 1 and lab_coeff == 1, '(<1, 1)')
+                            , (lambda tok_coeff, _, lab_coeff: tok_coeff < 1 and lab_coeff >= 0.8, '(<1, >=0.8)')
+                            , (lambda tok_coeff, _, lab_coeff: tok_coeff < 1 and lab_coeff < 0.8, '(<1, <0.8)')
+                           ]
+        coeff_group_uas = {x[1]: [] for x in coeff_group_func_uas}
+        coeff_group_las = {x[1]: [] for x in coeff_group_func_las}
+
+        print([x[1] for x in coeff_group_func_uas], file=f_table_loss)
+        for c_i, c in enumerate(data[f"{exp_name}_coeffs"]):
+            uas_value = data[f"{exp_name}_uas"][c_i] if data[f"{exp_name}_uas"][c_i] is not None else 0.0
+            las_value = data[f"{exp_name}_las"][c_i] if data[f"{exp_name}_las"][c_i] is not None else 0.0
+            if c is None or c["tok_coeff"] is None:
+                tok_coeff = 0.0
+                unlab_coeff = 0.0
+                lab_coeff = 0.0
+            else:
+                tok_coeff = c["tok_coeff"]
+                unlab_coeff = c["unlab_coeff"]
+                lab_coeff = c["lab_coeff"]
+            for check_f, lab in coeff_group_func_uas:
+                if check_f(tok_coeff, unlab_coeff, lab_coeff):
+                    coeff_group_uas[lab].append(uas_value)
+                    break
+
+            for check_f, lab in coeff_group_func_las:
+                if check_f(tok_coeff, unlab_coeff, lab_coeff):
+                    coeff_group_las[lab].append(las_value)
+                    break
+
+        coeff_group_uas = {k: (len(v), round(sum(v) / m_res['all_amount'], 2),
+                               round((len(v) - sum(v)) / m_res['all_amount'], 2))
+                           for k, v in coeff_group_uas.items()}
+        coeff_group_las = {k: (len(v), round(sum(v) / m_res['all_amount'], 2),
+                               round((len(v) - sum(v)) / m_res['all_amount'], 2))
+                           for k, v in coeff_group_las.items()}
+        if m_res["uas_all"] != 0:
+            print('(1, )', '(<1, 1)', '(<1, >=0.8)', '(<1, <0.8)', file=f_table_loss)
+            print(m_path_str + "\n",
+            f"{m_res['uas_all']:.2f}   ",
+            *coeff_group_uas['(1, )'],
+            *coeff_group_uas['(<1, 1)'], *coeff_group_uas['(<1, >=0.8)'], *coeff_group_uas['(<1, <0.8)'],
+            sep=" & ", end = " \\\\\n", file=f_table_loss)
+        
+        return coeff_group_uas, coeff_group_las
 
 def group_loss(data, exp_name, m_res, m_path_str, f_table_loss):
         coeff_group_uas = {"(<1, 1)": [], ("(<1, >=0.8)"): [], '(<1, <0.8)': [], '(1, )': []}
@@ -97,7 +149,7 @@ def group_loss(data, exp_name, m_res, m_path_str, f_table_loss):
         for c_i, c in enumerate(data[f"{exp_name}_coeffs"]):
             uas_value = data[f"{exp_name}_uas"][c_i] if data[f"{exp_name}_uas"][c_i] is not None else 0.0
             las_value = data[f"{exp_name}_las"][c_i] if data[f"{exp_name}_las"][c_i] is not None else 0.0
-            if c is None or c["tok_coeff"] is None:
+            if c is None or c["tok_coeff"] is None or c["unlab_coeff"] is None:
                 tok_coeff = 0.0
                 unlab_coeff = 0.0
                 lab_coeff = 0.0
@@ -159,7 +211,7 @@ def collect_mean_metrics(root_output_dir_path):
 
     mean_dict = {}
     p = Path(root_output_dir_path)
-    for m_path in p.glob(f"**/metrics_*.jsonl"):
+    for m_path in list(p.glob(f"**/metrics_*.jsonl")) + list(p.glob(f"**/**/metrics_*.jsonl")): # TODO: фиксация
         m_path_str = str(m_path)
         with open(m_path_str, 'r') as f:
             data = json.load(f)

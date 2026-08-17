@@ -17,10 +17,10 @@ def calculate_mean_metrics(uas_metrics, las_metrics, coeffs):
     mean_res["wrong_amount"] = len(uas_metrics) - len(good_uas)
     mean_res["all_amount"] = len(uas_metrics)
 
-    token_coeffs = [c_dict["tok_coeff"] for c_dict in coeffs]
-    uas_parser_coeffs = [c_dict["unlab_coeff"] if c_dict["unlab_coeff"] is not None else 0
+    token_coeffs = [c_dict["tok_coeff"] if c_dict is not None else 0.0 for c_dict in coeffs]
+    uas_parser_coeffs = [c_dict["unlab_coeff"] if c_dict is not None and c_dict["unlab_coeff"] is not None else 0
                     for c_dict in coeffs]
-    las_parser_coeffs = [c_dict["lab_coeff"] if c_dict["lab_coeff"] is not None else 0
+    las_parser_coeffs = [c_dict["lab_coeff"] if c_dict is not None and c_dict["lab_coeff"] is not None else 0
                     for c_dict in coeffs]
 
     mean_res["mean_tok_coeffs"] = sum(token_coeffs) / len(token_coeffs)

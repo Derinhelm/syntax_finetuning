@@ -143,7 +143,7 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss):
         
         return coeff_group_uas, coeff_group_las
 
-def group_loss(data, exp_name, m_res, m_path_str, f_table_loss):
+def group_loss(data, exp_name, m_res, m_path_str, f_table_loss, f_table_loss_las):
         coeff_group_uas = {"(<1, 1)": [], ("(<1, >=0.8)"): [], '(<1, <0.8)': [], '(1, )': []}
         coeff_group_las = {"(<1, 1)": [], ("(<1, >=0.8)"): [], '(<1, <0.8)': [], '(1, )': []}
         for c_i, c in enumerate(data[f"{exp_name}_coeffs"]):
@@ -188,6 +188,15 @@ def group_loss(data, exp_name, m_res, m_path_str, f_table_loss):
             *coeff_group_uas['(1, )'],
             *coeff_group_uas['(<1, 1)'], *coeff_group_uas['(<1, >=0.8)'], *coeff_group_uas['(<1, <0.8)'],
             sep=" & ", end = " \\\\\n", file=f_table_loss)
+
+        
+        if m_res["las_all"] != 0:
+            print('(1, )', '(<1, 1)', '(<1, >=0.8)', '(<1, <0.8)', file=f_table_loss_las)
+            print(m_path_str + "\n",
+            f"{m_res['las_all']:.2f}   ",
+            *coeff_group_las['(1, )'],
+            *coeff_group_las['(<1, 1)'], *coeff_group_las['(<1, >=0.8)'], *coeff_group_las['(<1, <0.8)'],
+            sep=" & ", end = " \\\\\n", file=f_table_loss_las)
         
         return coeff_group_uas, coeff_group_las
 
@@ -208,6 +217,8 @@ def collect_mean_metrics(root_output_dir_path):
 
     f_table_loss_uas_orig_lct = open(f"{root_output_dir_path}/mean_metrics_table_loss_uas_ft_orig_lct.txt", 'w')
     f_table_loss_uas_orig_grct = open(f"{root_output_dir_path}/mean_metrics_table_loss_uas_ft_orig_grct.txt", 'w')
+
+    f_table_loss_las = open(f"{root_output_dir_path}/mean_metrics_table_loss_las.txt", 'w')
 
     mean_dict = {}
     p = Path(root_output_dir_path)
@@ -242,7 +253,7 @@ def collect_mean_metrics(root_output_dir_path):
             sep=" & ", end = " \\\\\n", file=f_table)
 
         mean_dict[exp_name]['uas_decomp'], mean_dict[exp_name]['las_decomp'] = \
-            group_loss(data, exp_name, m_res, m_path_str, f_table_loss)
+            group_loss(data, exp_name, m_res, m_path_str, f_table_loss, f_table_loss_las)
 
     with open(f"{root_output_dir_path}/mean_metrics.json", 'w') as f:
         json.dump(mean_dict, f, indent=4)
@@ -257,5 +268,6 @@ def collect_mean_metrics(root_output_dir_path):
     f_table_loss_uas_full_prompt.close()
     f_table_loss_uas_short_prompt.close()
     f_table_loss_uas_other.close()
+    f_table_loss_las.close()
     #f_table_wrong.close()
     return mean_dict

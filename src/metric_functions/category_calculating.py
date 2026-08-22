@@ -48,22 +48,37 @@ def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
     else:
         las = 0.0
 
-    pred_nodes = {e[0] for e in pred_unlabeled_edges}
+    pred_nodes = {e[0] for e in pred_unlabeled_edges} # Для LLM-версии это множество форм слов
     gold_nodes = {e[0] for e in gold_unlabeled_edges}
 
     g_not_p = len([e for e in gold_unlabeled_edges if e[0] not in pred_nodes])
     p_not_g = len([e for e in pred_unlabeled_edges if e[0] not in gold_nodes])
-    g_p_not_h = len([e for e in gold_unlabeled_edges
-        if e[0] in pred_nodes and e[1] not in pred_nodes and "root" not in e[1]])
 
     g_p_h_m_r = las_numerator
     g_p_h_m_not_r = uas_numerator - las_numerator
-    g_p_h_not_m = gold_len - g_not_p - g_p_not_h - g_p_h_m_r  - g_p_h_m_not_r
+    if metric_type != "difference_easy": # TODO: пока так определяем не LLM вариант
+        g_p_not_h = len([e for e in gold_unlabeled_edges
+            if e[0] in pred_nodes and e[1] not in pred_nodes and "root" not in e[1]])
+        right_tok_val = gold_len - g_not_p - g_p_not_h
+        right_tok_coeff = right_tok_val
+        synt_fun = lambda x: (x / right_tok_coeff) if right_tok_coeff != 0 else None
+        tok_part = ((g_not_p + p_not_g + 2 * g_p_not_h) / (2 * right_tok_coeff)) if right_tok_coeff != 0 else 0
+    else:
 
-    if g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r != 0:
-        tok_coeff = 1 / (1 + (g_not_p + p_not_g + 2 * g_p_not_h) / (2 * (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)))
-        unlab_coeff = (g_p_h_m_not_r + g_p_h_m_r) / (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)
-        lab_coeff = g_p_h_m_r / (g_p_h_not_m + g_p_h_m_not_r + g_p_h_m_r)
+        g_p_hp_not_hg = len([e for e in pred_unlabeled_edges
+            if e[0] in gold_nodes and e[1] not in gold_nodes and "root" not in e[1]])
+        g_p_hg_not_hp = len([e for e in gold_unlabeled_edges
+            if e[0] in pred_nodes and e[1] not in pred_nodes and "root" not in e[1]])
+        right_tok_val_g = gold_len - g_not_p - g_p_hg_not_hp
+        right_tok_val_p = pred_len - p_not_g - g_p_hp_not_hg
+        right_tok_coeff = right_tok_val_g + right_tok_val_p
+        synt_fun = lambda x: (2 * x / right_tok_coeff) if right_tok_coeff != 0 else None
+        tok_part = ((g_not_p + g_p_hg_not_hp + p_not_g + g_p_hp_not_hg) / right_tok_coeff) if right_tok_coeff != 0 else 0
+
+    if right_tok_coeff != 0:
+        tok_coeff = 1 / (1 + tok_part)
+        unlab_coeff = synt_fun(g_p_h_m_not_r + g_p_h_m_r)
+        lab_coeff = synt_fun(g_p_h_m_r)
         if round(tok_coeff * unlab_coeff - uas, 5) != 0 or \
             round(tok_coeff * lab_coeff - las, 5) != 0:
             print(f"Error coeffs. uas: {uas}, las: {las}, coeff: {coeff_dict}")

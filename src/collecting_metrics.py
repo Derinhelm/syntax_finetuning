@@ -91,7 +91,7 @@ def group_loss_old2(data, exp_name, m_res, m_path_str, f_table_loss):
         
         return coeff_group_uas, coeff_group_las
 
-def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss):
+def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss_uas, f_table_loss_las):
         coeff_group_func_uas  =  [ (lambda tok_coeff, u, _: tok_coeff == 1, '(1, )')
                             , (lambda tok_coeff, unlab_coeff, _: tok_coeff < 1 and unlab_coeff == 1, '(<1, 1)')
                             , (lambda tok_coeff, unlab_coeff, _: tok_coeff < 1 and unlab_coeff >= 0.8, '(<1, >=0.8)')
@@ -105,11 +105,10 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss):
         coeff_group_uas = {x[1]: [] for x in coeff_group_func_uas}
         coeff_group_las = {x[1]: [] for x in coeff_group_func_las}
 
-        print([x[1] for x in coeff_group_func_uas], file=f_table_loss)
         for c_i, c in enumerate(data[f"{exp_name}_coeffs"]):
             uas_value = data[f"{exp_name}_uas"][c_i] if data[f"{exp_name}_uas"][c_i] is not None else 0.0
             las_value = data[f"{exp_name}_las"][c_i] if data[f"{exp_name}_las"][c_i] is not None else 0.0
-            if c is None or c["tok_coeff"] is None:
+            if c is None or c["tok_coeff"] is None or c["unlab_coeff"] is None or c["lab_coeff"] is None:
                 tok_coeff = 0.0
                 unlab_coeff = 0.0
                 lab_coeff = 0.0
@@ -134,72 +133,21 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss):
                                round((len(v) - sum(v)) / m_res['all_amount'], 2))
                            for k, v in coeff_group_las.items()}
         if m_res["uas_all"] != 0:
-            print('(1, )', '(<1, 1)', '(<1, >=0.8)', '(<1, <0.8)', file=f_table_loss)
+            print([x[1] for x in coeff_group_func_uas], file=f_table_loss_uas)
             print(m_path_str + "\n",
             f"{m_res['uas_all']:.2f}   ",
-            *coeff_group_uas['(1, )'],
-            *coeff_group_uas['(<1, 1)'], *coeff_group_uas['(<1, >=0.8)'], *coeff_group_uas['(<1, <0.8)'],
-            sep=" & ", end = " \\\\\n", file=f_table_loss)
-        
-        return coeff_group_uas, coeff_group_las
-
-def group_loss(data, exp_name, m_res, m_path_str, f_table_loss, f_table_loss_las):
-        coeff_group_uas = {"(<1, 1)": [], ("(<1, >=0.8)"): [], '(<1, <0.8)': [], '(1, )': []}
-        coeff_group_las = {"(<1, 1)": [], ("(<1, >=0.8)"): [], '(<1, <0.8)': [], '(1, )': []}
-        for c_i, c in enumerate(data[f"{exp_name}_coeffs"]):
-            uas_value = data[f"{exp_name}_uas"][c_i] if data[f"{exp_name}_uas"][c_i] is not None else 0.0
-            las_value = data[f"{exp_name}_las"][c_i] if data[f"{exp_name}_las"][c_i] is not None else 0.0
-            if c is None or c["tok_coeff"] is None or c["unlab_coeff"] is None:
-                tok_coeff = 0.0
-                unlab_coeff = 0.0
-                lab_coeff = 0.0
-            else:
-                tok_coeff = c["tok_coeff"]
-                unlab_coeff = c["unlab_coeff"]
-                lab_coeff = c["lab_coeff"]
-            if tok_coeff == 1.0:
-                coeff_group_uas['(1, )'].append(uas_value)
-                coeff_group_las['(1, )'].append(las_value)
-            else:
-                if unlab_coeff == 1.0:
-                    coeff_group_uas['(<1, 1)'].append(uas_value)
-                elif unlab_coeff >= 0.8:
-                    coeff_group_uas['(<1, >=0.8)'].append(uas_value)
-                else:
-                    coeff_group_uas['(<1, <0.8)'].append(uas_value)
-                
-                if lab_coeff == 1.0:
-                    coeff_group_las['(<1, 1)'].append(las_value)
-                elif lab_coeff >= 0.8:
-                    coeff_group_las['(<1, >=0.8)'].append(uas_value)
-                else:
-                    coeff_group_las['(<1, <0.8)'].append(uas_value)
-
-        coeff_group_uas = {k: (len(v), round(sum(v) / m_res['all_amount'], 2),
-                               round((len(v) - sum(v)) / m_res['all_amount'], 2))
-                           for k, v in coeff_group_uas.items()}
-        coeff_group_las = {k: (len(v), round(sum(v) / m_res['all_amount'], 2),
-                               round((len(v) - sum(v)) / m_res['all_amount'], 2))
-                           for k, v in coeff_group_las.items()}
-        if m_res["uas_all"] != 0:
-            print('(1, )', '(<1, 1)', '(<1, >=0.8)', '(<1, <0.8)', file=f_table_loss)
-            print(m_path_str + "\n",
-            f"{m_res['uas_all']:.2f}   ",
-            *coeff_group_uas['(1, )'],
-            *coeff_group_uas['(<1, 1)'], *coeff_group_uas['(<1, >=0.8)'], *coeff_group_uas['(<1, <0.8)'],
-            sep=" & ", end = " \\\\\n", file=f_table_loss)
+            *[v for v in coeff_group_uas.values()],
+            sep=" & ", end = " \\\\\n", file=f_table_loss_uas)
 
         
         if m_res["las_all"] != 0:
-            print('(1, )', '(<1, 1)', '(<1, >=0.8)', '(<1, <0.8)', file=f_table_loss_las)
+            print([x[1] for x in coeff_group_func_las], file=f_table_loss_las)
             print(m_path_str + "\n",
             f"{m_res['las_all']:.2f}   ",
-            *coeff_group_las['(1, )'],
-            *coeff_group_las['(<1, 1)'], *coeff_group_las['(<1, >=0.8)'], *coeff_group_las['(<1, <0.8)'],
+            *[v for v in coeff_group_las.values()],
             sep=" & ", end = " \\\\\n", file=f_table_loss_las)
         
         return coeff_group_uas, coeff_group_las
-
 
 
 def collect_mean_metrics(root_output_dir_path):
@@ -253,7 +201,7 @@ def collect_mean_metrics(root_output_dir_path):
             sep=" & ", end = " \\\\\n", file=f_table)
 
         mean_dict[exp_name]['uas_decomp'], mean_dict[exp_name]['las_decomp'] = \
-            group_loss(data, exp_name, m_res, m_path_str, f_table_loss, f_table_loss_las)
+            group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss, f_table_loss_las)
 
     with open(f"{root_output_dir_path}/mean_metrics.json", 'w') as f:
         json.dump(mean_dict, f, indent=4)

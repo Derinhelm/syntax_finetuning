@@ -160,7 +160,8 @@ def start_inference_experiment(exp):
     with open(dataset_path, 'r') as f:
         data = json.load(f)
     data_amount = len(data)
-    not_ready_data = [d for d in data if index_predicate(d)]
+    print(data[0])
+    not_ready_data = [d for d in data if index_predicate(d['index'])]
 
     if len(not_ready_data) != 0:
         parser = Parser(model_config.original_model_id,

@@ -125,6 +125,47 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss_uas, f_table_
                             , (lambda tok_coeff, unlab_coeff, _: unlab_coeff >= 0.2 and unlab_coeff < 0.4, '(_, [0.2, 0.4))')
                             , (lambda tok_coeff, unlab_coeff, _: unlab_coeff < 0.2, '(_, [0.0, 0.2))')
                             ],
+
+                            [ 
+                              (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and unlab_coeff == 1, '(1, 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and unlab_coeff >= 0.8, '(1, [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and unlab_coeff >= 0.6, '(1, [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and unlab_coeff >= 0.4, '(1, (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and unlab_coeff > 0, '(1, (0, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and unlab_coeff == 0, '(1, 0)')
+                            
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and unlab_coeff == 1, '([0.8, 1), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and unlab_coeff >= 0.8, '([0.8, 1), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and unlab_coeff >= 0.6, '([0.8, 1), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and unlab_coeff >= 0.4, '([0.8, 1), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and unlab_coeff > 0, '([0.8, 1), (0.0, 0.4))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and unlab_coeff == 0, '([0.8, 1), 0)')
+                            
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and unlab_coeff == 1, '([0.6, 0.8), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and unlab_coeff >= 0.8, '([0.6, 0.8), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and unlab_coeff >= 0.6, '([0.6, 0.8), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and unlab_coeff >= 0.4, '([0.6, 0.8), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and unlab_coeff > 0, '([0.6, 0.8), (0, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and unlab_coeff == 0, '([0.6, 0.8), 0)')
+
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and unlab_coeff == 1, '([0.4, 0.6), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and unlab_coeff >= 0.8, '([0.4, 0.6), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and unlab_coeff >= 0.6, '([0.4, 0.6), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and unlab_coeff >= 0.4, '([0.4, 0.6), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and unlab_coeff > 0, '([0.4, 0.6), (0, 0.4))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and unlab_coeff == 0, '([0.4, 0.6), 0)')
+
+
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and unlab_coeff == 1, '((0, 0.4), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and unlab_coeff >= 0.8, '((0, 0.4), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and unlab_coeff >= 0.6, '((0, 0.4), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and unlab_coeff >= 0.4, '((0, 0.4), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and unlab_coeff > 0, '((0, 0.4), (0, 0.4))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and unlab_coeff == 0, '((0, 0.4), 0)')
+                            
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 0, '(0, _)'),
+
+                            ],
     ]
     coeff_group_func_las_gr  =  [ 
                             [ (lambda tok_coeff, u, _: tok_coeff == 1, '(1, )')
@@ -150,6 +191,47 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss_uas, f_table_
                             , (lambda tok_coeff, _, lab_coeff: lab_coeff >= 0.4 and lab_coeff < 0.6, '(_, [0.4, 0.6))')
                             , (lambda tok_coeff, _, lab_coeff: lab_coeff >= 0.2 and lab_coeff < 0.4, '(_, [0.2, 0.4))')
                             , (lambda tok_coeff, _, lab_coeff: lab_coeff < 0.2, '(_, [0.0, 0.2))')
+                            ],
+
+                            [ 
+                              (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and lab_coeff == 1, '(1, 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and lab_coeff >= 0.8, '(1, [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and lab_coeff >= 0.6, '(1, [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and lab_coeff >= 0.4, '(1, (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and lab_coeff > 0, '(1, (0, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 1 and lab_coeff == 0, '(1, 0)')
+                            
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and lab_coeff == 1, '([0.8, 1), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and lab_coeff >= 0.8, '([0.8, 1), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and lab_coeff >= 0.6, '([0.8, 1), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and lab_coeff >= 0.4, '([0.8, 1), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and lab_coeff > 0, '([0.8, 1), (0.0, 0.4))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 1 and tok_coeff >= 0.8 and lab_coeff == 0, '([0.8, 1), 0)')
+                            
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and lab_coeff == 1, '([0.6, 0.8), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and lab_coeff >= 0.8, '([0.6, 0.8), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and lab_coeff >= 0.6, '([0.6, 0.8), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and lab_coeff >= 0.4, '([0.6, 0.8), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and lab_coeff > 0, '([0.6, 0.8), (0, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.8 and tok_coeff >= 0.6 and lab_coeff == 0, '([0.6, 0.8), 0)')
+
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and lab_coeff == 1, '([0.4, 0.6), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and lab_coeff >= 0.8, '([0.4, 0.6), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and lab_coeff >= 0.6, '([0.4, 0.6), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and lab_coeff >= 0.4, '([0.4, 0.6), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and lab_coeff > 0, '([0.4, 0.6), (0, 0.4))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.6 and tok_coeff >= 0.4 and lab_coeff == 0, '([0.4, 0.6), 0)')
+
+
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and lab_coeff == 1, '((0, 0.4), 1)')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and lab_coeff >= 0.8, '((0, 0.4), [0.8, 1.0))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and lab_coeff >= 0.6, '((0, 0.4), [0.6, 0.8))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and lab_coeff >= 0.4, '((0, 0.4), (0.4, 0.6))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and lab_coeff > 0, '((0, 0.4), (0, 0.4))')
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff < 0.4 and tok_coeff > 0 and lab_coeff == 0, '((0, 0.4), 0)')
+                            
+                            , (lambda tok_coeff, unlab_coeff, lab_coeff: tok_coeff == 0, '(0, _)'),
+
                             ],
     ]
     assert len(coeff_group_func_uas_gr) == len(coeff_group_func_las_gr)
@@ -194,6 +276,10 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss_uas, f_table_
             f"{m_res['uas_all']:.2f}   ",
             *[v for v in coeff_group_uas.values()],
             sep=" & ", end = " \\\\\n", file=f_table_loss_uas)
+            print(
+            *zip([v for v in coeff_group_uas.values()],
+            [x[1] for x in coeff_group_func_uas]),
+            sep="\n", end = " \\\\\n", file=f_table_loss_uas)
 
         
         if m_res["las_all"] != 0:
@@ -202,6 +288,10 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss_uas, f_table_
             f"{m_res['las_all']:.2f}   ",
             *[v for v in coeff_group_las.values()],
             sep=" & ", end = " \\\\\n", file=f_table_loss_las)
+            print(
+            *zip([v for v in coeff_group_las.values()],
+            [x[1] for x in coeff_group_func_las]),
+            sep="\n", end = " \\\\\n", file=f_table_loss_las)
 
         print("=====" * 2, file=f_table_loss_uas)
         print("=====" * 2, file=f_table_loss_las)

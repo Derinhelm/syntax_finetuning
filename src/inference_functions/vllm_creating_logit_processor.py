@@ -26,9 +26,9 @@ class Constraint(ABC):
 # =============================================
 # Prefix constraints
 
-class PrefixGenerator(Constraint):    
+class PrefixGenerator:    
     def __init__(self):
-        super().__init__()
+        pass
 
     def create_allow_prefixes(self, generated_text):
         if generated_text == "":
@@ -40,7 +40,7 @@ class PrefixGenerator(Constraint):
 from genlm.backend.tokenization import decode_vocab
 import marisa_trie
 
-class PrefixFinder(Constraint):
+class PrefixFinder:
     def __init__(self, tokenizer):
         super().__init__()
         byte_vocab, _ = decode_vocab(tokenizer)
@@ -437,7 +437,7 @@ class BracketLogitsProcessor:
             applying_max_amount, soft_max_amount)
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
 
-        self.prefix_constraints = PrefixConstraint()
+        self.prefix_constraints = PrefixConstraint(tokenizer)
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         print(f"eos_ids: {eos_ids}")
         

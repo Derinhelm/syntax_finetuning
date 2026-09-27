@@ -22,7 +22,63 @@ class Constraint(ABC):
     @abstractmethod
     def check(self, context):
         pass
-        
+         
+# =============================================
+# Prefix constraints
+
+class PrefixGenerator(Constraint):    
+    def __init__(self):
+        super().__init__()
+
+    def create_allow_prefixes(self, generated_text):
+        if generated_text == "":
+            return True, ["[root["]
+        elif generated_text == "[":
+            return True, ["root["]
+        return False, None
+
+from genlm.backend.tokenization import decode_vocab
+import marisa_trie
+
+class PrefixFinder(Constraint):
+    def __init__(self, tokenizer):
+        super().__init__()
+        byte_vocab, _ = decode_vocab(tokenizer)
+        byte_subtokens = [subtoken.byte_string for subtoken in byte_vocab]
+        self.bytes_to_id = {subtoken.byte_string: subtoken.token_id
+                            for subtoken in byte_vocab}
+        self.trie = marisa_trie.BinaryTrie(byte_subtokens)
+
+    def find_prefixes(self, prefixes: str):
+        allow_ids = set()
+        for target_str in prefixes:
+            target = target_str.encode("utf-8")
+            # Условие 1: токены, которые являются префиксом target
+            target_prefixes = list(self.trie.iter_prefixes(target))
+
+            # Условие 2: токены, для которых target — префикс
+            target_continuations = list(self.trie.iterkeys(target))
+
+            allow_ids += [self.bytes_to_id[b] \
+                for b in target_prefixes + target_continuations]
+
+        return list(set(allow_ids))
+
+class PrefixConstraint(Constraint):
+    def __init__(self, tokenizer):
+        self.prefix_generator = PrefixGenerator()
+        self.prefix_checker = PrefixFinder(tokenizer)
+
+    def check(self, context):
+        return True
+
+    def __call__(self, logits, context):
+        need_prefix_check, prefixes = self.prefix_generator(context.generated_text)
+        if need_prefix_check:
+            allow_ids = self.prefix_checker(prefixes)
+            logits[allow_ids] = -torch.inf
+        return logits
+
 # =============================================
 # Force constraints
 
@@ -380,7 +436,8 @@ class BracketLogitsProcessor:
         self.force_finish_constraints = ForceFinishConstraint(tokenizer.eos_token_id,
             applying_max_amount, soft_max_amount)
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
-        
+
+        self.prefix_constraints = PrefixConstraint()
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         print(f"eos_ids: {eos_ids}")
         
@@ -422,15 +479,17 @@ class BracketLogitsProcessor:
         self.last_processed_re = context.re_text
         
         logits = logits.clone()
-        if self.force_first_constraints.check(context):
-            logits = self.force_first_constraints(logits, context)
-        elif self.force_root_constraints.check(context):
-            logits = self.force_root_constraints(logits, context)
-        elif self.force_finish_constraints.check(context):
+        #if self.force_first_constraints.check(context):
+        #    logits = self.force_first_constraints(logits, context)
+        #elif self.force_root_constraints.check(context):
+        #    logits = self.force_root_constraints(logits, context)
+        if self.force_finish_constraints.check(context):
             logits = self.force_finish_constraints(logits, context)
         elif self.force_end_constraints.check(context):
             logits = self.force_end_constraints(logits, context)
         else:
+            if self.prefix_constraints.check(context):
+                logits = self.prefix_constraints(logits, context)
             if self.restrict_error_constraints.check(context):
                 logits = self.restrict_error_constraints(logits, context)
             if self.restrict_open_constraints.check(context):

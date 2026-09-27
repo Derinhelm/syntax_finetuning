@@ -21,7 +21,7 @@ def create_finetuning_experiments(configs, config_name,
                     param_name != 'output_experiment_path':
                 parameters.__setattr__(
                     param_name, None)
-        return [parameters]
+        return [parameters], root_output_dir_path
 
 
 

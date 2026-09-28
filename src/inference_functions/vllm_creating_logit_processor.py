@@ -135,6 +135,7 @@ class ForceEndConstraint(Constraint):
             return False
         return context.check_all_open() and \
             not context.check_all_end() and \
+            len(context.generated_text) > 0 and \
             context.generated_text[-1] == "]"
         # Generate some last "]"
 
@@ -185,7 +186,8 @@ class RestrictBracketAfterOpenConstraint(Constraint):
         self.partial_bracket_codes = partial_bracket_codes
 
     def check(self, context):
-        return context.generated_text[-1] == "["
+        return len(context.generated_text) > 0 and \
+            context.generated_text[-1] == "["
         # After "[" any bracket subtoken is restricted
         
     def __call__(self, logits, context):
@@ -202,7 +204,8 @@ class RestrictTextAfterEndConstraint(Constraint):
         self.eos_ids = eos_ids
 
     def check(self, context):
-        return context.generated_text[-1] == "]"
+        return len(context.generated_text) > 0 and \
+            context.generated_text[-1] == "]"
         
     def __call__(self, logits, context): # TODO: запрет нужен для всех!!!
         mask_tensor = torch.full(logits.shape, -float('inf'), device=logits.device)

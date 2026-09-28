@@ -30,7 +30,8 @@ class PrefixGenerator:
     def __init__(self):
         pass
 
-    def __call__(self, generated_text):
+    def __call__(self, content):
+        generated_text = content.generated_text
         if generated_text == "":
             return True, ["[root["]
         elif generated_text == "[":
@@ -48,6 +49,13 @@ class PrefixFinder:
         self.bytes_to_id = {subtoken.byte_string: subtoken.token_id
                             for subtoken in byte_vocab}
         self.trie = marisa_trie.BinaryTrie(byte_subtokens)
+
+        self.relations = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', 'cc',
+             'ccomp', 'compound', 'conj', 'cop', 'csubj', 'dep', 'det',
+             'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'iobj', 'list',
+             'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan',
+             'parataxis', 'punct', 'root', 'vocative', 'xcomp']
+        # TODO: для русского, перенести в конфигурационный файл
 
     def __call__(self, prefixes: str):
         allow_ids = []
@@ -73,7 +81,8 @@ class PrefixConstraint(Constraint):
         return True
 
     def __call__(self, logits, context):
-        need_prefix_check, prefixes = self.prefix_generator(context.generated_text)
+        need_prefix_check, prefixes = self.prefix_generator(
+            context)
         if need_prefix_check:
             allow_ids = self.prefix_checker(prefixes)
             mask = torch.ones_like(logits, dtype=torch.bool)
@@ -344,7 +353,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
 
 class GenerationContext:
     def __init__(self, token_ids, generated_text, max_op_bracket,
-            last_processed_text, last_processed_re):
+            last_processed_text, last_processed_re, gold_tokens):
         self.token_ids = token_ids
         self.generated_text = generated_text
         print(f"generated_text: {self.generated_text}")
@@ -358,6 +367,7 @@ class GenerationContext:
         new_text = self.generated_text[len(last_processed_text):]
         self.re_text = fold_bracket_seq(last_processed_re + new_text.lower()) # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         print(self.re_text)
+        self.gold_tokens = gold_tokens
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket
@@ -370,8 +380,8 @@ class OriginalLogitsProcessor:
         self.logit_params = logit_params
         self.max_op_bracket = None
 
-    def create_new_context(self, max_op_bracket): 
-        self.max_op_bracket = max_op_bracket
+    def create_new_context(self, input_tokens): 
+        self.max_op_bracket = len(input_tokens)
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -421,11 +431,12 @@ class BracketLogitsProcessor:
         self.last_processed_re = None
 
 
-    def create_new_context(self, max_op_bracket): 
-        self.max_op_bracket = (self.mul_coeff * max_op_bracket + \
+    def create_new_context(self, input_tokens): 
+        self.max_op_bracket = (self.mul_coeff * len(input_tokens) + \
             self.add_coeff) * 2
         self.last_processed_text = None
         self.last_processed_re = None
+        self.gold_tokens = input_tokens
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -444,7 +455,8 @@ class BracketLogitsProcessor:
 
         ts = time.time()
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
-                    self.last_processed_text, self.last_processed_re)
+                    self.last_processed_text, self.last_processed_re,
+                    self.gold_tokens)
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
         self.last_processed_text = context.generated_text

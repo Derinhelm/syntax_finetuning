@@ -50,7 +50,7 @@ class PrefixFinder:
         self.trie = marisa_trie.BinaryTrie(byte_subtokens)
 
     def __call__(self, prefixes: str):
-        allow_ids = set()
+        allow_ids = []
         for target_str in prefixes:
             target = target_str.encode("utf-8")
             # Условие 1: токены, которые являются префиксом target

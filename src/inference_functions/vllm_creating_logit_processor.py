@@ -319,8 +319,7 @@ class RestrictErrorTokenConstraint(Constraint):
         return True
     
     def __call__(self, logits, context):
-        for _, token_id in self.error_indexes:
-            logits[token_id] = float('-inf')
+        logits[self.error_indexes] = float('-inf')
         return logits
 
 

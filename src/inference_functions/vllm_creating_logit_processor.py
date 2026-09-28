@@ -84,47 +84,6 @@ class PrefixConstraint(Constraint):
 # =============================================
 # Force constraints
 
-class ForceFirstTokenConstraint(Constraint):
-    """Первый токен должен быть '['"""
-    
-    def __init__(self, partial_bracket_codes):
-        self.partial_bracket_codes = partial_bracket_codes
-        
-    def check(self, context):
-    # First subtoken has to be "["
-        return len(context.token_ids) == 0
-    
-    def __call__(self, logits, context):
-        print("Forcing first [")
-        codes_with_logits = [(token_text, token_id, float(logits[token_id]))
-                             for token_text, token_id in self.partial_bracket_codes]
-        logits[:] = -torch.inf
-
-        for token_text, token_id, token_logit in codes_with_logits:
-            if token_text[0] == "[":
-                logits[token_id] = token_logit
-        return logits
-        
-class ForceRootPrefixConstraint(Constraint):
-     def __init__(self, applying_first_root, tokenizer):
-         self.applying_first_root = applying_first_root
-         self.root_prefix = "[root["
-         self.tokenizer = tokenizer
-
-     def check(self, context):
-         return self.applying_first_root and len(context.generated_text) <= 6
-         # "[root[" - 6 symbols
-         
-     def __call__(self, logits, context): # TODO: можно ли убрать context ?
-         print("ForceRootPrefixConstraint")
-         for tok_id, _ in enumerate(logits):
-         # TODO: for optimization
-             potential_new_text = context.generated_text + self.tokenizer.decode(tok_id)
-             min_pair_len = min(len(potential_new_text), len(self.root_prefix))
-             if potential_new_text[:min_pair_len] != self.root_prefix[:min_pair_len]:
-                 logits[tok_id] = float('-inf')
-         return logits
-
 class ForceEndConstraint(Constraint):
     """"""
     
@@ -438,8 +397,6 @@ class BracketLogitsProcessor:
         if soft_max_amount:
             applying_max_amount = True
 
-        self.force_first_constraints = ForceFirstTokenConstraint(partial_bracket_codes)
-        self.force_root_constraints = ForceRootPrefixConstraint(applying_first_root, self.tokenizer)
         self.force_finish_constraints = ForceFinishConstraint(tokenizer.eos_token_id,
             applying_max_amount, soft_max_amount)
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
@@ -499,10 +456,6 @@ class BracketLogitsProcessor:
         logits = logits.clone()
         time_list.append(('clone', time.time() - ts))
 
-        #if self.force_first_constraints.check(context):
-        #    logits = self.force_first_constraints(logits, context)
-        #elif self.force_root_constraints.check(context):
-        #    logits = self.force_root_constraints(logits, context)
         if self.force_finish_constraints.check(context):
             logits = self.force_finish_constraints(logits, context)
         elif self.force_end_constraints.check(context):

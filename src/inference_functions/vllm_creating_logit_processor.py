@@ -76,7 +76,9 @@ class PrefixConstraint(Constraint):
         need_prefix_check, prefixes = self.prefix_generator(context.generated_text)
         if need_prefix_check:
             allow_ids = self.prefix_checker(prefixes)
-            logits[allow_ids] = -torch.inf
+            mask = torch.ones_like(logits, dtype=torch.bool)
+            mask[allow_ids] = False
+            logits[mask] = -torch.inf
         return logits
 
 # =============================================

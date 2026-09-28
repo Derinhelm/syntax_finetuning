@@ -30,7 +30,7 @@ class PrefixGenerator:
     def __init__(self):
         pass
 
-    def create_allow_prefixes(self, generated_text):
+    def __call__(self, generated_text):
         if generated_text == "":
             return True, ["[root["]
         elif generated_text == "[":
@@ -49,7 +49,7 @@ class PrefixFinder:
                             for subtoken in byte_vocab}
         self.trie = marisa_trie.BinaryTrie(byte_subtokens)
 
-    def find_prefixes(self, prefixes: str):
+    def __call__(self, prefixes: str):
         allow_ids = set()
         for target_str in prefixes:
             target = target_str.encode("utf-8")
@@ -157,6 +157,8 @@ class ForceFinishConstraint(Constraint):
         self.soft_max_amount = soft_max_amount
     
     def check(self, context):
+        if context.op_amount == 0:
+            return False
         if not self.applying_max_amount:
             # Ограничений на количество скобок нет
             if context.op_amount == context.end_amount:
@@ -324,7 +326,8 @@ class RestrictUnbalancedEOSConstraint(Constraint):
         self.eos_ids = eos_ids
         
     def check(self, context):
-        return context.op_amount != context.end_amount
+        return context.op_amount > 0 and \
+            context.op_amount != context.end_amount
     
     def __call__(self, logits, context):
         print("Restriction for eos (because of unbalancing)")

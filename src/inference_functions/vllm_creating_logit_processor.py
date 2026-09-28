@@ -294,8 +294,7 @@ class RestrictUnbalancedEOSConstraint(Constraint):
     
     def __call__(self, logits, context):
         print("Restriction for eos (because of unbalancing)")
-        for eos_id in self.eos_ids:
-            logits[eos_id] = -torch.inf
+        logits[self.eos_ids] = -torch.inf
         return logits
 
 def fold_bracket_seq(s_param):

@@ -28,15 +28,34 @@ class Constraint(ABC):
 
 class PrefixGenerator:    
     def __init__(self):
-        pass
+        self.relations = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', 'cc',
+             'ccomp', 'compound', 'conj', 'cop', 'csubj', 'dep', 'det',
+             'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'iobj', 'list',
+             'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan',
+             'parataxis', 'punct', 'vocative', 'xcomp']
+            # 'parataxis', 'punct', 'root', 'vocative', 'xcomp']
+        # TODO: для русского, перенести в конфигурационный файл
 
-    def __call__(self, content):
-        generated_text = content.generated_text
+    def __call__(self, context):
+        generated_text = context.generated_text
         if generated_text == "":
-            return True, ["[root["]
+            return ["[root["]
         elif generated_text == "[":
-            return True, ["root["]
-        return False, None
+            return ["root["]
+        elif generated_text[-1] == "]":
+            if context.op_amount == context.end_amount:
+                return ["eos"]
+            # TODO: удалить только добавленный токен
+            return ["]"] + ["[" + el + "]" for el in
+                context.gold_tokens + self.relations]
+        elif generated_text[-1] == "[":
+            return [el + "]" for el in
+                context.gold_tokens + self.relations]
+        else:
+            last_el_text = generated_text.split("[")[-1]
+            return [el[len(last_el_text):] + "]" for el in
+                context.gold_tokens + self.relations
+                if el.startswith(last_el_text)]
 
 from genlm.backend.tokenization import decode_vocab
 import marisa_trie
@@ -49,13 +68,6 @@ class PrefixFinder:
         self.bytes_to_id = {subtoken.byte_string: subtoken.token_id
                             for subtoken in byte_vocab}
         self.trie = marisa_trie.BinaryTrie(byte_subtokens)
-
-        self.relations = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', 'cc',
-             'ccomp', 'compound', 'conj', 'cop', 'csubj', 'dep', 'det',
-             'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'iobj', 'list',
-             'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan',
-             'parataxis', 'punct', 'root', 'vocative', 'xcomp']
-        # TODO: для русского, перенести в конфигурационный файл
 
     def __call__(self, prefixes: str):
         allow_ids = []
@@ -73,21 +85,23 @@ class PrefixFinder:
         return list(set(allow_ids))
 
 class PrefixConstraint(Constraint):
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer, eos_ids):
         self.prefix_generator = PrefixGenerator()
         self.prefix_checker = PrefixFinder(tokenizer)
+        self.eos_ids = eos_ids
 
     def check(self, context):
         return True
 
     def __call__(self, logits, context):
-        need_prefix_check, prefixes = self.prefix_generator(
-            context)
-        if need_prefix_check:
+        prefixes = self.prefix_generator(context)
+        if prefixes == ["eos"]:
+            allow_ids = self.eos_ids
+        else:
             allow_ids = self.prefix_checker(prefixes)
-            mask = torch.ones_like(logits, dtype=torch.bool)
-            mask[allow_ids] = False
-            logits[mask] = -torch.inf
+        inf_mask = torch.ones_like(logits, dtype=torch.bool)
+        inf_mask[allow_ids] = False
+        logits[inf_mask] = -torch.inf
         return logits
 
 # =============================================
@@ -410,10 +424,11 @@ class BracketLogitsProcessor:
             applying_max_amount, soft_max_amount)
         self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
 
-        self.prefix_constraints = PrefixConstraint(tokenizer)
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         print(f"eos_ids: {eos_ids}")
-        
+
+        self.prefix_constraints = PrefixConstraint(tokenizer, eos_ids)
+
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
         self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(partial_bracket_codes, eos_ids)
         self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes,

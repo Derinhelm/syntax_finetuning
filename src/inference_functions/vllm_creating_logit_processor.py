@@ -467,16 +467,25 @@ class BracketLogitsProcessor:
     def __call__(self, token_ids, logits):
         import time
         time_list = []
-        ts_all = time.time()
-        ts = time.time()
+        torch.cuda.synchronize()
+        ts_all = time.perf_counter()
+        torch.cuda.synchronize()
+        ts = time.perf_counter()
         print(token_ids)
-        time_list.append(("print", time.time() - ts))
+        torch.cuda.synchronize()
+        tf = time.perf_counter()
+        time_list.append(("print", tf - ts))
 
-        ts = time.time()
+        torch.cuda.synchronize()
+        ts = time.perf_counter()
         generated_text = self.tokenizer.decode(token_ids)
-        time_list.append(("decode", time.time() - ts))
+        torch.cuda.synchronize()
 
-        ts = time.time()
+        tf = time.perf_counter()
+        time_list.append(("decode", tf - ts))
+
+        torch.cuda.synchronize()
+        ts = time.perf_counter()
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
                     self.last_processed_text, self.last_processed_re,
                     self.gold_tokens)
@@ -484,57 +493,88 @@ class BracketLogitsProcessor:
         # а его нельзя создавать до create_new_context
         self.last_processed_text = context.generated_text
         self.last_processed_re = context.re_text
-        time_list.append(("context", time.time() - ts))
+        torch.cuda.synchronize()
+        tf = time.perf_counter()
+        time_list.append(("context", tf - ts))
 
-        ts = time.time()
+        torch.cuda.synchronize()
+        ts = time.perf_counter()
         logits = logits.clone()
-        time_list.append(('clone', time.time() - ts))
+        torch.cuda.synchronize()
+        tf = time.perf_counter()
+        time_list.append(('clone', tf - ts))
 
         if self.force_finish_constraints.check(context):
             logits = self.force_finish_constraints(logits, context)
         elif self.force_end_constraints.check(context):
             logits = self.force_end_constraints(logits, context)
         else:
-            ts = time.time()
+            torch.cuda.synchronize()
+            ts = time.perf_counter()
             if self.prefix_constraints.check(context):
                 logits = self.prefix_constraints(logits, context)
-            time_list.append(("prefix", time.time() - ts))
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("prefix", tf - ts))
 
-            ts = time.time()
+            torch.cuda.synchronize()
+            ts = time.perf_counter()
             if self.restrict_error_constraints.check(context):
                 logits = self.restrict_error_constraints(logits, context)
-            time_list.append(("error", time.time() - ts))
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("error", tf - ts))
 
-            ts = time.time()
+            torch.cuda.synchronize()
+            ts = time.perf_counter()
             if self.restrict_open_constraints.check(context):
                 logits = self.restrict_open_constraints(logits, context)
-            time_list.append(("open", time.time() - ts))
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("open", tf - ts))
 
-            ts = time.time()
+            torch.cuda.synchronize()
+            ts = time.perf_counter()
             if self.restrict_bracket_after_open_constraints.check(context):
                 logits = self.restrict_bracket_after_open_constraints(logits, context)
-            time_list.append(("brack-after-open", time.time() - ts))
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("brack-after-open", tf - ts))
 
-            ts = time.time()
+            torch.cuda.synchronize()
+            ts = time.perf_counter()
             if self.restrict_text_after_end_constraints.check(context):
                 logits = self.restrict_text_after_end_constraints(logits, context)
-            time_list.append(("text-after-close", time.time() - ts))
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("text-after-close", tf - ts))
 
-            ts = time.time()
+            torch.cuda.synchronize()
+            ts = time.perf_counter()
             if self.restrict_unbalanced_eos_constraints.check(context):
                 logits = self.restrict_unbalanced_eos_constraints(logits, context)
-            time_list.append(("unbal", time.time() - ts))
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("unbal", tf - ts))
 
-            ts = time.time()
+            torch.cuda.synchronize()
+            ts = time.perf_counter()
             if self.restrict_balance_constraints.check(context):
                 logits = self.restrict_balance_constraints(logits, context)
-            time_list.append(("balance", time.time() - ts))
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("balance", tf - ts))
 
-            ts = time.time()          
+            torch.cuda.synchronize()
+            ts = time.perf_counter()          
             if self.restrict_uncorrect_level_constraints.check(context):
                 logits = self.restrict_uncorrect_level_constraints(logits, context)
-            time_list.append(("levels", time.time() - ts))
-        print(time.time() - ts_all)
+            torch.cuda.synchronize()
+            tf = time.perf_counter()
+            time_list.append(("levels", tf - ts))
+        torch.cuda.synchronize()
+        tf_all = time.perf_counter()
+        print(tf_all - ts_all)
         print(time_list)
         return logits
 

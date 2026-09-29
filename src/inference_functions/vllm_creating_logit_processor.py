@@ -38,12 +38,11 @@ class PrefixGenerator:
 
     def __call__(self, context):
         generated_text = context.generated_text
+        root_text = "[root["
         if generated_text == "":
-            return ["[root["]
-        elif generated_text == "[":
-            return ["root["]
-        elif generated_text == "[root]":
-            return ["["]
+            return [root_text]
+        elif root_text.startswith(generated_text):
+            return [root_text[len(generated_text):]]
         elif generated_text[-1] == "]":
             if context.op_amount == context.end_amount:
                 return ["eos"]

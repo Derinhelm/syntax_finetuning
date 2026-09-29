@@ -42,19 +42,28 @@ class PrefixGenerator:
             return ["[root["]
         elif generated_text == "[":
             return ["root["]
+        elif generated_text == "[root]":
+            return ["["]
         elif generated_text[-1] == "]":
             if context.op_amount == context.end_amount:
                 return ["eos"]
             # TODO: удалить только добавленный токен
             return ["]"] + ["[" + el + "]" for el in
-                context.gold_tokens + self.relations]
+                context.gold_tokens] + \
+                ["[" + el + "[" for el in
+                self.relations] 
         elif generated_text[-1] == "[":
             return [el + "]" for el in
-                context.gold_tokens + self.relations]
+                context.gold_tokens] + \
+                [el + "[" for el in
+                self.relations] 
         else:
             last_el_text = generated_text.split("[")[-1]
             return [el[len(last_el_text):] + "]" for el in
-                context.gold_tokens + self.relations
+                context.gold_tokens
+                if el.startswith(last_el_text)] + \
+                [el[len(last_el_text):] + "[" for el in
+                self.relations
                 if el.startswith(last_el_text)]
 
 from genlm.backend.tokenization import decode_vocab

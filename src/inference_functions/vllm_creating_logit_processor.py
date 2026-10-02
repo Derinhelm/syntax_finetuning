@@ -416,7 +416,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                             RUSSIAN_RELATIONS, context.last_unused_tokens, False):
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
-                    valid_indexes.append(token_id)
+                    valid_indexes.append(token_id.item())
         valid_mask = torch.zeros_like(logits, dtype=torch.bool)
         valid_mask[valid_indexes] = True
         logits[~valid_mask] = float('-inf')

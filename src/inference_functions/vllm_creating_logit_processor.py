@@ -337,6 +337,8 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
         s = "[T[" + s[6:]
     elif len(s) >= 6:
         return "E"
+    else:
+        return s if "[root[".startswith(s) else "E"
 
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
     # '[T[E'
@@ -412,6 +414,8 @@ class RestrictUncorrectLevelConstraint(Constraint):
             max_logits, max_indices = torch.topk(logits, k = 10 * (iter_i + 1))
             max_token_texts = self.tokenizer.convert_ids_to_tokens(max_indices)
             for token_i, token_id in enumerate(max_indices[10 * iter_i:]):
+                if max_logits[token_i + 10 * iter_i].isinf():
+                    break
                 token_text = max_token_texts[token_i + 10 * iter_i]
                 if "E" not in fold_bracket_seq(context.re_text + token_text.lower(),
                             RUSSIAN_RELATIONS, context.last_unused_tokens, False):

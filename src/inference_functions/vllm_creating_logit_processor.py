@@ -394,23 +394,33 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
 
 class RestrictUncorrectLevelConstraint(Constraint):
 
-    def __init__(self, partial_bracket_codes):
+    def __init__(self, partial_bracket_codes, tokenizer):
         self.partial_bracket_codes = partial_bracket_codes
+        self.tokenizer = tokenizer
 
     def check(self, context):
         return True
     
     def __call__(self, logits, context):
         print("Restrictions for grct levels")
-        for token_text, token_id in self.partial_bracket_codes: # TODO: Только для оставшихся разрешенными
+        #for token_text, token_id in self.partial_bracket_codes: # TODO: Только для оставшихся разрешенными
             # TODO: Куда ставить проверку после проверки по префиксам ?
-            if logits[token_id] != -torch.inf:
-                if "E" in fold_bracket_seq(context.re_text + token_text.lower(),
-                        RUSSIAN_RELATIONS, context.last_unused_tokens, False):
-                    # TODO: Проверка с учетом типа связи/формы и без них
-                    # Проверка, без изменения набора токенов
-                    logits[token_id] = -torch.inf
-                    print(f"Restriction for {token_id}")
+
+        valid_indexes = []
+        iter_i = 0
+        while len(valid_indexes) < 10:
+            max_logits, max_indices = torch.topk(logits, k = 10 * (iter_i + 1))
+            max_token_texts = self.tokenizer.convert_ids_to_tokens(max_indices)
+            for token_i, token_id in enumerate(max_indices[10 * iter_i:]):
+                token_text = max_token_texts[token_i + 10 * iter_i]
+                if "E" not in fold_bracket_seq(context.re_text + token_text.lower(),
+                            RUSSIAN_RELATIONS, context.last_unused_tokens, False):
+                        # TODO: Проверка с учетом типа связи/формы и без них
+                        # Проверка, без изменения набора токенов
+                    valid_indexes.append(token_id)
+        valid_mask = torch.zeros_like(logits, dtype=torch.bool)
+        valid_mask[valid_indexes] = True
+        logits[~valid_mask] = float('-inf')
         return logits
 
 
@@ -491,7 +501,8 @@ class BracketLogitsProcessor:
         self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
 
-        self.restrict_uncorrect_level_constraints = RestrictUncorrectLevelConstraint(partial_bracket_codes)
+        self.restrict_uncorrect_level_constraints = RestrictUncorrectLevelConstraint(
+            partial_bracket_codes, self.tokenizer)
 
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)

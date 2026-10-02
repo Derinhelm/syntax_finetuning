@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 import re
 import string
 from typing import List, Tuple
+from collections import Counter
+
 
 import torch
 
@@ -65,8 +67,8 @@ class PrefixGenerator:
                 self.relations
                 if el.startswith(last_el_text)]
 
-from genlm.backend.tokenization import decode_vocab
-import marisa_trie
+#from genlm.backend.tokenization import decode_vocab
+#import marisa_trie
 
 class PrefixFinder:
     def __init__(self, tokenizer):
@@ -328,30 +330,66 @@ class RestrictUnbalancedEOSConstraint(Constraint):
         logits[self.eos_ids] = -torch.inf
         return logits
 
-def fold_bracket_seq(s_param):
-    s = s_param[:]
+def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=False):
+    # >>> fold_bracket_seq("[roet[")
+    # 'E'
     s = s.replace(" ", "")
-    s = re.sub(r'[^\[\]TWC]+', lambda m: 'T', s)
-    #print(s)
-    while "TT" in s:
-        s = s.replace("TT", "T")
-    s = re.sub(r'\[T\]', lambda m: 'W', s)
-    #print(s)
+    if s[:6] == "[root[":
+        s = "[T[" + s[6:]
+    elif len(s) >= 6:
+        return "E"
 
-    prev_s = ''
-    while prev_s != s:
-        prev_s = s
-        s = re.sub(r'\[TC*WC*\]', lambda m: 'C', s)
-        #print(s, prev_s)
-        s = re.sub(r'\[TC*WC*WC*\]', lambda m: 'E', s)
-        s = re.sub(r'\[TC*\]', lambda m: 'E', s)
-        s = re.sub(r'\[[W|C]*\]', lambda m: 'E', s)
-        s = re.sub(r'\[[W|C]+T[W|C]*]\]', lambda m: 'E', s)
-        s = re.sub(r'\[[W|C]*T[W|C]*T[W|C]*]\]', lambda m: 'E', s)
+    # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
+    # '[T[E'
+    last_op_bracket = s.rfind("[")
+    last_text = s[last_op_bracket + 1:]
+    # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - C
+    if "]" not in last_text and unused_tokens is not None and len([token for token in unused_tokens if token.startswith(last_text)]) == 0:
+        return s[:last_op_bracket + 1] + "E"
 
-        if 'E' in s:
-          break
-    #print("fold_bracket_seq", s_param, s)
+
+    if allow_relations is not None:
+        f_rel = lambda x: '[T[' if x.group(0)[1:-1] in allow_relations else '[E['
+
+    else:
+        f_rel = lambda _: '[T['
+
+    if unused_tokens is not None:
+        if drop_tokens:
+            def f_form_drop(x):
+                if x.group(0)[1:-1] in unused_tokens:
+                    unused_tokens[x] -= 1
+                    return "[T]"
+                else:
+                    return "[E]"
+            f_form = f_form_drop
+        else:
+            f_form = lambda x: '[T]' if x.group(0)[1:-1] in unused_tokens else '[E]'
+    else:
+        f_form = lambda _: '[T]'
+           
+    # >>> fold_bracket_seq('[root[Дом][nmod[Тен]]]', {'nmod'}, Counter(['Дым', 'Дом', 'Тен'])) - C
+    s = re.sub(r'\[[^\[\]TWC]+\]', f_form, s)
+    s = re.sub(r'\[[^\[\]TWC]+\[', f_rel, s)
+    s = re.sub(r'\[\]', 'E', s)
+
+    if '[E]' in s or '[E[' in s:
+        return s
+
+    s = re.sub(r'\[T\]', 'W', s)
+    #print(s)
+    #     #print(s)
+    while 'E' not in s and "]" in s and s[0] == "[":
+        print(s)
+        end_bracket = s.find("]")
+        op_bracket = s[:end_bracket].rfind("[")
+        if s[op_bracket + 1] != "T" or s[op_bracket + 1: end_bracket].count("W") != 1:
+            s = s[:op_bracket + 1] + "E" + s[end_bracket:]
+            break
+        else:
+            s = s[:op_bracket] + "C" + s[end_bracket + 1:]
+    if s[0] != "[" and s != "C":
+        s = "E"
     return s
 
 
@@ -365,7 +403,8 @@ class RestrictUncorrectLevelConstraint(Constraint):
     
     def __call__(self, logits, context):
         print("Restrictions for grct levels")
-        for token_text, token_id in self.partial_bracket_codes:
+        for token_text, token_id in self.partial_bracket_codes: # TODO: Только для оставшихся разрешенными
+            # TODO: Куда ставить проверку после проверки по префиксам ?
             if logits[token_id] != -torch.inf:
                 if "E" in fold_bracket_seq(context.re_text + token_text.lower()):
                     logits[token_id] = -torch.inf
@@ -390,6 +429,8 @@ class GenerationContext:
         self.re_text = fold_bracket_seq(last_processed_re + new_text.lower()) # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         print(self.re_text)
         self.gold_tokens = gold_tokens
+        self.unused_tokens = Counter(gold_tokens)
+        
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket

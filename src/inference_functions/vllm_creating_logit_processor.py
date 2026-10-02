@@ -66,8 +66,8 @@ class PrefixGenerator:
                 RUSSIAN_RELATIONS
                 if el.startswith(last_el_text)]
 
-#from genlm.backend.tokenization import decode_vocab
-#import marisa_trie
+from genlm.backend.tokenization import decode_vocab
+import marisa_trie
 
 class PrefixFinder:
     def __init__(self, tokenizer):

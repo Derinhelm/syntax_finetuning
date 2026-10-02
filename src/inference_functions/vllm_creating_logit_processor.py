@@ -379,7 +379,6 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     #print(s)
     #     #print(s)
     while 'E' not in s and "]" in s and s[0] == "[":
-        print(s)
         end_bracket = s.find("]")
         op_bracket = s[:end_bracket].rfind("[")
         if s[op_bracket + 1] != "T" or s[op_bracket + 1: end_bracket].count("W") != 1:
@@ -387,7 +386,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
             break
         else:
             s = s[:op_bracket] + "C" + s[end_bracket + 1:]
-    if s[0] != "[" and s != "C":
+    if s != "" and s[0] != "[" and s != "C":
         s = "E"
     return s
 

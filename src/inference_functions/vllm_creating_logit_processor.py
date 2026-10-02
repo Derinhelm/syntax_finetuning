@@ -547,11 +547,12 @@ class BracketLogitsProcessor:
         ts = time.perf_counter()
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
                     self.last_processed_text, self.last_processed_re,
-                    self.gold_tokens)
+                    self.gold_tokens, self.last_unused_tokens)
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
         self.last_processed_text = context.generated_text
         self.last_processed_re = context.re_text
+        self.last_unused_tokens = context.last_unused_tokens
         torch.cuda.synchronize()
         tf = time.perf_counter()
         time_list.append(("context", tf - ts))

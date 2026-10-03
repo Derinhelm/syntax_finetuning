@@ -337,73 +337,78 @@ class RestrictUnbalancedEOSConstraint(Constraint):
     def __call__(self, logits, context):
         print("Restriction for eos (because of unbalancing)")
         logits[self.eos_ids] = -torch.inf
-        return logits
+        return 
+
+def constant_check(x):
+    return "|T" not in x and "|C" not in x and "|W" not in x and "|E" not in x
 
 def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=False):
     # >>> fold_bracket_seq("[roet[")
-    # 'E'
+    # '|E'
 
     s = s.replace(" ", "")
     if s[:6] == "[root[":
-        s = "[T[" + s[6:]
+        s = "[|T[" + s[6:]
     elif "[root[".startswith(s):
         return s
-    elif not s.startswith("[T"):
-        return "E"
+    elif not s.startswith("[|T"):
+        return "|E"
 
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
-    # '[T[E'
+    # '[|T[|E'
     last_op_bracket = s.rfind("[")
     last_text = s[last_op_bracket + 1:]
-    # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - C
+    # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |C
     if "]" not in last_text and unused_tokens is not None and \
             (len([token for token in unused_tokens if token.startswith(last_text)]) == 0 and
             (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
-        return s[:last_op_bracket + 1] + "E"
+        return s[:last_op_bracket + 1] + "|E"
 
 
     if allow_relations is not None:
-        f_rel = lambda x: '[T[' if x.group(0)[1:-1] in allow_relations else '[E['
+        f_rel = lambda x: ('[|T[' if x.group(0)[1:-1] in allow_relations else '[|E[') if constant_check(x.group(0)) else x.group(0)
 
     else:
-        f_rel = lambda _: '[T['
+        f_rel = lambda x: '[|T[' if constant_check(x.group(0)) else x.group(0)
 
     if unused_tokens is not None:
         if drop_tokens:
             def f_form_drop(x):
+                if not constant_check(x.group(0)):
+                    return x.group(0)
                 form_text = x.group(0)[1:-1]
                 if form_text in unused_tokens:
                     unused_tokens[form_text] -= 1
-                    return "[T]"
+                    return "[|T]"
                 else:
-                    return "[E]"
+                    return "[|E]"
             f_form = f_form_drop
         else:
-            f_form = lambda x: '[T]' if x.group(0)[1:-1] in unused_tokens else '[E]'
+            f_form = lambda x: ('[|T]' if x.group(0)[1:-1] in unused_tokens else '[|E]') if constant_check(x.group(0)) else x.group(0)
     else:
-        f_form = lambda _: '[T]'
+        f_form = lambda x: '[|T]' if constant_check(x.group(0)) else x.group(0)
            
-    # >>> fold_bracket_seq('[root[Дом][nmod[Тен]]]', {'nmod'}, Counter(['Дым', 'Дом', 'Тен'])) - C
-    s = re.sub(r'\[[^\[\]TWC]+\]', f_form, s)
-    s = re.sub(r'\[[^\[\]TWC]+\[', f_rel, s)
-    s = re.sub(r'\[\]', 'E', s)
+    # >>> fold_bracket_seq('[root[Дом][nmod[Тен]]]', {'nmod'}, Counter(['Дым', 'Дом', 'Тен'])) - |C
+    s = re.sub(r'\[[^\[\]]+\]', f_form, s) # TODO |
+    s = re.sub(r'\[[^\[\]]+\[', f_rel, s) # TODO |
+    s = re.sub(r'\[\]', '|E', s)
 
-    if '[E]' in s or '[E[' in s:
+    if '[|E]' in s or '[|E[' in s:
         return s
 
-    s = re.sub(r'\[T\]', 'W', s)
+    s = re.sub(r'\[|T\]', '|W', s)
     #print(s)
     #     #print(s)
-    while 'E' not in s and "]" in s and s[0] == "[":
+    while '|E' not in s and "]" in s and s[0] == "[":
         end_bracket = s.find("]")
         op_bracket = s[:end_bracket].rfind("[")
-        if s[op_bracket + 1] != "T" or s[op_bracket + 1: end_bracket].count("W") != 1:
-            s = s[:op_bracket + 1] + "E" + s[end_bracket:]
+        if s[op_bracket + 1] != "|T" or s[op_bracket + 1: end_bracket].count("|W") != 1:
+            s = s[:op_bracket + 1] + "|E" + s[end_bracket:]
             break
         else:
-            s = s[:op_bracket] + "C" + s[end_bracket + 1:]
-    if s != "" and s[0] != "[" and s != "C":
-        s = "E"
+            s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
+    if s != "" and s[0] != "[" and s != "|C":
+        s = "|E"
     return s
 
 
@@ -433,7 +438,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
-                if "E" not in fold_bracket_seq(context.re_text + token_text.lower(),
+                if "|E" not in fold_bracket_seq(context.re_text,
                             RUSSIAN_RELATIONS, context.last_unused_tokens, False):
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
@@ -460,7 +465,7 @@ class GenerationContext:
             last_processed_text = ""
             last_processed_re = ""
         new_text = self.generated_text[len(last_processed_text):]
-        self.re_text = fold_bracket_seq(last_processed_re + new_text.lower(),
+        self.re_text = fold_bracket_seq(last_processed_re + new_text, # TODO: не будет работать для строк с |, в SynTagRus нет
             RUSSIAN_RELATIONS, last_unused_tokens, True)
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         print(self.re_text)

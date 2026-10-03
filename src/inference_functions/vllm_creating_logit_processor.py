@@ -342,13 +342,14 @@ class RestrictUnbalancedEOSConstraint(Constraint):
 def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=False):
     # >>> fold_bracket_seq("[roet[")
     # 'E'
+
     s = s.replace(" ", "")
     if s[:6] == "[root[":
         s = "[T[" + s[6:]
-    elif len(s) >= 6:
+    elif "[root[".startswith(s):
+        return s
+    elif not s.startswith("[T["):
         return "E"
-    else:
-        return s if "[root[".startswith(s) else "E"
 
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
     # '[T[E'

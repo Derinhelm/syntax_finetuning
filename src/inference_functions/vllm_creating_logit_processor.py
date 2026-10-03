@@ -49,18 +49,18 @@ class PrefixGenerator:
                 return ["eos"]
             # TODO: удалить только добавленный токен
             return ["]"] + ["[" + el + "]" for el in
-                context.gold_tokens] + \
+                context.last_unused_tokens] + \
                 ["[" + el + "[" for el in
                 RUSSIAN_RELATIONS] 
         elif generated_text[-1] == "[":
             return [el + "]" for el in
-                context.gold_tokens] + \
+                context.last_unused_tokens] + \
                 [el + "[" for el in
                 RUSSIAN_RELATIONS] 
         else:
             last_el_text = generated_text.split("[")[-1]
             s_prefixes = [el[len(last_el_text):] + "]" for el in
-                context.gold_tokens
+                context.last_unused_tokens
                 if el.startswith(last_el_text)] + \
                 [el[len(last_el_text):] + "[" for el in
                 RUSSIAN_RELATIONS
@@ -68,7 +68,7 @@ class PrefixGenerator:
             if "[" in s_prefixes: # TODO: укорить
                 s_prefixes.remove("[")
                 s_prefixes += ["[" + el + "]" for el in
-                    context.gold_tokens] + \
+                    context.last_unused_tokens] + \
                     ["[" + el + "[" for el in
                     RUSSIAN_RELATIONS] 
             # TODO: if "]" in s_prefixes: - ввести "]" + конец ?
@@ -443,7 +443,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
 
 class GenerationContext:
     def __init__(self, token_ids, generated_text, max_op_bracket,
-            last_processed_text, last_processed_re, gold_tokens,
+            last_processed_text, last_processed_re,
             last_unused_tokens):
         self.token_ids = token_ids
         self.generated_text = generated_text
@@ -460,7 +460,6 @@ class GenerationContext:
             RUSSIAN_RELATIONS, last_unused_tokens, True)
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         print(self.re_text)
-        self.gold_tokens = gold_tokens
         self.last_unused_tokens = last_unused_tokens
         
 
@@ -534,7 +533,6 @@ class BracketLogitsProcessor:
             self.add_coeff) * 2
         self.last_processed_text = None
         self.last_processed_re = None
-        self.gold_tokens = input_tokens
         self.last_unused_tokens = Counter(input_tokens)
 
     def set_tokenizer(self, tokenizer):
@@ -564,7 +562,7 @@ class BracketLogitsProcessor:
         ts = time.perf_counter()
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
                     self.last_processed_text, self.last_processed_re,
-                    self.gold_tokens, self.last_unused_tokens)
+                    self.last_unused_tokens)
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
         self.last_processed_text = context.generated_text

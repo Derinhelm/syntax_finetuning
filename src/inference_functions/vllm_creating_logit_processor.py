@@ -371,8 +371,9 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     if unused_tokens is not None:
         if drop_tokens:
             def f_form_drop(x):
-                if x.group(0)[1:-1] in unused_tokens:
-                    unused_tokens[x] -= 1
+                form_text = x.group(0)[1:-1]
+                if form_text in unused_tokens:
+                    unused_tokens[form_text] -= 1
                     return "[T]"
                 else:
                     return "[E]"

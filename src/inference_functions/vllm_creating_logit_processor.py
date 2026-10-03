@@ -355,7 +355,9 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     last_op_bracket = s.rfind("[")
     last_text = s[last_op_bracket + 1:]
     # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - C
-    if "]" not in last_text and unused_tokens is not None and len([token for token in unused_tokens if token.startswith(last_text)]) == 0:
+    if "]" not in last_text and unused_tokens is not None and \
+            (len([token for token in unused_tokens if token.startswith(last_text)]) == 0 and
+            (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
         return s[:last_op_bracket + 1] + "E"
 
 

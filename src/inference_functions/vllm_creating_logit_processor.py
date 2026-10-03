@@ -427,7 +427,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
         ITER_SIZE = 10
         while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
             max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
-            max_token_texts = self.tokenizer.convert_ids_to_tokens(max_indices)
+            max_token_texts = [self.tokenizer.decode(ind) for ind in max_indices]
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break

@@ -348,7 +348,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
         s = "[T[" + s[6:]
     elif "[root[".startswith(s):
         return s
-    elif not s.startswith("[T["):
+    elif not s.startswith("[T"):
         return "E"
 
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))

@@ -536,7 +536,7 @@ class BracketLogitsProcessor:
             self.add_coeff) * 2
         self.last_processed_text = None
         self.last_processed_re = None
-        self.last_unused_tokens = Counter(input_tokens)
+        self.last_unused_tokens = Counter([t.lower() for t in input_tokens]) # TODO: сравнивать не по lower
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer

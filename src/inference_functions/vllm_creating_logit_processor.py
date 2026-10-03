@@ -59,12 +59,22 @@ class PrefixGenerator:
                 RUSSIAN_RELATIONS] 
         else:
             last_el_text = generated_text.split("[")[-1]
-            return [el[len(last_el_text):] + "]" for el in
+            s_prefixes = [el[len(last_el_text):] + "]" for el in
                 context.gold_tokens
                 if el.startswith(last_el_text)] + \
                 [el[len(last_el_text):] + "[" for el in
                 RUSSIAN_RELATIONS
                 if el.startswith(last_el_text)]
+            if "[" in s_prefixes: # TODO: укорить
+                s_prefixes.remove("[")
+                s_prefixes += ["[" + el + "]" for el in
+                    context.gold_tokens] + \
+                    ["[" + el + "[" for el in
+                    RUSSIAN_RELATIONS] 
+            # TODO: if "]" in s_prefixes: - ввести "]" + конец ?
+            #    s_prefixes.remove("]")
+            return s_prefixes
+
 
 from genlm.backend.tokenization import decode_vocab
 import marisa_trie

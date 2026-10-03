@@ -420,13 +420,15 @@ class RestrictUncorrectLevelConstraint(Constraint):
         valid_indexes = []
         iter_i = 0
         max_logits = None
-        while len(valid_indexes) < 10 and (max_logits is None or not max_logits[-1].isinf()):
-            max_logits, max_indices = torch.topk(logits, k = 10 * (iter_i + 1))
+        MIN_VALUE_LEN = 3 # TODO: больше него нельзя делать выбор элементов
+        ITER_SIZE = 10
+        while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
+            max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
             max_token_texts = self.tokenizer.convert_ids_to_tokens(max_indices)
-            for token_i, token_id in enumerate(max_indices[10 * iter_i:]):
-                if max_logits[token_i + 10 * iter_i].isinf():
+            for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
+                if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
-                token_text = max_token_texts[token_i + 10 * iter_i]
+                token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
                 if "E" not in fold_bracket_seq(context.re_text + token_text.lower(),
                             RUSSIAN_RELATIONS, context.last_unused_tokens, False):
                         # TODO: Проверка с учетом типа связи/формы и без них

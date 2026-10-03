@@ -337,7 +337,7 @@ class RestrictUnbalancedEOSConstraint(Constraint):
     def __call__(self, logits, context):
         print("Restriction for eos (because of unbalancing)")
         logits[self.eos_ids] = -torch.inf
-        return 
+        return logits
 
 def constant_check(x):
     return "|T" not in x and "|C" not in x and "|W" not in x and "|E" not in x

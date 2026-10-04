@@ -94,12 +94,13 @@ class PrefixFinder:
             target = target_str.encode("utf-8")
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
-
+            print(f"{target_prefixes=}")
             # Условие 2: токены, для которых target — префикс
             target_continuations = list(self.trie.iterkeys(target))
-
+            print(f"{target_continuations=}")
             allow_ids += [self.bytes_to_id[b] \
                 for b in target_prefixes + target_continuations]
+            print(f"{allow_ids=}")
 
         return list(set(allow_ids))
 
@@ -435,6 +436,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
         while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
             max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
             max_token_texts = [self.tokenizer.decode(ind) for ind in max_indices]
+            print(f"{max_logits=}")
+            print(f"{max_indices=}")
+            print(f"{max_token_texts=}")
+            print(f"{iter_i=}")
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
@@ -445,6 +450,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
             iter_i += 1
+            print(f"{valid_indexes=}")
         valid_mask = torch.zeros_like(logits, dtype=torch.bool)
         valid_mask[valid_indexes] = True
         logits[~valid_mask] = float('-inf')

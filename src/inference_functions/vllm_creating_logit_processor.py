@@ -345,20 +345,27 @@ def constant_check(x):
         "|T" not in x and "|C" not in x and "|W" not in x and "|E" not in x
 
 def change_text(change_fun, right_border_symbol, s):
+    print(f"{right_border_symbol=}")
     ready_border = 0
-    left_border = s[ready_border:].find("[")
-    right_border_in_fragment = s[left_border + 1:].find(right_border_symbol)
-    i = 0
-    while left_border != -1 and right_border_in_fragment != -1 and i < 5:
+    left_border_in_fragment = s[ready_border:].find("[")
+    right_border_in_fragment = s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)
+    while left_border_in_fragment != -1 and right_border_in_fragment != -1:
+        left_border = ready_border + left_border_in_fragment
         change_text = change_fun(s[left_border:left_border + 1 + right_border_in_fragment + 1])
+        print(f"{left_border=} {right_border_in_fragment=} {s[left_border:left_border + 1 + right_border_in_fragment + 1]} {change_text}")
         new_s = s[:left_border] + change_text + s[left_border + 1 + right_border_in_fragment + 1:]
         if "|E" in change_text:
             return new_s
         ready_border = left_border + 1 # Все, что левее left_border - неизменно
         s = new_s
-        left_border = ready_border + s[ready_border:].find("[")
-        right_border_in_fragment = s[left_border + 1:].find(right_border_symbol)
-        i += 1
+        print(f"start with ready_border: {s[ready_border:]} {s[ready_border:].find('[')}")
+        left_border_in_fragment = s[ready_border:].find("[")
+        if left_border_in_fragment == -1:
+            break
+        print(f"{left_border_in_fragment=}")
+        print(f"{s[ready_border + left_border_in_fragment + 1:]} {s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)}")
+        right_border_in_fragment = s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)
+        print(f"{right_border_in_fragment=}")
     return s
 
 def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=False):
@@ -372,7 +379,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
         return s
     elif not s.startswith("[|T"):
         return "|E"
-
+    print(1, s)
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
     # '[|T[|E'
     last_op_bracket = s.rfind("[")
@@ -414,7 +421,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
 
     if '|E' in s:
         return s
-
+    print("after text", s)
     s = re.sub(r'\[\|T\]', '|W', s)
 
     while '|E' not in s and "]" in s and s[0] == "[":

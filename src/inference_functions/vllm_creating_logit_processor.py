@@ -402,8 +402,10 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
                 if not constant_check(x):
                     return x
                 form_text = x[1:-1]
-                if form_text in unused_tokens:
+                if form_text in unused_tokens and unused_tokens[form_text] > 0:
                     unused_tokens[form_text] -= 1
+                    if unused_tokens[form_text] <= 0:
+                        unused_tokens.pop(form_text)
                     return "[|T]"
                 else:
                     return "[|E]"

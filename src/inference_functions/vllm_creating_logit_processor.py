@@ -341,7 +341,25 @@ class RestrictUnbalancedEOSConstraint(Constraint):
         return logits
 
 def constant_check(x):
-    return "|T" not in x and "|C" not in x and "|W" not in x and "|E" not in x
+    return "[" not in x[1:-1] and "]" not in x[1:-1] and \
+        "|T" not in x and "|C" not in x and "|W" not in x and "|E" not in x
+
+def change_text(change_fun, right_border_symbol, s):
+    ready_border = 0
+    left_border = s[ready_border:].find("[")
+    right_border_in_fragment = s[left_border + 1:].find(right_border_symbol)
+    i = 0
+    while left_border != -1 and right_border_in_fragment != -1 and i < 5:
+        change_text = change_fun(s[left_border:left_border + 1 + right_border_in_fragment + 1])
+        new_s = s[:left_border] + change_text + s[left_border + 1 + right_border_in_fragment + 1:]
+        if "|E" in change_text:
+            return new_s
+        ready_border = left_border + 1 # Все, что левее left_border - неизменно
+        s = new_s
+        left_border = ready_border + s[ready_border:].find("[")
+        right_border_in_fragment = s[left_border + 1:].find(right_border_symbol)
+        i += 1
+    return s
 
 def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=False):
     # >>> fold_bracket_seq("[roet[")
@@ -365,19 +383,18 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
             (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
         return s[:last_op_bracket + 1] + "|E"
 
-
     if allow_relations is not None:
-        f_rel = lambda x: ('[|T[' if x.group(0)[1:-1] in allow_relations else '[|E[') if constant_check(x.group(0)) else x.group(0)
+        f_rel = lambda x: ('[|T[' if x[1:-1] in allow_relations else '[|E[') if constant_check(x) else x
 
     else:
-        f_rel = lambda x: '[|T[' if constant_check(x.group(0)) else x.group(0)
+        f_rel = lambda x: '[|T[' if constant_check(x) else x
 
     if unused_tokens is not None:
         if drop_tokens:
             def f_form_drop(x):
-                if not constant_check(x.group(0)):
-                    return x.group(0)
-                form_text = x.group(0)[1:-1]
+                if not constant_check(x):
+                    return x
+                form_text = x[1:-1]
                 if form_text in unused_tokens:
                     unused_tokens[form_text] -= 1
                     return "[|T]"
@@ -385,26 +402,25 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
                     return "[|E]"
             f_form = f_form_drop
         else:
-            f_form = lambda x: ('[|T]' if x.group(0)[1:-1] in unused_tokens else '[|E]') if constant_check(x.group(0)) else x.group(0)
+            f_form = lambda x: ('[|T]' if x[1:-1] in unused_tokens else '[|E]') if constant_check(x) else x
     else:
-        f_form = lambda x: '[|T]' if constant_check(x.group(0)) else x.group(0)
-           
+        f_form = lambda x: '[|T]' if constant_check(x) else x
+
     # >>> fold_bracket_seq('[root[Дом][nmod[Тен]]]', {'nmod'}, Counter(['Дым', 'Дом', 'Тен'])) - |C
-    s = re.sub(r'\[[^\[\]]+\]', f_form, s) # TODO |
-    s = re.sub(r'\[[^\[\]]+\[', f_rel, s) # TODO |
-    s = re.sub(r'\[\]', '|E', s)
+    s = change_text(f_form, "]", s)
+    if "|E" in s:
+        return s
+    s = change_text(f_rel, "[", s)
 
     if '|E' in s:
         return s
 
     s = re.sub(r'\[\|T\]', '|W', s)
 
-    #print(s)
-    #     #print(s)
     while '|E' not in s and "]" in s and s[0] == "[":
         end_bracket = s.find("]")
         op_bracket = s[:end_bracket].rfind("[")
-        if s[op_bracket + 1] != "|T" or s[op_bracket + 1: end_bracket].count("|W") != 1:
+        if s[op_bracket + 1:op_bracket + 3] != "|T" or s[op_bracket + 2: end_bracket].count("|W") != 1:
             s = s[:op_bracket + 1] + "|E" + s[end_bracket:]
             break
         else:

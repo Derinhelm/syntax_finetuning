@@ -393,10 +393,11 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     s = re.sub(r'\[[^\[\]]+\[', f_rel, s) # TODO |
     s = re.sub(r'\[\]', '|E', s)
 
-    if '[|E]' in s or '[|E[' in s:
+    if '|E' in s:
         return s
 
-    s = re.sub(r'\[|T\]', '|W', s)
+    s = re.sub(r'\[\|T\]', '|W', s)
+
     #print(s)
     #     #print(s)
     while '|E' not in s and "]" in s and s[0] == "[":

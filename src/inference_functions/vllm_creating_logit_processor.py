@@ -94,13 +94,13 @@ class PrefixFinder:
             target = target_str.encode("utf-8")
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
-            print(f"{target_prefixes=}")
+            #print(f"{target_prefixes=}")
             # Условие 2: токены, для которых target — префикс
             target_continuations = list(self.trie.iterkeys(target))
-            print(f"{target_continuations=}")
+            #print(f"{target_continuations=}")
             allow_ids += [self.bytes_to_id[b] \
                 for b in target_prefixes + target_continuations]
-            print(f"{allow_ids=}")
+            #print(f"{allow_ids=}")
 
         return list(set(allow_ids))
 
@@ -345,27 +345,27 @@ def constant_check(x):
         "|T" not in x and "|C" not in x and "|W" not in x and "|E" not in x
 
 def change_text(change_fun, right_border_symbol, s):
-    print(f"{right_border_symbol=}")
+    #print(f"{right_border_symbol=}")
     ready_border = 0
     left_border_in_fragment = s[ready_border:].find("[")
     right_border_in_fragment = s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)
     while left_border_in_fragment != -1 and right_border_in_fragment != -1:
         left_border = ready_border + left_border_in_fragment
         change_text = change_fun(s[left_border:left_border + 1 + right_border_in_fragment + 1])
-        print(f"{left_border=} {right_border_in_fragment=} {s[left_border:left_border + 1 + right_border_in_fragment + 1]} {change_text}")
+        #print(f"{left_border=} {right_border_in_fragment=} {s[left_border:left_border + 1 + right_border_in_fragment + 1]} {change_text}")
         new_s = s[:left_border] + change_text + s[left_border + 1 + right_border_in_fragment + 1:]
         if "|E" in change_text:
             return new_s
         ready_border = left_border + 1 # Все, что левее left_border - неизменно
         s = new_s
-        print(f"start with ready_border: {s[ready_border:]} {s[ready_border:].find('[')}")
+        #print(f"start with ready_border: {s[ready_border:]} {s[ready_border:].find('[')}")
         left_border_in_fragment = s[ready_border:].find("[")
         if left_border_in_fragment == -1:
             break
-        print(f"{left_border_in_fragment=}")
-        print(f"{s[ready_border + left_border_in_fragment + 1:]} {s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)}")
+        #print(f"{left_border_in_fragment=}")
+        #print(f"{s[ready_border + left_border_in_fragment + 1:]} {s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)}")
         right_border_in_fragment = s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)
-        print(f"{right_border_in_fragment=}")
+        #print(f"{right_border_in_fragment=}")
     return s
 
 def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=False):
@@ -379,7 +379,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
         return s
     elif not s.startswith("[|T"):
         return "|E"
-    print(1, s)
+    #print(1, s)
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
     # '[|T[|E'
     last_op_bracket = s.rfind("[")
@@ -423,7 +423,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
 
     if '|E' in s:
         return s
-    print("after text", s)
+    #print("after text", s)
     s = re.sub(r'\[\|T\]', '|W', s)
 
     while '|E' not in s and "]" in s and s[0] == "[":
@@ -461,10 +461,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
         while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
             max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
             max_token_texts = [self.tokenizer.decode(ind) for ind in max_indices]
-            print(f"{max_logits=}")
-            print(f"{max_indices=}")
-            print(f"{max_token_texts=}")
-            print(f"{iter_i=}")
+            #print(f"{max_logits=}")
+            #print(f"{max_indices=}")
+            #print(f"{max_token_texts=}")
+            #print(f"{iter_i=}")
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
@@ -475,7 +475,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
             iter_i += 1
-            print(f"{valid_indexes=}")
+            #print(f"{valid_indexes=}")
         valid_mask = torch.zeros_like(logits, dtype=torch.bool)
         valid_mask[valid_indexes] = True
         logits[~valid_mask] = float('-inf')
@@ -580,27 +580,27 @@ class BracketLogitsProcessor:
         self.tokenizer = tokenizer
 
     def __call__(self, token_ids, logits):
-        import time
-        time_list = []
-        torch.cuda.synchronize()
-        ts_all = time.perf_counter()
-        torch.cuda.synchronize()
-        ts = time.perf_counter()
+        #import time
+        #time_list = []
+        #torch.cuda.synchronize()
+        #ts_all = time.perf_counter()
+        #torch.cuda.synchronize()
+        #ts = time.perf_counter()
         print(token_ids)
-        torch.cuda.synchronize()
-        tf = time.perf_counter()
-        time_list.append(("print", tf - ts))
+        #torch.cuda.synchronize()
+        #tf = time.perf_counter()
+        #time_list.append(("print", tf - ts))
 
-        torch.cuda.synchronize()
-        ts = time.perf_counter()
+        #torch.cuda.synchronize()
+        #ts = time.perf_counter()
         generated_text = self.tokenizer.decode(token_ids)
-        torch.cuda.synchronize()
+        #torch.cuda.synchronize()
 
-        tf = time.perf_counter()
-        time_list.append(("decode", tf - ts))
+        #tf = time.perf_counter()
+        #time_list.append(("decode", tf - ts))
 
-        torch.cuda.synchronize()
-        ts = time.perf_counter()
+        #torch.cuda.synchronize()
+        #ts = time.perf_counter()
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
                     self.last_processed_text, self.last_processed_re,
                     self.last_unused_tokens)
@@ -609,89 +609,89 @@ class BracketLogitsProcessor:
         self.last_processed_text = context.generated_text
         self.last_processed_re = context.re_text
         self.last_unused_tokens = context.last_unused_tokens
-        torch.cuda.synchronize()
-        tf = time.perf_counter()
-        time_list.append(("context", tf - ts))
+        #torch.cuda.synchronize()
+        #tf = time.perf_counter()
+        #time_list.append(("context", tf - ts))
 
-        torch.cuda.synchronize()
-        ts = time.perf_counter()
+        #torch.cuda.synchronize()
+        #ts = time.perf_counter()
         logits = logits.clone()
-        torch.cuda.synchronize()
-        tf = time.perf_counter()
-        time_list.append(('clone', tf - ts))
+        #torch.cuda.synchronize()
+        #tf = time.perf_counter()
+        #time_list.append(('clone', tf - ts))
 
         if self.force_finish_constraints.check(context):
             logits = self.force_finish_constraints(logits, context)
         elif self.force_end_constraints.check(context):
             logits = self.force_end_constraints(logits, context)
         else:
-            torch.cuda.synchronize()
-            ts = time.perf_counter()
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()
             if self.prefix_constraints.check(context):
                 logits = self.prefix_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("prefix", tf - ts))
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("prefix", tf - ts))
 
-            torch.cuda.synchronize()
-            ts = time.perf_counter()
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()
             if self.restrict_error_constraints.check(context):
                 logits = self.restrict_error_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("error", tf - ts))
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("error", tf - ts))
 
-            torch.cuda.synchronize()
-            ts = time.perf_counter()
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()
             if self.restrict_open_constraints.check(context):
                 logits = self.restrict_open_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("open", tf - ts))
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("open", tf - ts))
 
-            torch.cuda.synchronize()
-            ts = time.perf_counter()
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()
             if self.restrict_bracket_after_open_constraints.check(context):
                 logits = self.restrict_bracket_after_open_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("brack-after-open", tf - ts))
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("brack-after-open", tf - ts))
 
-            torch.cuda.synchronize()
-            ts = time.perf_counter()
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()
             if self.restrict_text_after_end_constraints.check(context):
                 logits = self.restrict_text_after_end_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("text-after-close", tf - ts))
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("text-after-close", tf - ts))
 
-            torch.cuda.synchronize()
-            ts = time.perf_counter()
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()
             if self.restrict_unbalanced_eos_constraints.check(context):
                 logits = self.restrict_unbalanced_eos_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("unbal", tf - ts))
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("unbal", tf - ts))
 
-            torch.cuda.synchronize()
-            ts = time.perf_counter()
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()
             if self.restrict_balance_constraints.check(context):
                 logits = self.restrict_balance_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("balance", tf - ts))
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("balance", tf - ts))
 
-            torch.cuda.synchronize()
-            ts = time.perf_counter()          
+            #torch.cuda.synchronize()
+            #ts = time.perf_counter()          
             if self.restrict_uncorrect_level_constraints.check(context):
                 logits = self.restrict_uncorrect_level_constraints(logits, context)
-            torch.cuda.synchronize()
-            tf = time.perf_counter()
-            time_list.append(("levels", tf - ts))
-        torch.cuda.synchronize()
-        tf_all = time.perf_counter()
-        print(tf_all - ts_all)
-        print(time_list)
+            #torch.cuda.synchronize()
+            #tf = time.perf_counter()
+            #time_list.append(("levels", tf - ts))
+        #torch.cuda.synchronize()
+        #tf_all = time.perf_counter()
+        #print(tf_all - ts_all)
+        #print(time_list)
         return logits
 
 

@@ -49,3 +49,4 @@ class InferenceParameters:
         self.prompt_name = None
         self.stop_prefix = None
         self.sampling_params = None
+        self.stub_parameter = False

@@ -260,14 +260,25 @@ def conduct_experiment(parameters, inf_experiments, metric_list):
     if inf_experiments != []:
             os.environ["VLLM_USE_V1"] = "0"
             for inf_exp in inf_experiments:
-                if not parameters.check_is_none():
+                if not parameters.check_is_none() and not inf_exp.stub_parameter:
                     inf_experiment = create_inference_config_by_finetuning(
                         parameters, inf_exp)
                 else:
                     inf_experiment = inf_exp
-                result_path = start_inference_experiment(inf_experiment)
+                if not inf_exp.stub_parameter:
+                    inf_result_path = start_inference_experiment(inf_experiment)
+                else:
+                    inf_result_path = None
                 for metric in metric_list:
-                    conduct_evaluation(parameters.output_experiment_path,
-                        inf_experiment['dataset_config'], result_path, metric)
+                    if "result_path" in metric:
+                        result_path = metric["result_path"]
+                    elif inf_result_path is not None:
+                        result_path = inf_result_path
+                    else:
+                        print(f"Error. No result path for metric: {metric}")
+                        result_path = None
+                    if result_path is not None:
+                        conduct_evaluation(parameters.output_experiment_path,
+                            inf_experiment['dataset_config'], result_path, metric)
     if not parameters.check_is_none():
         mark_ready(parameters.output_experiment_path)

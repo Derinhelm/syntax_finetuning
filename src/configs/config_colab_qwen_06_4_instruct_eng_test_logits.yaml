@@ -1,0 +1,32 @@
+dataset_config:
+  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_train.json
+  dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_dev.json
+  test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_test.json
+  conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_English-EWT/en_ewt-ud-test.conllu
+  # conll_test_file_path is used for metric evaluation 
+  treebank_repr: grct
+  treebank: english_ewt_grct
+inference_models:
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_en_ewt_grct
+    is_instruct: True
+    name: Qwen3_0_6B_en_ewt_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_en_ewt_grct
+    is_instruct: True
+    name: Qwen3_4B_en_ewt_grct
+    model_library: vllm
+    max_tokens: 5000
+root_output_dir_path: /content/results
+inference:
+    seed:
+        - 42
+    logit_parameters:
+        - name: main_logits
+    model_parameters:
+        - model_name: Qwen3_0_6B_en_ewt_grct
+        - model_name: Qwen3_4B_en_ewt_grct
+    treebank_parameters:
+        - treebank_name: english_ewt_grct

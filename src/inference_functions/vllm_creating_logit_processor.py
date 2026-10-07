@@ -33,6 +33,12 @@ RUSSIAN_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', '
              'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan',
              'parataxis', 'punct', 'vocative', 'xcomp'] # 'root'
 
+ENGLISH_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case',
+            'cc', 'ccomp', 'compound', 'conj', 'cop', 'csubj', 'dep', 'det',
+            'discourse', 'dislocated', 'expl', 'fixed', 'flat', 'goeswith', 
+            'iobj', 'list', 'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl',
+            'orphan', 'parataxis', 'punct', 'reparandum', 'vocative', 'xcomp'] # 'root'
+
 class PrefixGenerator:    
     def __init__(self):
         self.name = "prefix"        
@@ -51,26 +57,26 @@ class PrefixGenerator:
             return ["]"] + ["[" + el + "]" for el in
                 context.last_unused_tokens] + \
                 ["[" + el + "[" for el in
-                RUSSIAN_RELATIONS] 
+                ENGLISH_RELATIONS] 
         elif generated_text[-1] == "[":
             return [el + "]" for el in
                 context.last_unused_tokens] + \
                 [el + "[" for el in
-                RUSSIAN_RELATIONS] 
+                ENGLISH_RELATIONS] 
         else:
             last_el_text = generated_text.split("[")[-1]
             s_prefixes = [el[len(last_el_text):] + "]" for el in
                 context.last_unused_tokens
                 if el.startswith(last_el_text)] + \
                 [el[len(last_el_text):] + "[" for el in
-                RUSSIAN_RELATIONS
+                ENGLISH_RELATIONS
                 if el.startswith(last_el_text)]
             if "[" in s_prefixes: # TODO: укорить
                 s_prefixes.remove("[")
                 s_prefixes += ["[" + el + "]" for el in
                     context.last_unused_tokens] + \
                     ["[" + el + "[" for el in
-                    RUSSIAN_RELATIONS] 
+                    ENGLISH_RELATIONS] 
             # TODO: if "]" in s_prefixes: - ввести "]" + конец ?
             #    s_prefixes.remove("]")
             return s_prefixes
@@ -470,7 +476,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
                 if "|E" not in fold_bracket_seq(context.re_text + token_text,
-                            RUSSIAN_RELATIONS, context.last_unused_tokens, False):
+                            ENGLISH_RELATIONS, context.last_unused_tokens, False):
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
@@ -498,7 +504,7 @@ class GenerationContext:
             last_processed_re = ""
         new_text = self.generated_text[len(last_processed_text):]
         self.re_text = fold_bracket_seq(last_processed_re + new_text, # TODO: не будет работать для строк с |, в SynTagRus нет
-            RUSSIAN_RELATIONS, last_unused_tokens, True)
+            ENGLISH_RELATIONS, last_unused_tokens, True)
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         print(self.re_text)
         self.last_unused_tokens = last_unused_tokens

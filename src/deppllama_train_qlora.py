@@ -260,12 +260,13 @@ def conduct_experiment(parameters, inf_experiments, metric_list):
     if inf_experiments != []:
             os.environ["VLLM_USE_V1"] = "0"
             for inf_exp in inf_experiments:
-                if not parameters.check_is_none() and not inf_exp.stub_parameter:
+                if not parameters.check_is_none() and \
+                        not inf_exp["cur_parameters"].stub_parameter:
                     inf_experiment = create_inference_config_by_finetuning(
                         parameters, inf_exp)
                 else:
                     inf_experiment = inf_exp
-                if not inf_exp.stub_parameter:
+                if not inf_exp["cur_parameters"].stub_parameter:
                     inf_result_path = start_inference_experiment(inf_experiment)
                 else:
                     inf_result_path = None

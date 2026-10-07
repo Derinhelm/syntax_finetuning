@@ -4,10 +4,10 @@ from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mea
 
 from conllu import parse
 
-def conduct_evaluation(output_experiment_path, dataset_config, result_path, metric):
+def conduct_evaluation(output_experiment_path, conll_test_file_path,
+            result_path, metric):
         res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
         metric_path = f"{output_experiment_path}/metrics_{res_name}.jsonl"
-        conll_test_file_path = dataset_config.conll_test_file_path
 
         with open(conll_test_file_path, 'r') as file:
             content = file.read()

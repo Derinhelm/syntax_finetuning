@@ -13,7 +13,7 @@ def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
         create_fun = lambda tree_param: create_edges(gold_text, tree_param)
     else:
         print(f"Error metric_type: {metric_type}")
-        return None, None
+        return None, None, None
 
     pred_unlabeled_edges, pred_labeled_edges = create_fun(pred_tree)
     pred_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in pred_labeled_edges]

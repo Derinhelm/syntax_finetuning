@@ -91,6 +91,8 @@ def evaluate_one_experiment(gold_sentences, pred_filename,
             sent_uas, sent_las, sent_coeff_dict = None, None, None
         expir_res_uas.append(sent_uas)
         expir_res_las.append(sent_las)
+        if sent_coeff_dict is not None:
+            sent_coeff_dict["index"] = sent_i
         expir_res_coeffs.append(sent_coeff_dict)
 
     del pred_trees

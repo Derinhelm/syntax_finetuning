@@ -1,5 +1,6 @@
 import json
 import gc
+from conllu import parse
 
 from metric_functions.category_calculating \
             import create_statistics
@@ -37,6 +38,16 @@ def get_pred_trees(pred_filename, pred_format):
             for line_num, line in enumerate(f, 1):         
                 item = json.loads(line)
                 pred_trees.append(item)
+    elif pred_format == "conll":
+        with open(pred_filename, 'r') as file:
+            content = file.read()
+        conll_sentences = parse(content)
+        pred_trees = []
+        for i, conll_res in enumerate(conll_sentences):
+            tree_nodes = [{'id': str(t['id']), 'form': t['form'],
+                    'parent_id': str(t['head']), 'relation': t['deprel']}
+                    for t in conll_res ]
+            pred_trees.append({'index': i, 'pred_tree': tree_nodes})
     else:
         with open(pred_filename, 'r', encoding='utf-8') as f:
             pred_trees = json.load(f)

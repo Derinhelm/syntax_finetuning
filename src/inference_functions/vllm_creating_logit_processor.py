@@ -529,10 +529,8 @@ class GenerationContext:
             last_unused_tokens):
         self.token_ids = token_ids
         self.generated_text = generated_text
-        print(f"generated_text: {self.generated_text}")
         self.op_amount = self.generated_text.count("[")
         self.end_amount = self.generated_text.count("]")
-        print(f"op_amount: {self.op_amount}, end_amount: {self.end_amount}")
         self.max_op_bracket = max_op_bracket
         if last_processed_text is None:
             last_processed_text = ""
@@ -541,7 +539,6 @@ class GenerationContext:
         self.re_text = fold_bracket_seq(last_processed_re + new_text, # TODO: не будет работать для строк с |, в SynTagRus нет
             ENGLISH_RELATIONS, last_unused_tokens, True)
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
-        print(self.re_text)
         self.last_unused_tokens = last_unused_tokens
         
 
@@ -645,6 +642,7 @@ class BracketLogitsProcessor:
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
                     self.last_processed_text, self.last_processed_re,
                     self.last_unused_tokens)
+        print(f"{context.__dict__=}")
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
         self.last_processed_text = context.generated_text

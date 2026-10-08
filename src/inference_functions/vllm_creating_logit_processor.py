@@ -445,7 +445,8 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
     else:
         unused_tokens = copy.deepcopy(unused_tokens_param)
 
-    initial_unused_amount = unused_tokens.total()
+    if unused_tokens is not None:
+        initial_unused_amount = unused_tokens.total()
 
     s = s.replace(" ", "")
    

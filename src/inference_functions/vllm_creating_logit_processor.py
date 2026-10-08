@@ -524,8 +524,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
-                if "|E" not in fold_bracket_seq(context.re_text + token_text,
-                            ENGLISH_RELATIONS, context.last_unused_tokens, False):
+                fold_res = fold_bracket_seq(context.re_text + token_text,
+                            ENGLISH_RELATIONS, context.last_unused_tokens, False)
+                print(f"{fold_res=}")
+                if "|E" not in fold_res:
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())

@@ -490,7 +490,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
         else:
             s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
 
-    if s.count("[|T") - s.count("|W") == unused_tokens.total():
+    if unused_tokens is not None and s.count("[|T") - s.count("|W") == unused_tokens.total():
         # слов осталось ровно столько, сколько нужно, чтобы закрыть все открытые |T
         # Нельзя открывать новые уровни, только новые слова
         last_level_start = s.rfind("[|T")

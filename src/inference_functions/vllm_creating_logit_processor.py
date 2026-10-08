@@ -44,7 +44,9 @@ class PrefixGenerator:
         self.name = "prefix"        
 
     def _get_last_level(self, context):
-        last_re_level_ind = context.re_text.find("[")
+        last_re_level_ind = context.re_text.rfind("[|T")
+        if last_re_level_ind == -1:
+            last_re_level_ind = 0
         return context.re_text[last_re_level_ind:]
 
     def _create_relation_prefixes(self, context):

@@ -43,6 +43,27 @@ class PrefixGenerator:
     def __init__(self):
         self.name = "prefix"        
 
+    def _get_last_level(self, context):
+        last_re_level_ind = context.re_text.find("[")
+        return context.re_text[last_re_level_ind:]
+
+    def _create_relation_prefixes(self, context):
+        if len(context.last_unused_tokens) == 1:
+            last_re_level = self._get_last_level(context)
+            if "|W" in last_re_level:
+                return ENGLISH_RELATIONS
+            else:
+                return []
+            # На текущем уровне еще нет формы,
+            # оставшееся слово нужно на текущий уровень
+
+    def _create_form_prefixes(self, context):
+        last_re_level = self._get_last_level(context)
+        if "|W" in last_re_level:
+            return []
+        else:
+            return context.unused_tokens
+
     def __call__(self, context):
         generated_text = context.generated_text
         root_text = "[root["
@@ -53,30 +74,31 @@ class PrefixGenerator:
         elif generated_text[-1] == "]":
             if context.op_amount == context.end_amount:
                 return ["eos"]
-            # TODO: удалить только добавленный токен
             return ["]"] + ["[" + el + "]" for el in
-                context.last_unused_tokens] + \
+                self._create_form_prefixes(context)] + \
                 ["[" + el + "[" for el in
-                ENGLISH_RELATIONS] 
+                self._create_relation_prefixes(context)]
+        elif len(context.last_unused_tokens) == 0:
+            return ["]"]
         elif generated_text[-1] == "[":
             return [el + "]" for el in
-                context.last_unused_tokens] + \
+                self._create_form_prefixes(context)] + \
                 [el + "[" for el in
-                ENGLISH_RELATIONS] 
+                self._create_relation_prefixes(context)] 
         else:
             last_el_text = generated_text.split("[")[-1]
             s_prefixes = [el[len(last_el_text):] + "]" for el in
-                context.last_unused_tokens
+                self._create_form_prefixes(context)
                 if el.startswith(last_el_text)] + \
                 [el[len(last_el_text):] + "[" for el in
-                ENGLISH_RELATIONS
+                self._create_relation_prefixes(context)
                 if el.startswith(last_el_text)]
             if "[" in s_prefixes: # TODO: укорить
                 s_prefixes.remove("[")
                 s_prefixes += ["[" + el + "]" for el in
-                    context.last_unused_tokens] + \
-                    ["[" + el + "[" for el in
-                    ENGLISH_RELATIONS] 
+                    self._create_form_prefixes(context)] + \
+                        ["[" + el + "[" for el in
+                        self._create_relation_prefixes(context)] 
             # TODO: if "]" in s_prefixes: - ввести "]" + конец ?
             #    s_prefixes.remove("]")
             return s_prefixes

@@ -402,6 +402,10 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     # '|E'
 
     s = s.replace(" ", "")
+
+    # если было одно слово всего, нельзя [|T[|W[. Любая [ требует слова для "разрешения"
+    if unused_tokens is not None and unused_tokens.total() == 0 and s[-1] == "[":
+        return "|E" # TODO: более понятную строку   
     if s[:6] == "[root[":
         s = "[|T[" + s[6:]
     elif "[root[".startswith(s):

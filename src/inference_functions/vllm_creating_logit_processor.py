@@ -90,8 +90,10 @@ class PrefixGenerator:
     def _create_form_prefixes(self, context):
         # '[|T|W[|T|C|W|C[nmod' - [nmod
         # '[|T|W[|T|C|W|C' - [|T|C|W|C
-
-        last_re_level_ind = context.re_text.rfind("[")
+        right_border = len(context.re_text)
+        if context.re_text[-1] == "[":
+            right_border = right_border - 1
+        last_re_level_ind = context.re_text[:right_border].rfind("[")
         if last_re_level_ind == -1:
             last_re_level_ind = 0
         last_re_level = context.re_text[last_re_level_ind:]

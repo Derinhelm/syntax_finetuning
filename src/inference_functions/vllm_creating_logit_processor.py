@@ -50,7 +50,7 @@ class PrefixGenerator:
         return context.re_text[last_re_level_ind:]
 
     def _create_relation_prefixes(self, context):
-        if context.re_text.count("[|T") - context.re_text.count("[|W") == \
+        if context.re_text.count("[|T") - context.re_text.count("|W") == \
                 context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
             # [|T[|T[|W] - если 2 last_unused_tokens, можно генерировать relations

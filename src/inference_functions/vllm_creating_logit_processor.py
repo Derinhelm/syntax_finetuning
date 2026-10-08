@@ -50,10 +50,10 @@ class PrefixGenerator:
         return context.re_text[last_re_level_ind:]
 
     def _create_relation_prefixes(self, context):
-        print("{context.re_text.count('[|T')=}", f"{context.re_text.count('|W')=}",
-            f"{context.last_unused_tokens.total()=}")
-        print(context.re_text.count("[|T") - context.re_text.count("|W") == \
-            context.last_unused_tokens.total()) 
+        #print("{context.re_text.count('[|T')=}", f"{context.re_text.count('|W')=}",
+        #    f"{context.last_unused_tokens.total()=}")
+        #print(context.re_text.count("[|T") - context.re_text.count("|W") == \
+        #    context.last_unused_tokens.total()) 
         if context.re_text.count("[|T") - context.re_text.count("|W") == \
                 context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
@@ -70,8 +70,8 @@ class PrefixGenerator:
             return context.last_unused_tokens
 
     def __call__(self, context):
-        print(f"{self._create_form_prefixes(context)}")
-        print(f"{self._create_relation_prefixes(context)}")
+        #print(f"{self._create_form_prefixes(context)}")
+        #print(f"{self._create_relation_prefixes(context)}")
         generated_text = context.generated_text
         root_text = "[root["
         if generated_text == "":
@@ -129,13 +129,13 @@ class PrefixFinder:
             target = target_str.encode("utf-8")
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
-            print(f"{target_prefixes=}")
+            #print(f"{target_prefixes=}")
             # Условие 2: токены, для которых target — префикс
             target_continuations = list(self.trie.iterkeys(target))
-            print(f"{target_continuations=}")
+            #print(f"{target_continuations=}")
             allow_ids += [self.bytes_to_id[b] \
                 for b in target_prefixes + target_continuations]
-            print(f"{allow_ids=}")
+            #print(f"{allow_ids=}")
 
         return list(set(allow_ids))
 
@@ -420,14 +420,14 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     # '[|T[|E'
     last_op_bracket = s.rfind("[")
     last_text = s[last_op_bracket + 1:]
-    # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |C
-    if "]" not in last_text and unused_tokens is not None and \
+    # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |
+    if not last_text.startswith("|T") and \
+        "]" not in last_text and unused_tokens is not None and \
             (len([token for token in unused_tokens if token.startswith(last_text)]) == 0 and
             (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
         return s[:last_op_bracket + 1] + "|E"
     if last_text.count("|W") > 1:
         return s[:last_op_bracket + 1] + "|E"
-
     if allow_relations is not None:
         f_rel = lambda x: ('[|T[' if x[1:-1] in allow_relations else '[|E[') if constant_check(x) else x
 
@@ -489,6 +489,15 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
             break
         else:
             s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
+
+    if s.count("[|T") - s.count("|W") == unused_tokens.total():
+        # слов осталось ровно столько, сколько нужно, чтобы закрыть все открытые |T
+        # Нельзя открывать новые уровни, только новые слова
+        last_level_start = s.rfind("[|T")
+        if last_level_start != -1:
+            last_level_text = s[last_level_start:]
+            if "|W" in last_level_text and last_level_text.count("[") > 1:
+                return "E"
     if s != "" and s[0] != "[" and s != "|C":
         s = "|E"
     return s
@@ -516,23 +525,23 @@ class RestrictUncorrectLevelConstraint(Constraint):
         while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
             max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
             max_token_texts = [self.tokenizer.decode(ind) for ind in max_indices]
-            print(f"{max_logits=}")
-            print(f"{max_indices=}")
-            print(f"{max_token_texts=}")
-            print(f"{iter_i=}")
+            #print(f"{max_logits=}")
+            #print(f"{max_indices=}")
+            #print(f"{max_token_texts=}")
+            #print(f"{iter_i=}")
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
                 fold_res = fold_bracket_seq(context.re_text + token_text,
                             ENGLISH_RELATIONS, context.last_unused_tokens, False)
-                print(f"{fold_res=}")
+                #print(f"{fold_res=}")
                 if "|E" not in fold_res:
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
             iter_i += 1
-            print(f"{valid_indexes=}")
+            #print(f"{valid_indexes=}")
         valid_mask = torch.zeros_like(logits, dtype=torch.bool)
         valid_mask[valid_indexes] = True
         logits[~valid_mask] = float('-inf')
@@ -640,7 +649,6 @@ class BracketLogitsProcessor:
         #ts_all = time.perf_counter()
         #torch.cuda.synchronize()
         #ts = time.perf_counter()
-        print(token_ids)
         #torch.cuda.synchronize()
         #tf = time.perf_counter()
         #time_list.append(("print", tf - ts))

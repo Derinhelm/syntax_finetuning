@@ -506,8 +506,9 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
 
     if unused_tokens is not None:
         unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
-        level_openers = s.count("[|T") # расход
+        level_openers = s.count("[|T[") # расход
         level_closers = s.count("|W") + s.count("[|T]") # уже случившийся приход
+        print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
         if level_openers > unused_amount_after_fold + level_closers:
             return "|E" # расход привысил потенциальный и реальный приход
         if level_openers == unused_amount_after_fold + level_closers:
@@ -527,6 +528,15 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
                     if len([1 for tok in unused_tokens
                             if tok.startswith(last_text)]) == 0:
                         return "|E"
+    # >>> fold_bracket_seq("[|T|C|W[|T|C|W|C[|T[.]", ENGLISH_RELATIONS, Counter({'.': 1}), True)
+    # after text [|T|C|W[|T|C|W|C[|T[|T]
+    # unused_amount_after_fold=0 level_openers=1 level_closers=3
+    # '[|T|C|W[|T|C|W|C[|T|W'
+    # >>> fold_bracket_seq("[|T|C|W[|T|C|W|C[|T[.]", ENGLISH_RELATIONS, Counter({'.': 1}), False)
+    # after text [|T|C|W[|T|C|W|C[|T[|T]
+    # unused_amount_after_fold=0 level_openers=1 level_closers=3
+    # '[|T|C|W[|T|C|W|C[|T|W'
+                    
     # >>> fold_bracket_seq("[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[fir", ENGLISH_RELATIONS, Counter({'of': 1, 'my': 1, 'firm': 1}), True)
     # after text [|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[fir
     # '[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[fir'

@@ -105,7 +105,7 @@ def inference_dataset(parser, result_filepath, not_ready_data, data_amount):
         new_d['input_tokens'], new_d['output_tokens'] = token_amount
         new_d['extra_info'] = extra_info
         res.append(new_d)
-        print(f"{d_i}/{data_amount}. {time.time() - ts}")
+        print(f"{d_i}/{d['index']}/{data_amount}. {time.time() - ts}")
         if len(res) - last_unsaved_i >= 5:
             with open(result_filepath, 'a', encoding='utf-8') as json_file:
                 for s_i in range(last_unsaved_i, len(res)):

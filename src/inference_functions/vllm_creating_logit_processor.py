@@ -417,6 +417,8 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
             (len([token for token in unused_tokens if token.startswith(last_text)]) == 0 and
             (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
         return s[:last_op_bracket + 1] + "|E"
+    if last_text.count("|W") > 1:
+        return s[:last_op_bracket + 1] + "|E"
 
     if allow_relations is not None:
         f_rel = lambda x: ('[|T[' if x[1:-1] in allow_relations else '[|E[') if constant_check(x) else x
@@ -448,6 +450,12 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     if "|E" in s:
         return s
     s = change_text(f_rel, "[", s)
+    if '|E' in s:
+        return s
+
+    f_check_level_two_words = lambda x: "|E" if x.count("|W") > 1 else x 
+    # Против [|T|C|W|W[
+    s = change_text(f_check_level_two_words, "[", s)
 
     if '|E' in s:
         return s

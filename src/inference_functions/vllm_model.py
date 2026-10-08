@@ -51,7 +51,7 @@ class VllmModel:
             for k, v in self.sampling_params_info.items():
                 sampling_params.__setattr__(k, v)
 
-        signal.alarm(120)
+        signal.alarm(40)
         self.llm.llm_engine.scheduler[0].waiting.clear()  # Очистить ожидающие
         self.llm.llm_engine.scheduler[0].running.clear()  # Очистить выполняющиеся
         self.llm.llm_engine.scheduler[0].swapped.clear()  # Очистить swap

@@ -25,6 +25,7 @@ inference:
         - 42
     logit_parameters:
         - name: main_logits
+          relations: eng
     model_parameters:
         - model_name: Qwen3_0_6B_en_ewt_grct
         - model_name: Qwen3_4B_en_ewt_grct

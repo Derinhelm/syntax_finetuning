@@ -39,8 +39,34 @@ ENGLISH_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case',
             'iobj', 'list', 'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl',
             'orphan', 'parataxis', 'punct', 'reparandum', 'vocative', 'xcomp'] # 'root'
 
-RELATION_DICT = {None: RUSSIAN_RELATIONS, "russian": RUSSIAN_RELATIONS,
-                 "english": ENGLISH_RELATIONS}
+CHINESE_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case', 'cc',
+           'ccomp', 'clf', 'compound', 'conj', 'cop', 'csubj', 'det', 'discourse',
+           'dislocated', 'flat', 'iobj', 'mark', 'nmod', 'nsubj', 'nummod', 'obj',
+           'obl', 'orphan', 'parataxis', 'punct', 'reparandum', 'vocative', 'xcomp'] # 'root', GSD
+
+FINNISH_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux',
+                     'case', 'cc', 'ccomp', 'compound', 'conj', 'cop',
+                     'csubj', 'dep', 'det', 'discourse', 'expl',
+                     'fixed', 'flat', 'goeswith', 'mark', 'nmod',
+                     'nsubj', 'nummod', 'obj', 'obl', 'orphan',
+                     'punct', 'reparandum', 'vocative', 'xcomp'] # 'root', FTB
+
+FRENCH_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux',
+                    'case', 'cc', 'ccomp', 'compound', 'conj', 'cop',
+                    'csubj', 'dep', 'det', 'discourse', 'dislocated',
+                    'expl', 'fixed', 'flat', 'goeswith', 'iobj', 'mark',
+                    'nmod', 'nsubj', 'nummod', 'obj', 'obl', 'orphan',
+                    'parataxis', 'punct', 'vocative', 'xcomp'] # 'root', GSD
+
+JAPANESE_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'aux', 'case',
+                      'cc', 'ccomp', 'compound', 'cop', 'csubj', 'dep',
+                      'det', 'discourse', 'fixed', 'iobj', 'mark', 'nmod',
+                      'nsubj', 'nummod', 'obj', 'obl', 'punct'] # 'root', GSD
+
+RELATION_DICT = {None: RUSSIAN_RELATIONS, "ru": RUSSIAN_RELATIONS,
+                 "eng": ENGLISH_RELATIONS, "ch": CHINESE_RELATIONS,
+                 "fin": FINNISH_RELATIONS, "fr": FRENCH_RELATIONS,
+                 "ja": JAPANESE_RELATIONS}
 
 class PrefixGenerator:    
     def __init__(self, relations):

@@ -62,7 +62,7 @@ class PrefixGenerator:
         if "|W" in last_re_level:
             return []
         else:
-            return context.unused_tokens
+            return context.last_unused_tokens
 
     def __call__(self, context):
         generated_text = context.generated_text

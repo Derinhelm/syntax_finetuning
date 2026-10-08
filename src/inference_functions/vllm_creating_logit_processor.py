@@ -39,9 +39,13 @@ ENGLISH_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'appos', 'aux', 'case',
             'iobj', 'list', 'mark', 'nmod', 'nsubj', 'nummod', 'obj', 'obl',
             'orphan', 'parataxis', 'punct', 'reparandum', 'vocative', 'xcomp'] # 'root'
 
+RELATION_DICT = {None: RUSSIAN_RELATIONS, "russian": RUSSIAN_RELATIONS,
+                 "english": ENGLISH_RELATIONS}
+
 class PrefixGenerator:    
-    def __init__(self):
-        self.name = "prefix"        
+    def __init__(self, relations):
+        self.name = "prefix"
+        self.relations = relations    
 
     def _get_last_level(self, context):
         last_re_level_ind = context.re_text.rfind("[|T")
@@ -60,7 +64,7 @@ class PrefixGenerator:
             # [|T[|T[|W] - если 2 last_unused_tokens, можно генерировать relations
             # [|T[|W][|T[ - если 2 last_unused_tokens, можно генерировать relations
             return []
-        return ENGLISH_RELATIONS
+        return self.relations
 
     def _create_form_prefixes(self, context):
         last_re_level = self._get_last_level(context)
@@ -140,8 +144,8 @@ class PrefixFinder:
         return list(set(allow_ids))
 
 class PrefixConstraint(Constraint):
-    def __init__(self, tokenizer, eos_ids):
-        self.prefix_generator = PrefixGenerator()
+    def __init__(self, tokenizer, eos_ids, relations):
+        self.prefix_generator = PrefixGenerator(relations)
         self.prefix_checker = PrefixFinder(tokenizer)
         self.eos_ids = eos_ids
 
@@ -505,9 +509,10 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
 
 class RestrictUncorrectLevelConstraint(Constraint):
 
-    def __init__(self, partial_bracket_codes, tokenizer):
+    def __init__(self, partial_bracket_codes, tokenizer, relations):
         self.partial_bracket_codes = partial_bracket_codes
         self.tokenizer = tokenizer
+        self.relations = relations
 
     def check(self, context):
         return True
@@ -534,7 +539,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
                 fold_res = fold_bracket_seq(context.re_text + token_text,
-                            ENGLISH_RELATIONS, context.last_unused_tokens, False)
+                            self.relations, context.last_unused_tokens, False)
                 #print(f"{fold_res=}")
                 if "|E" not in fold_res:
                         # TODO: Проверка с учетом типа связи/формы и без них
@@ -551,7 +556,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
 class GenerationContext:
     def __init__(self, token_ids, generated_text, max_op_bracket,
             last_processed_text, last_processed_re,
-            last_unused_tokens):
+            last_unused_tokens, relations):
         self.token_ids = token_ids
         self.generated_text = generated_text
         self.op_amount = self.generated_text.count("[")
@@ -562,7 +567,7 @@ class GenerationContext:
             last_processed_re = ""
         new_text = self.generated_text[len(last_processed_text):]
         self.re_text = fold_bracket_seq(last_processed_re + new_text, # TODO: не будет работать для строк с |, в SynTagRus нет
-            ENGLISH_RELATIONS, last_unused_tokens, True)
+            relations, last_unused_tokens, True)
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         self.last_unused_tokens = last_unused_tokens
         
@@ -590,6 +595,8 @@ class OriginalLogitsProcessor:
 class BracketLogitsProcessor:
     def __init__(self, tokenizer, logit_params):
         optional_constraints = logit_params.get("optional_constraints", set())
+        relation_language = logit_params.get("relations")
+        self.relations = RELATION_DICT[relation_language]
         self.max_op_bracket = None
         self.tokenizer = tokenizer
         vocab = tokenizer.get_vocab()
@@ -611,7 +618,7 @@ class BracketLogitsProcessor:
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         print(f"eos_ids: {eos_ids}")
 
-        self.prefix_constraints = PrefixConstraint(tokenizer, eos_ids)
+        self.prefix_constraints = PrefixConstraint(tokenizer, eos_ids, self.relations)
 
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
         self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(partial_bracket_codes, eos_ids)
@@ -622,7 +629,7 @@ class BracketLogitsProcessor:
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
 
         self.restrict_uncorrect_level_constraints = RestrictUncorrectLevelConstraint(
-            partial_bracket_codes, self.tokenizer)
+            partial_bracket_codes, self.tokenizer, self.relations)
 
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)
@@ -665,7 +672,7 @@ class BracketLogitsProcessor:
         #ts = time.perf_counter()
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
                     self.last_processed_text, self.last_processed_re,
-                    self.last_unused_tokens)
+                    self.last_unused_tokens, self.relations)
         print(f"{context.__dict__=}")
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context

@@ -470,13 +470,13 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     #print("after text", s)
 
     if unused_tokens is not None:
+        can_open = unused_tokens.total()
         if last_text in unused_tokens:
-            last_word = 1
-        else:
-            last_word = 0
+            can_open -= 1
+        if not drop_tokens and "[|T]" in s:
+            can_open -= s.count("[|T]")
         # если в предложении одно слово, нельзя [|T[|W[. Любая [ требует слова для "разрешения"
-        if unused_tokens is not None and \
-                unused_tokens.total() - last_word == 0 and s[-1] == "[":
+        if can_open == 0 and s[-1] == "[":
             return "|E" # TODO: более понятную строку
     
     s = re.sub(r'\[\|T\]', '|W', s)

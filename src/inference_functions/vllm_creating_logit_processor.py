@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import copy
 import re
 import string
 from typing import List, Tuple
@@ -433,9 +434,15 @@ def change_text(change_fun, right_border_symbol, s):
         #print(f"{right_border_in_fragment=}")
     return s
 
-def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=False):
+def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tokens=False):
     # >>> fold_bracket_seq("[roet[")
     # '|E'
+    if drop_tokens:
+        unused_tokens = unused_tokens_param
+    else:
+        unused_tokens = copy.deepcopy(unused_tokens_param)
+
+    initial_unused_amount = unused_tokens.total()
 
     s = s.replace(" ", "")
    
@@ -465,21 +472,18 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
         f_rel = lambda x: '[|T[' if constant_check(x) else x
 
     if unused_tokens is not None:
-        if drop_tokens:
-            def f_form_drop(x):
-                if not constant_check(x):
-                    return x
-                form_text = x[1:-1]
-                if form_text in unused_tokens and unused_tokens[form_text] > 0:
-                    unused_tokens[form_text] -= 1
-                    if unused_tokens[form_text] <= 0:
-                        unused_tokens.pop(form_text)
-                    return "[|T]"
-                else:
-                    return "[|E]"
-            f_form = f_form_drop
-        else:
-            f_form = lambda x: ('[|T]' if x[1:-1] in unused_tokens else '[|E]') if constant_check(x) else x
+        def f_form_drop(x):
+            if not constant_check(x):
+                return x
+            form_text = x[1:-1]
+            if form_text in unused_tokens and unused_tokens[form_text] > 0:
+                unused_tokens[form_text] -= 1
+                if unused_tokens[form_text] <= 0:
+                    unused_tokens.pop(form_text)
+                return "[|T]"
+            else:
+                return "[|E]"
+        f_form = f_form_drop
     else:
         f_form = lambda x: '[|T]' if constant_check(x) else x
 
@@ -500,24 +504,42 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     #print("after text", s)
 
     if unused_tokens is not None:
-        can_open = unused_tokens.total()
-        if last_text in unused_tokens:
-            can_open -= 1
-        if not drop_tokens and "[|T]" in s:
-            can_open -= s.count("[|T]")
-        # Количество открытых "[T" больше чем можем закрыть
-        if can_open + s.count("|W") < s.count("[|T"):
-            return "|E"
-            # если в предложении одно слово, нельзя [|T[|W[. Любая [ требует слова для "разрешения"
-        # Количество 
-        if can_open + s.count("|W") == s.count("[|T"):
-        # слов осталось ровно столько, сколько нужно, чтобы закрыть все открытые |T
-        # Нельзя открывать новые уровни, только новые слова
+        unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
+        level_openers = s.count("[|T") # расход
+        level_closers = s.count("|W") + s.count("[|T]") # уже случившийся приход
+        if level_openers > unused_amount_after_fold + level_closers:
+            return "|E" # расход привысил потенциальный и реальный приход
+        if level_openers == unused_amount_after_fold + level_closers:
+            # Есть шансы свести бюджет, но нужно действовать аккуратно
+            # Нельзя открывать новые уровни, только новые слова
             last_level_start = s.rfind("[|T")
             if last_level_start != -1:
                 last_level_text = s[last_level_start:]
-                if "|W" in last_level_text and last_level_text.count("[") > 1:
-                    return "|E"
+                # На последнем уровне уже есть |W, второе |W не может быть,
+                # все [ - открывают уровень
+                if "|W" in last_level_text:
+                    if last_level_text.count("[") > 1:
+                        return "|E"
+                else: # Нужно сгенерировать слово.
+                    # За запрет генерации типа связи отвечает генератор префиксов
+                    # Но на всякий случай нужно проверить
+                    if len([1 for tok in unused_tokens
+                            if tok.startswith(last_text)]) == 0:
+                        return "|E"
+    # >>> fold_bracket_seq("[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[fir", ENGLISH_RELATIONS, Counter({'of': 1, 'my': 1, 'firm': 1}), True)
+    # after text [|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[fir
+    # '[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[fir'
+    # >>> fold_bracket_seq("[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[firm", ENGLISH_RELATIONS, Counter({'of': 1, 'my': 1, 'firm': 1}), True)
+    # after text [|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[firm
+    # '[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[firm'
+    #>>> fold_bracket_seq("[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[frm", ENGLISH_RELATIONS, Counter({'of': 1, 'my': 1, 'firm': 1}), True)
+    # '[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[|E'
+    #>>> fold_bracket_seq("[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[frm", ENGLISH_RELATIONS, Counter({'of': 1, 'my': 1, 'firm': 1}), False)
+    # '[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[|E'
+    # >>> fold_bracket_seq("[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[firm", ENGLISH_RELATIONS, Counter({'of': 1, 'my': 1, 'firm': 1}), False)
+    # after text [|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[firm
+    # '[|T|C[|T|C|C|W[|T|C|C|C|W[|T[|T[firm'
+
     # >>> fold_bracket_seq("[|T[|T|W|C|C|C[|T|C|C[of][", ENGLISH_RELATIONS, Counter([',', 'of']))
     #'|E'
     #>>> fold_bracket_seq("[|T[|T|W|C|C|C[|T|C|C[of][", ENGLISH_RELATIONS, Counter([',', 'of']), True)

@@ -48,14 +48,12 @@ class PrefixGenerator:
         return context.re_text[last_re_level_ind:]
 
     def _create_relation_prefixes(self, context):
-        if len(context.last_unused_tokens) == 1:
-            last_re_level = self._get_last_level(context)
-            if "|W" in last_re_level:
-                return ENGLISH_RELATIONS
-            else:
-                return []
-            # На текущем уровне еще нет формы,
-            # оставшееся слово нужно на текущий уровень
+        if context.re_text.count("[|T") - context.re_text.count("[|W") == \
+                len(context.last_unused_tokens):
+            # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
+            # [|T[|T[|W] - если 2 last_unused_tokens, можно генерировать relations
+            # [|T[|W][|T[ - если 2 last_unused_tokens, можно генерировать relations
+            return []
         return ENGLISH_RELATIONS
 
     def _create_form_prefixes(self, context):

@@ -19,7 +19,7 @@ inference_models:
     name: Qwen3_4B_Base_en_ewt_grct
     model_library: vllm
     max_tokens: 5000
-root_output_dir_path: /content/results
+root_output_dir_path: /content/results/Qwen_06_4_Base_EWT
 inference:
     seed:
         - 42

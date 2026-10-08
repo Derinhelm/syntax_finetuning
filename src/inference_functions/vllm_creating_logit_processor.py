@@ -50,6 +50,10 @@ class PrefixGenerator:
         return context.re_text[last_re_level_ind:]
 
     def _create_relation_prefixes(self, context):
+        print("{context.re_text.count('[|T')=}", f"{context.re_text.count('|W')=}",
+            f"{context.last_unused_tokens.total()=}")
+        print(context.re_text.count("[|T") - context.re_text.count("|W") == \
+            context.last_unused_tokens.total()) 
         if context.re_text.count("[|T") - context.re_text.count("|W") == \
                 context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
@@ -66,6 +70,8 @@ class PrefixGenerator:
             return context.last_unused_tokens
 
     def __call__(self, context):
+        print(f"{self._create_form_prefixes(context)}")
+        print(f"{self._create_relation_prefixes(context)}")
         generated_text = context.generated_text
         root_text = "[root["
         if generated_text == "":
@@ -123,13 +129,13 @@ class PrefixFinder:
             target = target_str.encode("utf-8")
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
-            #print(f"{target_prefixes=}")
+            print(f"{target_prefixes=}")
             # Условие 2: токены, для которых target — префикс
             target_continuations = list(self.trie.iterkeys(target))
-            #print(f"{target_continuations=}")
+            print(f"{target_continuations=}")
             allow_ids += [self.bytes_to_id[b] \
                 for b in target_prefixes + target_continuations]
-            #print(f"{allow_ids=}")
+            print(f"{allow_ids=}")
 
         return list(set(allow_ids))
 
@@ -402,10 +408,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     # '|E'
 
     s = s.replace(" ", "")
-
-    # если было одно слово всего, нельзя [|T[|W[. Любая [ требует слова для "разрешения"
-    if unused_tokens is not None and unused_tokens.total() == 0 and s[-1] == "[":
-        return "|E" # TODO: более понятную строку   
+   
     if s[:6] == "[root[":
         s = "[|T[" + s[6:]
     elif "[root[".startswith(s):
@@ -465,6 +468,17 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
     if '|E' in s:
         return s
     #print("after text", s)
+
+    if unused_tokens is not None:
+        if last_text in unused_tokens:
+            last_word = 1
+        else:
+            last_word = 0
+        # если в предложении одно слово, нельзя [|T[|W[. Любая [ требует слова для "разрешения"
+        if unused_tokens is not None and \
+                unused_tokens.total() - last_word == 0 and s[-1] == "[":
+            return "|E" # TODO: более понятную строку
+    
     s = re.sub(r'\[\|T\]', '|W', s)
 
     while '|E' not in s and "]" in s and s[0] == "[":
@@ -502,10 +516,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
         while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
             max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
             max_token_texts = [self.tokenizer.decode(ind) for ind in max_indices]
-            #print(f"{max_logits=}")
-            #print(f"{max_indices=}")
-            #print(f"{max_token_texts=}")
-            #print(f"{iter_i=}")
+            print(f"{max_logits=}")
+            print(f"{max_indices=}")
+            print(f"{max_token_texts=}")
+            print(f"{iter_i=}")
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
@@ -516,7 +530,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
             iter_i += 1
-            #print(f"{valid_indexes=}")
+            print(f"{valid_indexes=}")
         valid_mask = torch.zeros_like(logits, dtype=torch.bool)
         valid_mask[valid_indexes] = True
         logits[~valid_mask] = float('-inf')

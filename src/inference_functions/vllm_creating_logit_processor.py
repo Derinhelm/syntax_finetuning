@@ -72,13 +72,7 @@ RELATION_DICT = {None: RUSSIAN_RELATIONS, "ru": RUSSIAN_RELATIONS,
 class PrefixGenerator:    
     def __init__(self, relations):
         self.name = "prefix"
-        self.relations = relations    
-
-    def _get_last_level(self, context):
-        last_re_level_ind = context.re_text.rfind("[|T")
-        if last_re_level_ind == -1:
-            last_re_level_ind = 0
-        return context.re_text[last_re_level_ind:]
+        self.relations = relations        
 
     def _create_relation_prefixes(self, context):
         #print("{context.re_text.count('[|T')=}", f"{context.re_text.count('|W')=}",
@@ -94,7 +88,14 @@ class PrefixGenerator:
         return self.relations
 
     def _create_form_prefixes(self, context):
-        last_re_level = self._get_last_level(context)
+        # '[|T|W[|T|C|W|C[nmod' - [nmod
+        # '[|T|W[|T|C|W|C' - [|T|C|W|C
+
+        last_re_level_ind = context.re_text.rfind("[")
+        if last_re_level_ind == -1:
+            last_re_level_ind = 0
+        last_re_level = context.re_text[last_re_level_ind:]
+
         if "|W" in last_re_level:
             return []
         else:
@@ -160,13 +161,13 @@ class PrefixFinder:
             target = target_str.encode("utf-8")
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
-            #print(f"{target_prefixes=}")
+            print(f"{target_prefixes=}")
             # Условие 2: токены, для которых target — префикс
             target_continuations = list(self.trie.iterkeys(target))
-            #print(f"{target_continuations=}")
+            print(f"{target_continuations=}")
             allow_ids += [self.bytes_to_id[b] \
                 for b in target_prefixes + target_continuations]
-            #print(f"{allow_ids=}")
+            print(f"{allow_ids=}")
 
         return list(set(allow_ids))
 
@@ -501,7 +502,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
 
     if '|E' in s:
         return s
-    #print("after text", s)
+    print("after text", s)
 
     if unused_tokens is not None:
         unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
@@ -583,23 +584,23 @@ class RestrictUncorrectLevelConstraint(Constraint):
         while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
             max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
             max_token_texts = [self.tokenizer.decode(ind) for ind in max_indices]
-            #print(f"{max_logits=}")
-            #print(f"{max_indices=}")
-            #print(f"{max_token_texts=}")
-            #print(f"{iter_i=}")
+            print(f"{max_logits=}")
+            print(f"{max_indices=}")
+            print(f"{max_token_texts=}")
+            print(f"{iter_i=}")
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
                 fold_res = fold_bracket_seq(context.re_text + token_text,
                             self.relations, context.last_unused_tokens, False)
-                #print(f"{fold_res=}")
+                print(f"{fold_res=}")
                 if "|E" not in fold_res:
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
             iter_i += 1
-            #print(f"{valid_indexes=}")
+            print(f"{valid_indexes=}")
         valid_mask = torch.zeros_like(logits, dtype=torch.bool)
         valid_mask[valid_indexes] = True
         logits[~valid_mask] = float('-inf')

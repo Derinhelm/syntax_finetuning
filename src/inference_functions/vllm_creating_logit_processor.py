@@ -505,10 +505,23 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
             can_open -= 1
         if not drop_tokens and "[|T]" in s:
             can_open -= s.count("[|T]")
-        # если в предложении одно слово, нельзя [|T[|W[. Любая [ требует слова для "разрешения"
-        if can_open == 0 and s[-1] == "[":
-            return "|E" # TODO: более понятную строку
-    
+        # Количество открытых "[T" больше чем можем закрыть
+        if can_open + s.count("|W") < s.count("[|T"):
+            return "|E"
+            # если в предложении одно слово, нельзя [|T[|W[. Любая [ требует слова для "разрешения"
+        # Количество 
+        if can_open + s.count("|W") == s.count("[|T"):
+        # слов осталось ровно столько, сколько нужно, чтобы закрыть все открытые |T
+        # Нельзя открывать новые уровни, только новые слова
+            last_level_start = s.rfind("[|T")
+            if last_level_start != -1:
+                last_level_text = s[last_level_start:]
+                if "|W" in last_level_text and last_level_text.count("[") > 1:
+                    return "|E"
+    # >>> fold_bracket_seq("[|T[|T|W|C|C|C[|T|C|C[of][", ENGLISH_RELATIONS, Counter([',', 'of']))
+    #'|E'
+    #>>> fold_bracket_seq("[|T[|T|W|C|C|C[|T|C|C[of][", ENGLISH_RELATIONS, Counter([',', 'of']), True)
+    #'|E'
     s = re.sub(r'\[\|T\]', '|W', s)
 
     while '|E' not in s and "]" in s and s[0] == "[":
@@ -519,15 +532,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens=None, drop_tokens=Fa
             break
         else:
             s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
-
-    if unused_tokens is not None and s.count("[|T") - s.count("|W") == unused_tokens.total():
-        # слов осталось ровно столько, сколько нужно, чтобы закрыть все открытые |T
-        # Нельзя открывать новые уровни, только новые слова
-        last_level_start = s.rfind("[|T")
-        if last_level_start != -1:
-            last_level_text = s[last_level_start:]
-            if "|W" in last_level_text and last_level_text.count("[") > 1:
-                return "E"
+        
     if s != "" and s[0] != "[" and s != "|C":
         s = "|E"
     return s

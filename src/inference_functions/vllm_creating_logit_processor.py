@@ -56,6 +56,7 @@ class PrefixGenerator:
                 return []
             # На текущем уровне еще нет формы,
             # оставшееся слово нужно на текущий уровень
+        return ENGLISH_RELATIONS
 
     def _create_form_prefixes(self, context):
         last_re_level = self._get_last_level(context)

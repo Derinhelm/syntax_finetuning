@@ -49,7 +49,7 @@ class PrefixGenerator:
 
     def _create_relation_prefixes(self, context):
         if context.re_text.count("[|T") - context.re_text.count("[|W") == \
-                len(context.last_unused_tokens):
+                context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
             # [|T[|T[|W] - если 2 last_unused_tokens, можно генерировать relations
             # [|T[|W][|T[ - если 2 last_unused_tokens, можно генерировать relations
@@ -77,7 +77,7 @@ class PrefixGenerator:
                 self._create_form_prefixes(context)] + \
                 ["[" + el + "[" for el in
                 self._create_relation_prefixes(context)]
-        elif len(context.last_unused_tokens) == 0:
+        elif context.last_unused_tokens.total() == 0:
             return ["]"]
         elif generated_text[-1] == "[":
             return [el + "]" for el in

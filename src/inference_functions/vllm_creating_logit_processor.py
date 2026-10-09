@@ -515,35 +515,66 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
     print("after text", s)
 
     if unused_tokens is not None:
+        unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
+
+    s = re.sub(r'\[\|T\]', '|W', s)
+
+    while '|E' not in s and "]" in s and s[0] == "[":
+        end_bracket = s.find("]")
+        op_bracket = s[:end_bracket].rfind("[")
+        if s[op_bracket + 1:op_bracket + 3] != "|T" or s[op_bracket + 2: end_bracket].count("|W") != 1:
+            s = s[:op_bracket + 1] + "|E" + s[end_bracket:]
+            break
+        else:
+            s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
+    print("after fold", s)
+        
+    if s != "" and s[0] != "[" and s != "|C":
+        s = "|E"
+
+    if unused_tokens is not None:
         # [|T|W[|T|C|W|C[|T[Home]] - Counter({'Home': 1})
         # after text [|T|W[|T|C|W|C[|T[|T]]
         # unused_amount_after_fold=0 level_openers=3 level_closers=3
-
-        unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
         level_openers = s.replace("[|T]", "").count("[|T") # расход
         level_closers = s.count("|W") + s.count("[|T]") # уже случившийся приход
         print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
         if level_openers > unused_amount_after_fold + level_closers:
             return "|E" # расход привысил потенциальный и реальный приход
-        if level_openers == unused_amount_after_fold + level_closers and \
-                level_openers != level_closers:
+        if level_openers == unused_amount_after_fold + level_closers:
+            if level_openers == level_closers:
+                # Бюджет сведен
+                if s.count("[") > 1:
+                    return "|E"
+            else:   
             # Бюджет еще не сведен
             # Есть шансы свести бюджет, но нужно действовать аккуратно
             # Нельзя открывать новые уровни, только новые слова
-            last_level_start = s.rfind("[|T")
-            if last_level_start != -1:
-                last_level_text = s[last_level_start:]
-                # На последнем уровне уже есть |W, второе |W не может быть,
-                # все [ - открывают уровень
-                if "|W" in last_level_text:
-                    if last_level_text.count("[") > 1:
-                        return "|E"
-                else: # Нужно сгенерировать слово.
-                    # За запрет генерации типа связи отвечает генератор префиксов
-                    # Но на всякий случай нужно проверить
-                    if len([1 for tok in unused_tokens
-                            if tok.startswith(last_text)]) == 0:
-                        return "|E"
+                last_level_start = s.rfind("[|T")
+                if last_level_start != -1:
+                    last_level_text = s[last_level_start:]
+                    # На последнем уровне уже есть |W, второе |W не может быть,
+                    # все [ - открывают уровень
+                    if "|W" in last_level_text:
+                        if last_level_text.count("[") > 1:
+                            return "|E"
+                    else: # Нужно сгенерировать слово.
+                        # За запрет генерации типа связи отвечает генератор префиксов
+                        # Но на всякий случай нужно проверить
+                        if len([1 for tok in unused_tokens
+                                if tok.startswith(last_text)]) == 0:
+                            return "|E"
+    
+    #>>> fold_bracket_seq("[|T|C|C|W|C[|T|C|C[.]][", ENGLISH_RELATIONS, Counter({'.': 1}), True)
+    # after text [|T|C|C|W|C[|T|C|C[|T]][
+    # after fold [|T|C|C|W|C|C[
+    # unused_amount_after_fold=0 level_openers=1 level_closers=1
+    #'|E'
+    # >>> fold_bracket_seq("[|T|C|C|W|C[|T|C|C[.]][", ENGLISH_RELATIONS, Counter({'.': 1}), False)
+    # after text [|T|C|C|W|C[|T|C|C[|T]][
+    # after fold [|T|C|C|W|C|C[
+    # unused_amount_after_fold=0 level_openers=1 level_closers=1
+    #'|E'
     # >>> fold_bracket_seq("[|T|C|W[|T|C|W|C[|T[.]", ENGLISH_RELATIONS, Counter({'.': 1}), True)
     # after text [|T|C|W[|T|C|W|C[|T[|T]
     # unused_amount_after_fold=0 level_openers=1 level_closers=3
@@ -571,19 +602,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
     #'|E'
     #>>> fold_bracket_seq("[|T[|T|W|C|C|C[|T|C|C[of][", ENGLISH_RELATIONS, Counter([',', 'of']), True)
     #'|E'
-    s = re.sub(r'\[\|T\]', '|W', s)
 
-    while '|E' not in s and "]" in s and s[0] == "[":
-        end_bracket = s.find("]")
-        op_bracket = s[:end_bracket].rfind("[")
-        if s[op_bracket + 1:op_bracket + 3] != "|T" or s[op_bracket + 2: end_bracket].count("|W") != 1:
-            s = s[:op_bracket + 1] + "|E" + s[end_bracket:]
-            break
-        else:
-            s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
-        
-    if s != "" and s[0] != "[" and s != "|C":
-        s = "|E"
     return s
 
 

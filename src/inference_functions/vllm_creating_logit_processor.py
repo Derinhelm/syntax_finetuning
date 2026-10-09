@@ -515,8 +515,12 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
     print("after text", s)
 
     if unused_tokens is not None:
+        # [|T|W[|T|C|W|C[|T[Home]] - Counter({'Home': 1})
+        # after text [|T|W[|T|C|W|C[|T[|T]]
+        # unused_amount_after_fold=0 level_openers=3 level_closers=3
+
         unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
-        level_openers = s.count("[|T[") # расход
+        level_openers = s.replace("[|T]", "").count("[|T") # расход
         level_closers = s.count("|W") + s.count("[|T]") # уже случившийся приход
         print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
         if level_openers > unused_amount_after_fold + level_closers:

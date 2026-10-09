@@ -66,7 +66,7 @@ JAPANESE_RELATIONS = ['acl', 'advcl', 'advmod', 'amod', 'aux', 'case',
 
 RELATION_DICT = {None: RUSSIAN_RELATIONS, "ru": RUSSIAN_RELATIONS,
                  "eng": ENGLISH_RELATIONS, "ch": CHINESE_RELATIONS,
-                 "fin": FINNISH_RELATIONS, "fr": FRENCH_RELATIONS,
+                 "fi": FINNISH_RELATIONS, "fr": FRENCH_RELATIONS,
                  "ja": JAPANESE_RELATIONS}
 
 class PrefixGenerator:    
@@ -170,13 +170,13 @@ class PrefixFinder:
             target = target_str.encode("utf-8")
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
-            print(f"{target_prefixes=}")
+            #print(f"{target_prefixes=}")
             # Условие 2: токены, для которых target — префикс
             target_continuations = list(self.trie.iterkeys(target))
-            print(f"{target_continuations=}")
+            #print(f"{target_continuations=}")
             allow_ids += [self.bytes_to_id[b] \
                 for b in target_prefixes + target_continuations]
-            print(f"{allow_ids=}")
+            #print(f"{allow_ids=}")
 
         return list(set(allow_ids))
 
@@ -512,7 +512,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
 
     if '|E' in s:
         return s
-    print("after text", s)
+    #print("after text", s)
 
     if unused_tokens is not None:
         unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
@@ -527,7 +527,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
             break
         else:
             s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
-    print("after fold", s)
+    #print("after fold", s)
         
     if s != "" and s[0] != "[" and s != "|C":
         s = "|E"
@@ -538,14 +538,14 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
         # unused_amount_after_fold=0 level_openers=3 level_closers=3
         level_openers = s.replace("[|T]", "").count("[|T") # расход
         level_closers = s.count("|W") + s.count("[|T]") # уже случившийся приход
-        print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
+        #print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
         if level_openers > unused_amount_after_fold + level_closers:
             return "|E" # расход привысил потенциальный и реальный приход
         if level_openers == unused_amount_after_fold + level_closers:
             last_level_start = s.rfind("[|T")
             if last_level_start != -1:
                 last_level_text = s[last_level_start:]
-                print(f"{last_level_text=}")
+                #print(f"{last_level_text=}")
                 if level_openers == level_closers:
                 # Бюджет сведен
                     if last_level_text.count("[") > 1:

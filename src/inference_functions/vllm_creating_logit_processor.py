@@ -542,17 +542,20 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
         if level_openers > unused_amount_after_fold + level_closers:
             return "|E" # расход привысил потенциальный и реальный приход
         if level_openers == unused_amount_after_fold + level_closers:
-            if level_openers == level_closers:
+            last_level_start = s.rfind("[|T")
+            if last_level_start != -1:
+                last_level_text = s[last_level_start:]
+                print(f"{last_level_text=}")
+                if level_openers == level_closers:
                 # Бюджет сведен
-                if s.count("[") > 1:
-                    return "|E"
-            else:   
+                    if last_level_text.count("[") > 1:
+                        return "|E"
+            # >>> fold_bracket_seq("[|T|W|C[|T|C|C|W|C[|T|C|W[|T|W", ENGLISH_RELATIONS, Counter(), True)
+            # '[|T|W|C[|T|C|C|W|C[|T|C|W[|T|W'
+                else:   
             # Бюджет еще не сведен
             # Есть шансы свести бюджет, но нужно действовать аккуратно
             # Нельзя открывать новые уровни, только новые слова
-                last_level_start = s.rfind("[|T")
-                if last_level_start != -1:
-                    last_level_text = s[last_level_start:]
                     # На последнем уровне уже есть |W, второе |W не может быть,
                     # все [ - открывают уровень
                     if "|W" in last_level_text:

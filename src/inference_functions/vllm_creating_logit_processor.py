@@ -525,7 +525,9 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
         print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
         if level_openers > unused_amount_after_fold + level_closers:
             return "|E" # расход привысил потенциальный и реальный приход
-        if level_openers == unused_amount_after_fold + level_closers:
+        if level_openers == unused_amount_after_fold + level_closers and \
+                level_openers != level_closers:
+            # Бюджет еще не сведен
             # Есть шансы свести бюджет, но нужно действовать аккуратно
             # Нельзя открывать новые уровни, только новые слова
             last_level_start = s.rfind("[|T")

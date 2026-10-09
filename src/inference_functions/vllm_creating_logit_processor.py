@@ -88,16 +88,23 @@ class PrefixGenerator:
         return self.relations
 
     def _create_form_prefixes(self, context):
-        # '[|T|W[|T|C|W|C[nmod' - [nmod
+        # '[|T|W[|T|C|W|C[nmod' - [nmod - это не форма
         # '[|T|W[|T|C|W|C' - [|T|C|W|C
+        # '[|T|W[|T|C|W|C[nmod' - можно добавить [Дом (если ок по количеству)
+
         right_border = len(context.re_text)
         if context.re_text[-1] == "[":
             right_border = right_border - 1
-        last_re_level_ind = context.re_text[:right_border].rfind("[")
+        right_open = context.re_text[:right_border].rfind("[")
+        if right_open != -1:
+            text_after_right = context.re_text[right_open + 1:]
+            if "]" not in text_after_right and text_after_right in self.relations:
+                return context.last_unused_tokens # Нарушается логика для некоторых вариантов. Расписать
+
+        last_re_level_ind = context.re_text.rfind("[|T")
         if last_re_level_ind == -1:
             last_re_level_ind = 0
         last_re_level = context.re_text[last_re_level_ind:]
-
         if "|W" in last_re_level:
             return []
         else:

@@ -283,7 +283,10 @@ def conduct_experiment(parameters, inf_experiments, metric_list):
                     else: # TODO: убрать необходимость в datasets для metric
                         conll_test_file_path = inf_experiment['dataset_config'].conll_test_file_path
                     if result_path is not None:
-                        conduct_evaluation(parameters.output_experiment_path,
-                            conll_test_file_path, result_path, metric)
+                        try:
+                            conduct_evaluation(parameters.output_experiment_path,
+                                conll_test_file_path, result_path, metric)
+                        except Exception as e:
+                            print(f"Error during evaluation {result_path}:\n{e}")
     if not parameters.check_is_none():
         mark_ready(parameters.output_experiment_path)

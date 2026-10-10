@@ -7,7 +7,7 @@ dataset_config:
   treebank_repr: grct
   treebank: english_ewt_grct
 inference_models:
-  - original_model_id: Qwen/Qwen3-0.6B
+  - original_model_id: Qwen/Qwen3-0.6B-Base
     peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_en_ewt_grct
     is_instruct: False
     name: Qwen3_0_6B_Base_en_ewt_grct

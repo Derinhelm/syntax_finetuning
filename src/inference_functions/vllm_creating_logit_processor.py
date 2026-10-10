@@ -564,9 +564,11 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
                     else: # Нужно сгенерировать слово.
                         # За запрет генерации типа связи отвечает генератор префиксов
                         # Но на всякий случай нужно проверить
-                        if len([1 for tok in unused_tokens
+                        if s[-2:] != "|C" and s[-2:] != "|T":
+                            # [|T|W|C[|T|C|C, Counter([.]) - ok
+                            if len([1 for tok in unused_tokens
                                 if tok.startswith(last_text)]) == 0:
-                            return "|E"
+                                return "|E"
     
     #>>> fold_bracket_seq("[|T|C|C|W|C[|T|C|C[.]][", ENGLISH_RELATIONS, Counter({'.': 1}), True)
     # after text [|T|C|C|W|C[|T|C|C[|T]][

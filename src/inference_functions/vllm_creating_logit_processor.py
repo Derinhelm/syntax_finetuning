@@ -474,9 +474,13 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
             (len([token for token in unused_tokens if token.startswith(last_text)]) == 0 and
             (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
         return s[:last_op_bracket + 1] + "|E"
-    if last_text.count("|W") > 1:
+    last_re_level_ind = s.rfind("[|T")
+    if last_re_level_ind == -1:
+        last_re_level_ind = 0
+    last_re_level = s[last_re_level_ind:]
+    if last_re_level.count("|W") > 1:
         return s[:last_op_bracket + 1] + "|E"
-    if last_text.count("|W") == 1 and \
+    if last_re_level.count("|W") == 1 and \
         (len([token for token in unused_tokens if token.startswith(last_text)]) != 0 and
         (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
         # [|T|W[|T|W|C|C|C[$ - E (два на уровне будут)
@@ -511,8 +515,10 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
     if '|E' in s:
         return s
 
-    f_check_level_two_words = lambda x: "|E" if x.count("|W") > 1 else x 
+    f_check_level_two_words = lambda x: "|E" if x.count("|W") > 1 else x
+
     # Против [|T|C|W|W[
+    # Только для закрытых уровней. Открытый рассматривается раньше
     s = change_text(f_check_level_two_words, "[", s)
 
     if '|E' in s:

@@ -7,14 +7,14 @@ from conllu import parse
 def conduct_evaluation(output_experiment_path, conll_test_file_path,
             result_path, metric):
         res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
-        metric_path = f"{output_experiment_path}/metrics_{res_name}.jsonl"
+
+        metric_format = metric["format"]
+        metric_type = metric["metric_type"]
+        metric_path = f"{output_experiment_path}/metrics_{res_name}_{metric_format}_{metric_type}.jsonl"
 
         with open(conll_test_file_path, 'r') as file:
             content = file.read()
         gold_sentences = parse(content)
-
-        metric_format = metric["format"]
-        metric_type = metric["metric_type"]
 
         expir_res_uas, expir_res_las, expir_res_coeffs = evaluate_one_experiment(
             gold_sentences, result_path, metric_format, metric_type)

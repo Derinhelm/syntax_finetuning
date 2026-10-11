@@ -95,7 +95,7 @@ def inference_dataset(parser, result_filepath, not_ready_data, data_amount):
         new_d['gold_tree'] = parser.tree_decoder.decode_tree(d['output'], False)
         print(new_d['gold_tree'])
         input_tokens = [t['form'] for t in new_d['gold_tree']
-            if '.' not in t['id']]
+            if "." not in t['id'] and "-" not in t['id']]
         llm_output, full_output, pred_tree, llm_time, token_amount, extra_info = \
             parser.parse(d['input'], input_tokens)
         new_d['pred_output'] = llm_output

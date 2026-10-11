@@ -4,7 +4,8 @@ def create_sent_be_nodes(sent_text, sent_tokens, text_transform):
     sent_text = text_transform(sent_text)
     original_sent_text = text_transform(sent_text)
     del_prefix_len = 0
-    tokens = [t for t in sent_tokens if '.' not in t["id"]]
+    tokens = [t for t in sent_tokens
+              if "." not in t["id"] and "-" not in t['id']]
     for t_i, t in enumerate(tokens):
         token_text = text_transform(t["form"])
         t_start = sent_text.find(token_text)

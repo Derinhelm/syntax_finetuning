@@ -196,7 +196,9 @@ class ForceFinishConstraint(Constraint):
 
 class RestrictBracketAfterOpenConstraint(Constraint):
     def __init__(self, id_to_bytes):
-        self.id_to_bytes = id_to_bytes
+        wrong_ids = [token_id for token_id, token_bytes in id_to_bytes.items()
+                          if token_bytes[0] in {OPEN_BYTE, END_BYTE}]
+        self.wrong_ids = torch.tensor(wrong_ids, dtype=torch.long)
 
     def check(self, context):
         return len(context.generated_bytes) > 0 and \
@@ -204,30 +206,24 @@ class RestrictBracketAfterOpenConstraint(Constraint):
         # After "[" any bracket subtoken is restricted
         
     def __call__(self, logits, context):
-        for token_id, token_bytes in self.id_to_bytes.items():
-            if token_bytes[0] in {OPEN_BYTE, END_BYTE}:
-                logits[token_id] = float('-inf')
+        logits[self.wrong_ids] = float('-inf')
                 #print(token_id, token_text)
         #print("Restriction for bracket after open bracket")
         return logits
         
 class RestrictTextAfterEndConstraint(Constraint):
     def __init__(self, id_to_bytes, eos_ids):
-        self.id_to_bytes = id_to_bytes
-        self.eos_ids = eos_ids
+        self.allowed_ids = [ token_id for token_id, token_bytes in id_to_bytes.items()
+                           if token_bytes[0] == END_BYTE or token_bytes[0] == OPEN_BYTE ] + eos_ids
 
     def check(self, context):
         return len(context.generated_bytes) > 0 and \
             context.generated_bytes[-1] == END_BYTE
         
     def __call__(self, logits, context): # TODO: запрет нужен для всех!!!
-        mask_tensor = torch.full(logits.shape, -float('inf'), device=logits.device)
-        for token_id, token_bytes in self.id_to_bytes.items():
-            if token_bytes[0] == END_BYTE or token_bytes[0] == OPEN_BYTE:
-                mask_tensor[token_id] = 0
-        for token_id in self.eos_ids:
-            mask_tensor[token_id] = 0
-        logits += mask_tensor
+        allowed_logits = logits[self.allowed_ids].clone()
+        logits.fill_(-float('inf'))
+        logits[self.allowed_ids] = allowed_logits
         return logits
 
         
@@ -238,12 +234,24 @@ class RestrictBalanceBracketConstraint(Constraint):
         self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
         self.soft_max_amount = soft_max_amount
+        self.full_deltas = { token_id: token_bytes.count(OPEN_BYTE) - token_bytes.count(END_BYTE)
+                             for token_id, token_bytes in self.id_to_bytes.items() }
         
     def check(self, context):
         return True
     
     def __call__(self, logits, context):
         bracket_diff = context.op_amount - context.end_amount
+        if self.applying_max_amount and not self.soft_max_amount: # Есть жесткое ограничение по количеству открытых скобок
+            if not context.check_all_open(): # И не все [ сгенерированы
+                # То есть нельзя делать diff = 0
+                threshold = 1
+            else: # Все [ сгенерированы, можно diff = 0
+                threshold = 0
+        else: 
+            # Ограничений по количеству скобок нет, можно уходить в ноль (тогда потом будет force end)
+            threshold = 0
+
         for token_id, token_bytes in self.id_to_bytes.items():
             inf_flag = False
             for i in range(1, len(token_bytes)):
@@ -252,20 +260,9 @@ class RestrictBalanceBracketConstraint(Constraint):
                     # Ошибка вида "[Остается][" при добавлении "]["
                     inf_flag = True
             if not inf_flag:
-                new_bracket_diff = bracket_diff + \
-                    token_bytes.count(OPEN_BYTE) - token_bytes.count(END_BYTE)
-                if self.applying_max_amount and not self.soft_max_amount: # Есть жесткое ограничение по количеству открытых скобок
-                    if not context.check_all_open(): # И не все [ сгенерированы
-                        # То есть нельзя делать diff = 0
-                        if new_bracket_diff < 1:
-                            inf_flag = True
-                    else: # Все [ сгенерированы, можно diff = 0
-                        if new_bracket_diff < 0:
-                            inf_flag = True
-                else:
-                # Ограничений по количеству скобок нет, можно уходить в ноль (тогда потом будет force end)
-                    if new_bracket_diff < 0:
-                        inf_flag = True
+                new_bracket_diff = bracket_diff + self.full_deltas[token_id]
+                if new_bracket_diff < threshold:
+                    inf_flag = True
             if inf_flag:
                 logits[token_id] = float('-inf')
         return logits
@@ -274,8 +271,10 @@ class RestrictOpenConstraint(Constraint):
     """"""
     
     def __init__(self, id_to_bytes, applying_max_amount):
-        self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
+        self.wrong_ids = [ token_id for token_id, token_bytes in id_to_bytes.items()
+                           if OPEN_BYTE in token_bytes ] 
+
         
     def check(self, context):
         if not self.applying_max_amount:
@@ -283,11 +282,7 @@ class RestrictOpenConstraint(Constraint):
         return context.check_all_open() and not context.check_all_end()
     
     def __call__(self, logits, context):
-        #print("Restriction for [")
-        for token_id, token_bytes in self.id_to_bytes.items():
-            if OPEN_BYTE in token_bytes:
-              logits[token_id] = float('-inf')
-              #print(f"Restricted {token_id} ({token_text})")
+        logits[self.wrong_ids] = float('-inf')
         return logits
 
 class RestrictErrorTokenConstraint(Constraint):

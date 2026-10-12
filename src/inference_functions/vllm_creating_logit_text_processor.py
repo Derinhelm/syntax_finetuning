@@ -234,9 +234,25 @@ class RestrictBalanceBracketConstraint(Constraint):
         self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
         self.soft_max_amount = soft_max_amount
-        self.full_deltas = { token_id: token_bytes.count(OPEN_BYTE) - token_bytes.count(END_BYTE)
-                             for token_id, token_bytes in self.id_to_bytes.items() }
-        
+        full_deltas = []
+        bracketed_token_ids = []
+        min_deltas = []
+        for token_id, token_bytes in self.id_to_bytes.items():
+            if OPEN_BYTE in token_bytes or END_BYTE in token_bytes:
+                min_delta = None
+                for i in range(1, len(token_bytes)):
+                    token_slice = token_bytes[:i]
+                    delta = token_slice.count(OPEN_BYTE) - token_slice.count(END_BYTE)
+                    if min_delta is None or delta < min_delta:
+                        min_delta = delta
+                bracketed_token_ids.append(token_id)
+                min_deltas.append(min_delta)
+                full_deltas.append(token_bytes.count(OPEN_BYTE) - token_bytes.count(END_BYTE))
+        self.bracketed_token_ids = torch.tensor(bracketed_token_ids, dtype=torch.long)
+        self.full_deltas = torch.tensor(full_deltas, dtype=torch.int32)
+        self.min_deltas = torch.tensor(min_deltas, dtype=torch.int32)
+
+
     def check(self, context):
         return True
     
@@ -252,19 +268,11 @@ class RestrictBalanceBracketConstraint(Constraint):
             # Ограничений по количеству скобок нет, можно уходить в ноль (тогда потом будет force end)
             threshold = 0
 
-        for token_id, token_bytes in self.id_to_bytes.items():
-            inf_flag = False
-            for i in range(1, len(token_bytes)):
-                token_slice = token_bytes[:i]
-                if bracket_diff + token_slice.count(OPEN_BYTE) - token_slice.count(END_BYTE) < 1:
-                    # Ошибка вида "[Остается][" при добавлении "]["
-                    inf_flag = True
-            if not inf_flag:
-                new_bracket_diff = bracket_diff + self.full_deltas[token_id]
-                if new_bracket_diff < threshold:
-                    inf_flag = True
-            if inf_flag:
-                logits[token_id] = float('-inf')
+        # Ошибка вида "[Остается][" при добавлении "]["
+        min_filter = (bracket_diff + self.min_deltas < 1)
+        full_filter = (bracket_diff + self.full_deltas < threshold)
+        wrong_ids = self.bracketed_token_ids[min_filter | full_filter]
+        logits[wrong_ids] = float('-inf')
         return logits
 
 class RestrictOpenConstraint(Constraint):

@@ -381,7 +381,7 @@ class RestrictErrorTokenConstraint(Constraint):
                        error_token_flag = True
                        break
                elif not (t.isalnum() or t in string.punctuation or
-                 t in " “”„«»—–…№"):
+                 t in " “”„«»—–…№" or 0xFF00 <= ord(t) < 0xFFEF):
                    error_token_flag = True
                    break
                 

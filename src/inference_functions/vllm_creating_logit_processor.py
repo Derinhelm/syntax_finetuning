@@ -380,10 +380,10 @@ class RestrictErrorTokenConstraint(Constraint):
                    if t_i != 0 and decode_token_text[t_i - 1] != "]":
                        error_token_flag = True
                        break
-               elif not (t.isalnum() or t in string.punctuation or
-                 t in " “”„«»—–…№" or 0xFF00 <= ord(t) < 0xFFEF):
-                   error_token_flag = True
-                   break
+               #elif not (t.isalnum() or t in string.punctuation or
+               #  t in " “”„«»—–…№" or 0xFF00 <= ord(t) < 0xFFEF):
+               #    error_token_flag = True
+               #    break
                 
             if error_token_flag:
                 self.error_indexes.append(token_id)

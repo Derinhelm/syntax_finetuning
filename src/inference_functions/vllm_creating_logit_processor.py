@@ -93,7 +93,7 @@ class PrefixGenerator:
         # '[|T|W[|T|C|W|C[nmod' - можно добавить [Дом (если ок по количеству)
 
         right_border = len(context.re_text)
-        if context.re_text[-1] == "[":
+        if context.re_text != "" and context.re_text[-1] == "[":
             right_border = right_border - 1
         right_open = context.re_text[:right_border].rfind("[")
         if right_open != -1:
@@ -445,6 +445,10 @@ def change_text(change_fun, right_border_symbol, s):
     return s
 
 def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tokens=False):
+
+    last_op_bracket = s.rfind("[")
+    last_text = s[last_op_bracket + 1:]
+
     # >>> fold_bracket_seq("[roet[")
     # '|E'
     if drop_tokens:
@@ -466,8 +470,6 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
     #print(1, s)
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
     # '[|T[|E'
-    last_op_bracket = s.rfind("[")
-    last_text = s[last_op_bracket + 1:]
     # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |
     if not last_text.startswith("|T") and \
         "]" not in last_text and unused_tokens is not None and \

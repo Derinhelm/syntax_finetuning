@@ -444,6 +444,16 @@ def change_text(change_fun, right_border_symbol, s):
         #print(f"{right_border_in_fragment=}")
     return s
 
+def last_tokens_is_form_prefix(last_tokens, unused_tokens):
+    if unused_tokens is None:
+        return False
+    if len([1 for tok in unused_tokens if tok.startswith(last_tokens)]) != 0:
+        return True
+    return False
+
+def last_tokens_is_relation_prefix(last_tokens, allow_relations):
+    return len([rel for rel in allow_relations if rel.startswith(last_tokens)]) != 0
+
 def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tokens=False):
 
     last_op_bracket = s.rfind("[")
@@ -473,8 +483,8 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
     # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |
     if not last_text.startswith("|T") and \
         "]" not in last_text and unused_tokens is not None and \
-            (len([token for token in unused_tokens if token.startswith(last_text)]) == 0 and
-            (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
+            (not last_tokens_is_form_prefix(last_text, unused_tokens) and
+            not last_tokens_is_relation_prefix(last_text, allow_relations)):
         return s[:last_op_bracket + 1] + "|E"
     last_re_level_ind = s.rfind("[|T")
     if last_re_level_ind == -1:
@@ -579,8 +589,7 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
                         # Но на всякий случай нужно проверить
                         if s[-2:] != "|C" and s[-2:] != "|T":
                             # [|T|W|C[|T|C|C, Counter([.]) - ok
-                            if len([1 for tok in unused_tokens
-                                if tok.startswith(last_text)]) == 0:
+                            if not last_tokens_is_form_prefix(last_text, unused_tokens):
                                 return "|E"
     
     #>>> fold_bracket_seq("[|T|C|C|W|C[|T|C|C[.]][", ENGLISH_RELATIONS, Counter({'.': 1}), True)

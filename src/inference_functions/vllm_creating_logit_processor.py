@@ -491,8 +491,8 @@ def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_token
     if last_re_level.count("|W") > 1:
         return prev_text + "|E"
     if last_re_level.count("|W") == 1 and \
-        (len([token for token in unused_tokens if token.startswith(last_text)]) != 0 and
-        (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
+        (last_tokens_is_form_prefix(last_text, unused_tokens) and
+            not last_tokens_is_relation_prefix(last_text, allow_relations)):
         # [|T|W[|T|W|C|C|C[$ - E (два на уровне будут)
         return prev_text + "|E"
     if allow_relations is not None:
@@ -587,7 +587,7 @@ def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_token
                         # Но на всякий случай нужно проверить
                         if s[-2:] != "|C" and s[-2:] != "|T":
                             # [|T|W|C[|T|C|C, Counter([.]) - ok
-                            if not last_tokens_is_form_prefix(last_text, unused_tokens):
+                            if not last_tokens_is_form_prefix(last_text, unused_tokens): # Не выносить, здесь новые unused_tokens
                                 return "|E"
     
     #>>> fold_bracket_seq("[|T|C|C|W|C[|T|C|C[.]][", ENGLISH_RELATIONS, Counter({'.': 1}), True)

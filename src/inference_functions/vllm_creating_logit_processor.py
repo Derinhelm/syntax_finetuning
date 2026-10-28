@@ -75,10 +75,6 @@ class PrefixGenerator:
         self.relations = relations        
 
     def _create_relation_prefixes(self, context):
-        #print("{context.re_text.count('[|T')=}", f"{context.re_text.count('|W')=}",
-        #    f"{context.last_unused_tokens.total()=}")
-        #print(context.re_text.count("[|T") - context.re_text.count("|W") == \
-        #    context.last_unused_tokens.total()) 
         if context.re_text.count("[|T") - context.re_text.count("|W") == \
                 context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
@@ -455,7 +451,8 @@ def last_tokens_is_relation_prefix(last_tokens, allow_relations):
     return len([rel for rel in allow_relations if rel.startswith(last_tokens)]) != 0
 
 def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_tokens_param=None, drop_tokens=False):
-    s = prev_text + last_text
+    # prev_text - до крайней правой ], включительно (можем сворачивать, все байты уже получены)
+    # last_text - после крайней правой ], еще могут прийти байты, нельзя переводить в символы --- пока это еще не байты
 
     # >>> fold_bracket_seq("[roet[")
     # '|E'
@@ -467,27 +464,30 @@ def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_token
     if unused_tokens is not None:
         initial_unused_amount = unused_tokens.total()
 
-    s = s.replace(" ", "")
+    prev_text = prev_text.replace(" ", "")
    
-    if s[:6] == "[root[":
-        s = "[|T[" + s[6:]
-    elif "[root[".startswith(s):
-        return s
-    elif not s.startswith("[|T"):
+    if prev_text[:6] == "[root[":
+        prev_text = "[|T[" + prev_text[6:]
+    elif len(prev_text) < 6:
+        if b"[root[".startswith(prev_text.encode("utf-8") + last_text): # last_text - байты, проверка на уровне байтов # TODO: проверить логику
+            return prev_text
         return "|E"
-    #print(1, s)
+    elif not prev_text.startswith("[|T"):
+        return "|E"
+
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
     # '[|T[|E'
     # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |
+    # TODO проверки в байтовой строке (не байтовые)
     if not last_text.startswith("|T") and \
         "]" not in last_text and unused_tokens is not None and \
             (not last_tokens_is_form_prefix(last_text, unused_tokens) and
             not last_tokens_is_relation_prefix(last_text, allow_relations)):
         return prev_text + "|E"
-    last_re_level_ind = s.rfind("[|T")
+    last_re_level_ind = prev_text.rfind("[|T")
     if last_re_level_ind == -1:
         last_re_level_ind = 0
-    last_re_level = s[last_re_level_ind:]
+    last_re_level = prev_text[last_re_level_ind:]
     if last_re_level.count("|W") > 1:
         return prev_text + "|E"
     if last_re_level.count("|W") == 1 and \
@@ -518,54 +518,52 @@ def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_token
         f_form = lambda x: '[|T]' if constant_check(x) else x
 
     # >>> fold_bracket_seq('[root[Дом][nmod[Тен]]]', {'nmod'}, Counter(['Дым', 'Дом', 'Тен'])) - |C
-    s = change_text(f_form, "]", s)
-    if "|E" in s:
-        return s
-    s = change_text(f_rel, "[", s)
-    if '|E' in s:
-        return s
+    prev_text = change_text(f_form, "]", prev_text)
+    if "|E" in prev_text:
+        return prev_text
+    prev_text = change_text(f_rel, "[", prev_text)
+    if '|E' in prev_text:
+        return prev_text
 
     f_check_level_two_words = lambda x: "|E" if x.count("|W") > 1 else x
 
     # Против [|T|C|W|W[
     # Только для закрытых уровней. Открытый рассматривается раньше
-    s = change_text(f_check_level_two_words, "[", s)
+    prev_text = change_text(f_check_level_two_words, "[", prev_text)
 
-    if '|E' in s:
-        return s
-    #print("after text", s)
+    if '|E' in prev_text:
+        return prev_text
 
     if unused_tokens is not None:
-        unused_amount_after_fold = initial_unused_amount - s.count("[|T]") # обещанный приход
+        unused_amount_after_fold = initial_unused_amount - prev_text.count("[|T]") # обещанный приход
 
-    s = re.sub(r'\[\|T\]', '|W', s)
+    prev_text = re.sub(r'\[\|T\]', '|W', prev_text)
 
-    while '|E' not in s and "]" in s and s[0] == "[":
-        end_bracket = s.find("]")
-        op_bracket = s[:end_bracket].rfind("[")
-        if s[op_bracket + 1:op_bracket + 3] != "|T" or s[op_bracket + 2: end_bracket].count("|W") != 1:
-            s = s[:op_bracket + 1] + "|E" + s[end_bracket:]
+    while '|E' not in prev_text and "]" in prev_text and prev_text[0] == "[":
+        end_bracket = prev_text.find("]")
+        op_bracket = prev_text[:end_bracket].rfind("[")
+        if prev_text[op_bracket + 1:op_bracket + 3] != "|T" or prev_text[op_bracket + 2: end_bracket].count("|W") != 1:
+            prev_text = prev_text[:op_bracket + 1] + "|E" + prev_text[end_bracket:]
             break
         else:
-            s = s[:op_bracket] + "|C" + s[end_bracket + 1:]
-    #print("after fold", s)
+            prev_text = prev_text[:op_bracket] + "|C" + prev_text[end_bracket + 1:]
         
-    if s != "" and s[0] != "[" and s != "|C":
-        s = "|E"
+    if prev_text != "" and prev_text[0] != "[" and prev_text != "|C":
+        prev_text = "|E"
 
     if unused_tokens is not None:
         # [|T|W[|T|C|W|C[|T[Home]] - Counter({'Home': 1})
         # after text [|T|W[|T|C|W|C[|T[|T]]
         # unused_amount_after_fold=0 level_openers=3 level_closers=3
-        level_openers = s.replace("[|T]", "").count("[|T") # расход
-        level_closers = s.count("|W") + s.count("[|T]") # уже случившийся приход
+        level_openers = prev_text.replace("[|T]", "").count("[|T") # расход
+        level_closers = prev_text.count("|W") + prev_text.count("[|T]") # уже случившийся приход
         #print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
         if level_openers > unused_amount_after_fold + level_closers:
             return "|E" # расход привысил потенциальный и реальный приход
         if level_openers == unused_amount_after_fold + level_closers:
-            last_level_start = s.rfind("[|T")
+            last_level_start = prev_text.rfind("[|T")
             if last_level_start != -1:
-                last_level_text = s[last_level_start:]
+                last_level_text = prev_text[last_level_start:]
                 #print(f"{last_level_text=}")
                 if level_openers == level_closers:
                 # Бюджет сведен
@@ -585,7 +583,7 @@ def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_token
                     else: # Нужно сгенерировать слово.
                         # За запрет генерации типа связи отвечает генератор префиксов
                         # Но на всякий случай нужно проверить
-                        if s[-2:] != "|C" and s[-2:] != "|T":
+                        if prev_text[-2:] != "|C" and prev_text[-2:] != "|T":
                             # [|T|W|C[|T|C|C, Counter([.]) - ok
                             if not last_tokens_is_form_prefix(last_text, unused_tokens): # Не выносить, здесь новые unused_tokens
                                 return "|E"
@@ -628,7 +626,7 @@ def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_token
     #>>> fold_bracket_seq("[|T[|T|W|C|C|C[|T|C|C[of][", ENGLISH_RELATIONS, Counter([',', 'of']), True)
     #'|E'
 
-    return s
+    return prev_text
 
 
 class RestrictUncorrectLevelConstraint(Constraint):
@@ -699,8 +697,9 @@ class GenerationContext:
         last_op_bracket = s.rfind("[") # TODO: с байтами!
         last_text = s[last_op_bracket + 1:] # После крайней правой ]
         prev_text = s[:last_op_bracket + 1] # До крайней правой ], включительно
-        self.re_text = fold_bracket_seq(prev_text, last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
+        prev_re_text = fold_bracket_seq(prev_text, last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
             relations, last_unused_tokens, True)
+        self.re_text = prev_re_text + last_text
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         self.last_unused_tokens = last_unused_tokens
         

@@ -146,13 +146,10 @@ from genlm.backend.tokenization import decode_vocab
 import marisa_trie
 
 class PrefixFinder:
-    def __init__(self, tokenizer):
+    def __init__(self, bytes_to_id):
         super().__init__()
-        byte_vocab, _ = decode_vocab(tokenizer)
-        byte_subtokens = [subtoken.byte_string for subtoken in byte_vocab]
-        self.bytes_to_id = {subtoken.byte_string: subtoken.token_id
-                            for subtoken in byte_vocab}
-        self.trie = marisa_trie.BinaryTrie(byte_subtokens)
+        self.bytes_to_id = bytes_to_id
+        self.trie = marisa_trie.BinaryTrie(list(bytes_to_id.keys()))
 
     def __call__(self, prefixes: str):
         allow_ids = []
@@ -171,9 +168,9 @@ class PrefixFinder:
         return list(set(allow_ids))
 
 class PrefixConstraint(Constraint):
-    def __init__(self, tokenizer, eos_ids, relations):
+    def __init__(self, bytes_to_id, eos_ids, relations):
         self.prefix_generator = PrefixGenerator(relations)
-        self.prefix_checker = PrefixFinder(tokenizer)
+        self.prefix_checker = PrefixFinder(bytes_to_id)
         self.eos_ids = eos_ids
 
     def check(self, context):
@@ -745,7 +742,12 @@ class BracketLogitsProcessor:
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         print(f"eos_ids: {eos_ids}")
 
-        self.prefix_constraints = PrefixConstraint(tokenizer, eos_ids, self.relations)
+        byte_vocab, _ = decode_vocab(tokenizer)
+        bytes_to_id = {subtoken.byte_string: subtoken.token_id
+                                    for subtoken in byte_vocab}
+        self.id_to_bytes = {subtoken.token_id: subtoken.byte_string
+                                    for subtoken in byte_vocab}
+        self.prefix_constraints = PrefixConstraint(bytes_to_id, eos_ids, self.relations)
 
         self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
         self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(partial_bracket_codes, eos_ids)

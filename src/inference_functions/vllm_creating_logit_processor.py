@@ -75,7 +75,7 @@ class PrefixGenerator:
         self.relations = relations        
 
     def _create_relation_prefixes(self, context):
-        if context.re_text.count("[|T") - context.re_text.count("|W") == \
+        if context.prev_re_text.count("[|T") - context.prev_re_text.count("|W") == \
                 context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
             # [|T[|T[|W] - если 2 last_unused_tokens, можно генерировать relations
@@ -88,20 +88,14 @@ class PrefixGenerator:
         # '[|T|W[|T|C|W|C' - [|T|C|W|C
         # '[|T|W[|T|C|W|C[nmod' - можно добавить [Дом (если ок по количеству)
 
-        right_border = len(context.re_text)
-        if context.re_text != "" and context.re_text[-1] == "[":
-            right_border = right_border - 1
-        right_open = context.re_text[:right_border].rfind("[")
-        if right_open != -1:
-            text_after_right = context.re_text[right_open + 1:]
-            if "]" not in text_after_right and text_after_right in self.relations:
+        if context.last_text != "": # TODO: зачем ?
+            if "]" not in context.last_text and context.last_text in self.relations:
                 return context.last_unused_tokens # Нарушается логика для некоторых вариантов. Расписать
 
-        last_re_level_ind = context.re_text.rfind("[|T")
+        last_re_level_ind = context.prev_re_text.rfind("[|T")
         if last_re_level_ind == -1:
             last_re_level_ind = 0
-        last_re_level = context.re_text[last_re_level_ind:]
-        if "|W" in last_re_level:
+        if "|W" in context.prev_re_text[last_re_level_ind:]:
             return []
         else:
             return context.last_unused_tokens
@@ -660,7 +654,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
-                s = context.re_text + token_text
+                s = context.prev_re_text + context.last_text + token_text
                 last_op_bracket = s.rfind("[") # TODO: с байтами!
                 last_text = s[last_op_bracket + 1:] # После крайней правой ]
                 prev_text = s[:last_op_bracket + 1] # До крайней правой ], включительно
@@ -699,7 +693,8 @@ class GenerationContext:
         prev_text = s[:last_op_bracket + 1] # До крайней правой ], включительно
         prev_re_text = fold_bracket_seq(prev_text, last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
             relations, last_unused_tokens, True)
-        self.re_text = prev_re_text + last_text
+        self.last_text = last_text
+        self.prev_re_text = prev_re_text
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         self.last_unused_tokens = last_unused_tokens
         
@@ -809,7 +804,7 @@ class BracketLogitsProcessor:
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
         self.last_processed_text = context.generated_text
-        self.last_processed_re = context.re_text
+        self.last_processed_re = context.prev_re_text + context.last_text
         self.last_unused_tokens = context.last_unused_tokens
         #torch.cuda.synchronize()
         #tf = time.perf_counter()

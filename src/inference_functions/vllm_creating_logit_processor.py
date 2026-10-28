@@ -675,29 +675,29 @@ class RestrictUncorrectLevelConstraint(Constraint):
 
 class GenerationContext:
     def __init__(self, token_ids, generated_text, max_op_bracket,
-            last_processed_text, last_processed_re,
-            last_unused_tokens, relations):
+            relations, prev_context, last_unused_tokens=None):
         self.token_ids = token_ids
         self.generated_text = generated_text
         self.op_amount = self.generated_text.count("[")
         self.end_amount = self.generated_text.count("]")
         self.max_op_bracket = max_op_bracket
-        if last_processed_text is None:
-            last_processed_text = ""
-            last_processed_re = ""
-        new_text = self.generated_text[len(last_processed_text):]
-
-        s = last_processed_re + new_text
-        last_op_bracket = s.rfind("[") # TODO: с байтами!
-        last_text = s[last_op_bracket + 1:] # После крайней правой ]
-        prev_text = s[:last_op_bracket + 1] # До крайней правой ], включительно
+        if prev_context is None:
+            re_s = self.generated_text
+            if last_unused_tokens is not None:
+                self.last_unused_tokens = last_unused_tokens
+            else:
+                raise Exception("No last_unused_tokens")
+        else:
+            new_text = self.generated_text[len(prev_context.generated_text):]
+            re_s = prev_context.prev_re_text + prev_context.last_text + new_text
+            self.last_unused_tokens = prev_context.last_unused_tokens
+        last_op_bracket = re_s.rfind("[") # TODO: с байтами!
+        last_text = re_s[last_op_bracket + 1:] # После крайней правой ]
+        prev_text = re_s[:last_op_bracket + 1] # До крайней правой ], включительно
         prev_re_text = fold_bracket_seq(prev_text, last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
-            relations, last_unused_tokens, True)
+            relations, self.last_unused_tokens, True)
         self.last_text = last_text
         self.prev_re_text = prev_re_text
-        # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
-        self.last_unused_tokens = last_unused_tokens
-        
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket
@@ -760,18 +760,14 @@ class BracketLogitsProcessor:
 
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)
-
-        self.last_processed_text = None
-        self.last_processed_re = None
-        self.last_unused_tokens = None
+        self.prev_context = None
 
 
     def create_new_context(self, input_tokens): 
-        self.max_op_bracket = (self.mul_coeff * len(input_tokens) + \
+        max_op_bracket = (self.mul_coeff * len(input_tokens) + \
             self.add_coeff) * 2
-        self.last_processed_text = None
-        self.last_processed_re = None
-        self.last_unused_tokens = Counter(input_tokens)
+        self.prev_context =  GenerationContext((), "", max_op_bracket,
+                    self.relations, None, Counter(input_tokens))
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -797,15 +793,16 @@ class BracketLogitsProcessor:
 
         #torch.cuda.synchronize()
         #ts = time.perf_counter()
+        # Этап обработки нового субтокена. В generated_text есть новый элемент
+        # TODO: а, если байты ?
+        # Нужно работать с token_ids[-1] - это новый субтокен
         context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
-                    self.last_processed_text, self.last_processed_re,
-                    self.last_unused_tokens, self.relations)
+                    self.relations, self.prev_context)
         print(f"{context.__dict__=}")
+        self.prev_context = context
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
-        self.last_processed_text = context.generated_text
-        self.last_processed_re = context.prev_re_text + context.last_text
-        self.last_unused_tokens = context.last_unused_tokens
+
         #torch.cuda.synchronize()
         #tf = time.perf_counter()
         #time_list.append(("context", tf - ts))

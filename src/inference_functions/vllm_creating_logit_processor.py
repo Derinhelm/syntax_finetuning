@@ -454,10 +454,8 @@ def last_tokens_is_form_prefix(last_tokens, unused_tokens):
 def last_tokens_is_relation_prefix(last_tokens, allow_relations):
     return len([rel for rel in allow_relations if rel.startswith(last_tokens)]) != 0
 
-def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tokens=False):
-
-    last_op_bracket = s.rfind("[")
-    last_text = s[last_op_bracket + 1:]
+def fold_bracket_seq(prev_text, last_text="", allow_relations=None, unused_tokens_param=None, drop_tokens=False):
+    s = prev_text + last_text
 
     # >>> fold_bracket_seq("[roet[")
     # '|E'
@@ -485,18 +483,18 @@ def fold_bracket_seq(s, allow_relations=None, unused_tokens_param=None, drop_tok
         "]" not in last_text and unused_tokens is not None and \
             (not last_tokens_is_form_prefix(last_text, unused_tokens) and
             not last_tokens_is_relation_prefix(last_text, allow_relations)):
-        return s[:last_op_bracket + 1] + "|E"
+        return prev_text + "|E"
     last_re_level_ind = s.rfind("[|T")
     if last_re_level_ind == -1:
         last_re_level_ind = 0
     last_re_level = s[last_re_level_ind:]
     if last_re_level.count("|W") > 1:
-        return s[:last_op_bracket + 1] + "|E"
+        return prev_text + "|E"
     if last_re_level.count("|W") == 1 and \
         (len([token for token in unused_tokens if token.startswith(last_text)]) != 0 and
         (len([rel for rel in allow_relations if rel.startswith(last_text)]) == 0)):
         # [|T|W[|T|W|C|C|C[$ - E (два на уровне будут)
-        return s[:last_op_bracket + 1] + "|E"
+        return prev_text + "|E"
     if allow_relations is not None:
         f_rel = lambda x: ('[|T[' if x[1:-1] in allow_relations else '[|E[') if constant_check(x) else x
 
@@ -664,7 +662,11 @@ class RestrictUncorrectLevelConstraint(Constraint):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
                 token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
-                fold_res = fold_bracket_seq(context.re_text + token_text,
+                s = context.re_text + token_text
+                last_op_bracket = s.rfind("[") # TODO: с байтами!
+                last_text = s[last_op_bracket + 1:] # После крайней правой ]
+                prev_text = s[:last_op_bracket + 1] # До крайней правой ], включительно
+                fold_res = fold_bracket_seq(prev_text, last_text,
                             self.relations, context.last_unused_tokens, False)
                 print(f"{fold_res=}")
                 if "|E" not in fold_res:
@@ -692,7 +694,12 @@ class GenerationContext:
             last_processed_text = ""
             last_processed_re = ""
         new_text = self.generated_text[len(last_processed_text):]
-        self.re_text = fold_bracket_seq(last_processed_re + new_text, # TODO: не будет работать для строк с |, в SynTagRus нет
+
+        s = last_processed_re + new_text
+        last_op_bracket = s.rfind("[") # TODO: с байтами!
+        last_text = s[last_op_bracket + 1:] # После крайней правой ]
+        prev_text = s[:last_op_bracket + 1] # До крайней правой ], включительно
+        self.re_text = fold_bracket_seq(prev_text, last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
             relations, last_unused_tokens, True)
         # TODO: Сделать отдельный класс с хранением re и добавлением нового с lower)
         self.last_unused_tokens = last_unused_tokens

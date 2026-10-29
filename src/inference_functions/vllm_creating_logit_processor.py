@@ -622,10 +622,11 @@ def fold_bracket_seq(prev_re_text, last_text="", allow_relations=None, unused_to
 
 class RestrictUncorrectLevelConstraint(Constraint):
 
-    def __init__(self, partial_bracket_codes, tokenizer, relations):
+    def __init__(self, partial_bracket_codes, tokenizer, relations, id_to_bytes):
         self.partial_bracket_codes = partial_bracket_codes
         self.tokenizer = tokenizer
         self.relations = relations
+        self.id_to_bytes = id_to_bytes
 
     def check(self, context):
         return True
@@ -650,12 +651,11 @@ class RestrictUncorrectLevelConstraint(Constraint):
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
-                token_text = max_token_texts[token_i + ITER_SIZE * iter_i]
-                s = context.prev_re_text + context.last_text + token_text
-                last_op_bracket = s.rfind("[") # TODO: с байтами!
-                last_text = s[last_op_bracket + 1:] # После крайней правой ]
-                prev_re_text = s[:last_op_bracket + 1] # До крайней правой ], включительно
-                fold_res = fold_bracket_seq(prev_re_text, last_text,
+
+                re_s, last_text =  create_last_text(context.prev_re_text,
+                    context.last_text, self.id_to_bytes[token_id])
+
+                fold_res = fold_bracket_seq(re_s, last_text,
                             self.relations, context.last_unused_tokens, False)
                 print(f"{fold_res=}")
                 if "|E" not in fold_res:
@@ -669,6 +669,22 @@ class RestrictUncorrectLevelConstraint(Constraint):
         logits[~valid_mask] = float('-inf')
         return logits
 
+def create_last_text(prev_re_text, last_text, last_token_bytes):
+    right_open_bracket_pos = last_token_bytes.rfind(b"[")
+    if right_open_bracket_pos != -1:
+        before_open_bracket = last_token_bytes[:right_open_bracket_pos + 1]
+        after_open_bracket = last_token_bytes[right_open_bracket_pos + 1:]
+    else:
+        before_open_bracket, after_open_bracket = b"", last_token_bytes
+
+    if before_open_bracket:
+        re_s = prev_re_text + \
+                (last_text + before_open_bracket).decode("utf-8")
+        last_text = after_open_bracket
+    else:
+        re_s = prev_re_text
+        last_text = last_text + after_open_bracket
+    return re_s, last_text
 
 class GenerationContext:
     def __init__(self, max_op_bracket, relations, last_unused_tokens):
@@ -685,21 +701,17 @@ class GenerationContext:
 
     def update_context(self, last_token_bytes):
         new_text = last_token_bytes.decode("utf-8") # TODO: здесь новый принцип работы
-        re_s = self.prev_re_text + self.last_text + new_text
-
         self.generated_text += new_text
 
         self.last_token_bytes = last_token_bytes
-        self.op_amount = self.generated_text.count("[")
-        self.end_amount = self.generated_text.count("]")
+        self.op_amount += last_token_bytes.count(b"[")
+        self.end_amount += last_token_bytes.count(b"]")
         
-        last_op_bracket = re_s.rfind("[") # TODO: с байтами!
-        last_text = re_s[last_op_bracket + 1:] # После крайней правой ]
-        prev_re_text = re_s[:last_op_bracket + 1] # До крайней правой ], включительно
-        prev_re_text = fold_bracket_seq(prev_re_text, last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
+        re_s, self.last_text =  create_last_text(self.prev_re_text,
+                            self.last_text, last_token_bytes)
+
+        self.prev_re_text = fold_bracket_seq(re_s, self.last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
             self.relations, self.last_unused_tokens, True)
-        self.last_text = last_text
-        self.prev_re_text = prev_re_text
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket
@@ -763,7 +775,7 @@ class BracketLogitsProcessor:
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
 
         self.restrict_uncorrect_level_constraints = RestrictUncorrectLevelConstraint(
-            partial_bracket_codes, self.tokenizer, self.relations)
+            partial_bracket_codes, self.tokenizer, self.relations, self.id_to_bytes)
 
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)

@@ -105,11 +105,12 @@ class PrefixGenerator:
         #print(f"{self._create_relation_prefixes(context)}")
         generated_text = context.generated_text
         root_text = "[root["
-        if generated_text == "":
+        root_bytes = b"[root["
+        if context.generated_bytes == b"":
             return [root_text]
-        elif root_text.startswith(generated_text):
+        elif root_bytes.startswith(context.generated_bytes):
             return [root_text[len(generated_text):]]
-        elif generated_text[-1] == "]":
+        elif context.generated_bytes.endswith(b"]"):
             if context.op_amount == context.end_amount:
                 return ["eos"]
             return ["]"] + ["[" + el + "]" for el in
@@ -118,7 +119,7 @@ class PrefixGenerator:
                 self._create_relation_prefixes(context)]
         elif context.last_unused_tokens.total() == 0:
             return ["]"]
-        elif generated_text[-1] == "[":
+        elif context.generated_bytes.endswith(b"["):
             return [el + "]" for el in
                 self._create_form_prefixes(context)] + \
                 [el + "[" for el in
@@ -690,6 +691,7 @@ class GenerationContext:
     def __init__(self, max_op_bracket, relations, last_unused_tokens):
         # TODO: переделать только для первого использования
         self.generated_text = ""
+        self.generated_bytes = b""
         self.last_token_bytes = None
         self.op_amount = 0
         self.end_amount = 0
@@ -702,6 +704,7 @@ class GenerationContext:
     def update_context(self, last_token_bytes):
         new_text = last_token_bytes.decode("utf-8") # TODO: здесь новый принцип работы
         self.generated_text += new_text
+        self.generated_bytes += last_token_bytes
 
         self.last_token_bytes = last_token_bytes
         self.op_amount += last_token_bytes.count(b"[")

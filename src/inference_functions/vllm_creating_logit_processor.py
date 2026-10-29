@@ -69,13 +69,16 @@ RELATION_DICT = {None: RUSSIAN_RELATIONS, "ru": RUSSIAN_RELATIONS,
                  "fi": FINNISH_RELATIONS, "fr": FRENCH_RELATIONS,
                  "ja": JAPANESE_RELATIONS}
 
+OPEN_BYTE = b"["[0]
+END_BYTE = b"]"[0]
+
 class PrefixGenerator:    
     def __init__(self, relations):
         self.name = "prefix"
         self.relations = relations        
 
     def _create_relation_prefixes(self, context):
-        if context.prev_re_text.count(b"[|T") - context.prev_re_text.count(b"|W") == \
+        if context.re_before_right_open.count(b"[|T") - context.re_before_right_open.count(b"|W") == \
                 context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
             # [|T[|T[|W] - если 2 last_unused_tokens, можно генерировать relations
@@ -88,27 +91,27 @@ class PrefixGenerator:
         # '[|T|W[|T|C|W|C' - [|T|C|W|C
         # '[|T|W[|T|C|W|C[nmod' - можно добавить [Дом (если ок по количеству)
 
-        if context.last_text != b"": # TODO: зачем ?
-            if b"]" not in context.last_text and context.last_text in self.relations:
+        # TODO1
+        if context.bytes_after_right_open != b"": # TODO: зачем ?
+            if b"]" not in context.bytes_after_right_open and context.bytes_after_right_open in self.relations:
                 return context.last_unused_tokens # Нарушается логика для некоторых вариантов. Расписать
 
-        last_re_level_ind = context.prev_re_text.rfind(b"[|T")
+        last_re_level_ind = context.re_before_right_open.rfind(b"[|T")
         if last_re_level_ind == -1:
             last_re_level_ind = 0
-        if b"|W" in context.prev_re_text[last_re_level_ind:]:
+        if b"|W" in context.re_before_right_open[last_re_level_ind:]:
             return []
         else:
             return context.last_unused_tokens
 
     def __call__(self, context):
-        #print(f"{self._create_form_prefixes(context)}")
-        #print(f"{self._create_relation_prefixes(context)}")
-        generated_text = context.generated_text
+        print(f"{self._create_form_prefixes(context)}")
+        print(f"{self._create_relation_prefixes(context)}")
         root_bytes = b"[root["
         if context.generated_bytes == b"":
             return [root_bytes]
-        elif root_bytes.startswith(context.generated_bytes):
-            return [root_bytes[len(generated_text):]]
+        elif root_bytes.startswith(context.generated_bytes) and root_bytes != context.generated_bytes:
+            return [root_bytes[len(context.generated_bytes):]]
         elif context.generated_bytes.endswith(b"]"):
             if context.op_amount == context.end_amount:
                 return [b"eos"]
@@ -124,7 +127,7 @@ class PrefixGenerator:
                 [el + b"[" for el in
                 self._create_relation_prefixes(context)] 
         else:
-            last_el_text = generated_text.split(b"[")[-1]
+            last_el_text = context.generated_bytes.split(b"[")[-1]
             s_prefixes = [el[len(last_el_text):] + b"]" for el in
                 self._create_form_prefixes(context)
                 if el.startswith(last_el_text)] + \
@@ -153,16 +156,17 @@ class PrefixFinder:
 
     def __call__(self, prefixes: str):
         allow_ids = []
+        print(f"{prefixes=}")
         for target in prefixes:
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
-            #print(f"{target_prefixes=}")
+            print(f"{target_prefixes=}")
             # Условие 2: токены, для которых target — префикс
             target_continuations = list(self.trie.iterkeys(target))
-            #print(f"{target_continuations=}")
+            print(f"{target_continuations=}")
             allow_ids += [self.bytes_to_id[b] \
                 for b in target_prefixes + target_continuations]
-            #print(f"{allow_ids=}")
+            print(f"{allow_ids=}")
 
         return list(set(allow_ids))
 
@@ -201,8 +205,8 @@ class ForceEndConstraint(Constraint):
             return False
         return context.check_all_open() and \
             not context.check_all_end() and \
-            len(context.generated_text) > 0 and \
-            context.generated_text[-1] == b"]"
+            len(context.generated_bytes) > 0 and \
+            context.generated_bytes[-1] == END_BYTE
         # Generate some last "]"
 
     def __call__(self, logits, context):
@@ -252,8 +256,8 @@ class RestrictBracketAfterOpenConstraint(Constraint):
         self.id_to_bytes = id_to_bytes
 
     def check(self, context):
-        return len(context.generated_text) > 0 and \
-            context.generated_text[-1] == b"["
+        return len(context.generated_bytes) > 0 and \
+            context.generated_bytes[-1] == OPEN_BYTE
         # After "[" any bracket subtoken is restricted
         
     def __call__(self, logits, context):
@@ -270,13 +274,13 @@ class RestrictTextAfterEndConstraint(Constraint):
         self.eos_ids = eos_ids
 
     def check(self, context):
-        return len(context.generated_text) > 0 and \
-            context.generated_text[-1] == b"]"
+        return len(context.generated_bytes) > 0 and \
+            context.generated_bytes[-1] == END_BYTE
         
     def __call__(self, logits, context): # TODO: запрет нужен для всех!!!
         mask_tensor = torch.full(logits.shape, -float('inf'), device=logits.device)
         for token_id, token_bytes in self.id_to_bytes.items():
-            if token_bytes[0] == b"]" or token_bytes[0] == b"[":
+            if token_bytes[0] == END_BYTE or token_bytes[0] == OPEN_BYTE:
                 mask_tensor[token_id] = 0
         for token_id in self.eos_ids:
             mask_tensor[token_id] = 0
@@ -351,17 +355,17 @@ class RestrictErrorTokenConstraint(Constraint):
         for token_id, token_bytes in id_to_bytes.items():
             error_token_flag = False
             for t_i, t in enumerate(token_bytes):
-               if t == b"]":
+               if t == END_BYTE:
                    if t_i != len(token_bytes) - 1 and \
                      token_bytes[t_i + 1] not in {b"]", b"["}:
                        error_token_flag = True
                        break
-               elif t == b"[":
+               elif t == OPEN_BYTE:
                    if t_i != len(token_bytes) - 1 and \
-                     token_bytes[t_i + 1] == b"]": # "[]"
+                     token_bytes[t_i + 1] == END_BYTE: # "[]"
                        error_token_flag = True
                        break
-                   if t_i != 0 and token_bytes[t_i - 1] != b"]":
+                   if t_i != 0 and token_bytes[t_i - 1] != END_BYTE:
                        error_token_flag = True
                        break
                #elif not (t.isalnum() or t in string.punctuation or
@@ -372,7 +376,8 @@ class RestrictErrorTokenConstraint(Constraint):
             if error_token_flag:
                 self.error_indexes.append(token_id)
         for token_bytes in [b"<think>", b"</think>", b"<|im_start|>"]:
-            self.error_indexes.append(self.id_to_bytes[token_bytes])
+            if token_bytes in id_to_bytes:
+                self.error_indexes.append(id_to_bytes[token_bytes])
 
         print(f"Error subtoken amount: {len(self.error_indexes)}")
         
@@ -404,27 +409,27 @@ def constant_check(x):
         b"|T" not in x and b"|C" not in x and b"|W" not in x and b"|E" not in x
 
 def change_text(change_fun, right_border_symbol, s):
-    #print(f"{right_border_symbol=}")
+    print(f"{right_border_symbol=}")
     ready_border = 0
     left_border_in_fragment = s[ready_border:].find(b"[")
     right_border_in_fragment = s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)
     while left_border_in_fragment != -1 and right_border_in_fragment != -1:
         left_border = ready_border + left_border_in_fragment
         change_text = change_fun(s[left_border:left_border + 1 + right_border_in_fragment + 1])
-        #print(f"{left_border=} {right_border_in_fragment=} {s[left_border:left_border + 1 + right_border_in_fragment + 1]} {change_text}")
+        print(f"{left_border=} {right_border_in_fragment=} {s[left_border:left_border + 1 + right_border_in_fragment + 1]} {change_text}")
         new_s = s[:left_border] + change_text + s[left_border + 1 + right_border_in_fragment + 1:]
         if b"|E" in change_text:
             return new_s
         ready_border = left_border + 1 # Все, что левее left_border - неизменно
         s = new_s
-        #print(f"start with ready_border: {s[ready_border:]} {s[ready_border:].find('[')}")
+        print(f"start with ready_border: {s[ready_border:]} {s[ready_border:].find(b"[")}")
         left_border_in_fragment = s[ready_border:].find(b"[")
         if left_border_in_fragment == -1:
             break
-        #print(f"{left_border_in_fragment=}")
-        #print(f"{s[ready_border + left_border_in_fragment + 1:]} {s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)}")
+        print(f"{left_border_in_fragment=}")
+        print(f"{s[ready_border + left_border_in_fragment + 1:]} {s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)}")
         right_border_in_fragment = s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)
-        #print(f"{right_border_in_fragment=}")
+        print(f"{right_border_in_fragment=}")
     return s
 
 def last_tokens_is_form_prefix(last_tokens, unused_tokens):
@@ -437,11 +442,15 @@ def last_tokens_is_form_prefix(last_tokens, unused_tokens):
 def last_tokens_is_relation_prefix(last_tokens, allow_relations):
     return len([rel for rel in allow_relations if rel.startswith(last_tokens)]) != 0
 
-def fold_bracket_seq(prev_re_text: bytes, last_text:bytes=b"",
+def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b"",
                      allow_relations=None, unused_tokens_param=None, drop_tokens=False):
-    # prev_re_text - до крайней правой ], включительно (можем сворачивать, все байты уже получены)
-    # last_text - после крайней правой ], еще могут прийти байты, нельзя переводить в символы
-
+    # re_before_right_open - до крайней правой ], включительно (можем сворачивать, все байты уже получены)
+    # bytes_after_right_open - после крайней правой ], еще могут прийти байты, нельзя переводить в символы
+    print(f"{re_before_right_open=}")
+    print(f"{bytes_after_right_open=}")
+    print(f"{allow_relations=}")
+    print(f"{unused_tokens_param=}")
+    print(f"{drop_tokens=}")
     # >>> fold_bracket_seq("[roet[")
     # '|E'
     if drop_tokens:
@@ -452,37 +461,39 @@ def fold_bracket_seq(prev_re_text: bytes, last_text:bytes=b"",
     if unused_tokens is not None:
         initial_unused_amount = unused_tokens.total()
 
-    prev_re_text = prev_re_text.replace(b" ", b"")
+    re_before_right_open = re_before_right_open.replace(b" ", b"")
+
    
-    if prev_re_text[:6] == b"[root[":
-        prev_re_text = b"[|T[" + prev_re_text[6:]
-    elif len(prev_re_text) < 6:
-        if b"[root[".startswith(prev_re_text + last_text): # last_text - байты, проверка на уровне байтов # TODO: проверить логику
-            return prev_re_text
-        return b"|E"
-    elif not prev_re_text.startswith(b"[|T"):
-        return b"|E"
+    if re_before_right_open[:6] == b"[root[":
+        re_before_right_open = b"[|T[" + re_before_right_open[6:]
+    elif not re_before_right_open.startswith(b"[|T"):
+        if len(re_before_right_open) < 6:
+            if b"[root[".startswith(re_before_right_open + bytes_after_right_open): # bytes_after_right_open - байты, проверка на уровне байтов # TODO: проверить логику
+                return re_before_right_open
+            return b"|E"
+        else:
+            return b"|E"
 
     # >>> fold_bracket_seq('[root[К', {'nmod'}, Counter(['Дым', 'Дом']))
     # '[|T[|E'
     # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |
-    # TODO проверки в байтовой строке (не байтовые)
-    if not last_text.startswith(b"|T") and \
-        b"]" not in last_text and unused_tokens is not None and \
-            (not last_tokens_is_form_prefix(last_text, unused_tokens) and
-            not last_tokens_is_relation_prefix(last_text, allow_relations)):
-        return prev_re_text + b"|E"
-    last_re_level_ind = prev_re_text.rfind(b"[|T")
+    #TODO1
+    if not bytes_after_right_open.startswith(b"|T") and \
+        b"]" not in bytes_after_right_open and unused_tokens is not None and \
+            (not last_tokens_is_form_prefix(bytes_after_right_open, unused_tokens) and
+            not last_tokens_is_relation_prefix(bytes_after_right_open, allow_relations)):
+        return re_before_right_open + b"|E"
+    last_re_level_ind = re_before_right_open.rfind(b"[|T")
     if last_re_level_ind == -1:
         last_re_level_ind = 0
-    last_re_level = prev_re_text[last_re_level_ind:]
+    last_re_level = re_before_right_open[last_re_level_ind:]
     if last_re_level.count(b"|W") > 1:
-        return prev_re_text + b"|E"
+        return re_before_right_open + b"|E"
     if last_re_level.count(b"|W") == 1 and \
-        (last_tokens_is_form_prefix(last_text, unused_tokens) and
-            not last_tokens_is_relation_prefix(last_text, allow_relations)):
+        (last_tokens_is_form_prefix(bytes_after_right_open, unused_tokens) and
+            not last_tokens_is_relation_prefix(bytes_after_right_open, allow_relations)):
         # [|T|W[|T|W|C|C|C[$ - E (два на уровне будут)
-        return prev_re_text + b"|E"
+        return re_before_right_open + b"|E"
     if allow_relations is not None:
         f_rel = lambda x: (b"[|T[" if x[1:-1] in allow_relations else b"[|E[") if constant_check(x) else x
 
@@ -506,52 +517,60 @@ def fold_bracket_seq(prev_re_text: bytes, last_text:bytes=b"",
         f_form = lambda x: b"[|T]" if constant_check(x) else x
 
     # >>> fold_bracket_seq('[root[Дом][nmod[Тен]]]', {'nmod'}, Counter(['Дым', 'Дом', 'Тен'])) - |C
-    prev_re_text = change_text(f_form, b"]", prev_re_text)
-    if b"|E" in prev_re_text:
-        return prev_re_text
-    prev_re_text = change_text(f_rel, b"[", prev_re_text)
-    if b"|E" in prev_re_text:
-        return prev_re_text
+    re_before_right_open = change_text(f_form, b"]", re_before_right_open)
+    print(f"after change_text 1: {re_before_right_open=}")
+    if b"|E" in re_before_right_open:
+        return re_before_right_open
+    re_before_right_open = change_text(f_rel, b"[", re_before_right_open)
+    print(f"after change_text 2: {re_before_right_open=}")
+    if b"|E" in re_before_right_open:
+        return re_before_right_open
 
     f_check_level_two_words = lambda x: b"|E" if x.count(b"|W") > 1 else x
 
     # Против [|T|C|W|W[
     # Только для закрытых уровней. Открытый рассматривается раньше
-    prev_re_text = change_text(f_check_level_two_words, b"[", prev_re_text)
+    re_before_right_open = change_text(f_check_level_two_words, b"[", re_before_right_open)
+    print(f"after change_text 3: {re_before_right_open=}")
 
-    if b"|E" in prev_re_text:
-        return prev_re_text
+    if b"|E" in re_before_right_open:
+        return re_before_right_open
 
     if unused_tokens is not None:
-        unused_amount_after_fold = initial_unused_amount - prev_re_text.count(b"[|T]") # обещанный приход
+        unused_amount_after_fold = initial_unused_amount - re_before_right_open.count(b"[|T]") # обещанный приход
 
-    prev_re_text = re.sub(rb"\[\|T\]", b"|W", prev_re_text)
+    re_before_right_open = re.sub(rb"\[\|T\]", b"|W", re_before_right_open)
+    print(f"after re sub: {re_before_right_open=}")
 
-    while b"|E" not in prev_re_text and b"]" in prev_re_text and prev_re_text[0] == b"[":
-        end_bracket = prev_re_text.find(b"]")
-        op_bracket = prev_re_text[:end_bracket].rfind(b"[")
-        if prev_re_text[op_bracket + 1:op_bracket + 3] != b"|T" or prev_re_text[op_bracket + 2: end_bracket].count(b"|W") != 1:
-            prev_re_text = prev_re_text[:op_bracket + 1] + b"|E" + prev_re_text[end_bracket:]
+
+    while b"|E" not in re_before_right_open and b"]" in re_before_right_open and re_before_right_open[0] == OPEN_BYTE:
+        print(f"while: {re_before_right_open=}")
+        end_bracket = re_before_right_open.find(b"]")
+        op_bracket = re_before_right_open[:end_bracket].rfind(b"[")
+        if re_before_right_open[op_bracket + 1:op_bracket + 3] != b"|T" or re_before_right_open[op_bracket + 2: end_bracket].count(b"|W") != 1:
+            re_before_right_open = re_before_right_open[:op_bracket + 1] + b"|E" + re_before_right_open[end_bracket:]
             break
         else:
-            prev_re_text = prev_re_text[:op_bracket] + b"|C" + prev_re_text[end_bracket + 1:]
-        
-    if prev_re_text != b"" and prev_re_text[0] != b"[" and prev_re_text != b"|C":
-        prev_re_text = b"|E"
+            re_before_right_open = re_before_right_open[:op_bracket] + b"|C" + re_before_right_open[end_bracket + 1:]
+    print(f"after while: {re_before_right_open=}")
 
+    if re_before_right_open != b"" and re_before_right_open[0] != OPEN_BYTE and re_before_right_open != b"|C":
+        re_before_right_open = b"|E"
+
+    print(f"after !=: {re_before_right_open=}")
     if unused_tokens is not None:
         # [|T|W[|T|C|W|C[|T[Home]] - Counter({'Home': 1})
         # after text [|T|W[|T|C|W|C[|T[|T]]
         # unused_amount_after_fold=0 level_openers=3 level_closers=3
-        level_openers = prev_re_text.replace(b"[|T]", b"").count(b"[|T") # расход
-        level_closers = prev_re_text.count(b"|W") + prev_re_text.count(b"[|T]") # уже случившийся приход
+        level_openers = re_before_right_open.replace(b"[|T]", b"").count(b"[|T") # расход
+        level_closers = re_before_right_open.count(b"|W") + re_before_right_open.count(b"[|T]") # уже случившийся приход
         #print(f"{unused_amount_after_fold=} {level_openers=} {level_closers=}")
         if level_openers > unused_amount_after_fold + level_closers:
             return b"|E" # расход привысил потенциальный и реальный приход
         if level_openers == unused_amount_after_fold + level_closers:
-            last_level_start = prev_re_text.rfind(b"[|T")
+            last_level_start = re_before_right_open.rfind(b"[|T")
             if last_level_start != -1:
-                last_level_text = prev_re_text[last_level_start:]
+                last_level_text = re_before_right_open[last_level_start:]
                 #print(f"{last_level_text=}")
                 if level_openers == level_closers:
                 # Бюджет сведен
@@ -571,11 +590,12 @@ def fold_bracket_seq(prev_re_text: bytes, last_text:bytes=b"",
                     else: # Нужно сгенерировать слово.
                         # За запрет генерации типа связи отвечает генератор префиксов
                         # Но на всякий случай нужно проверить
-                        if prev_re_text[-2:] != b"|C" and prev_re_text[-2:] != b"|T":
+                        if re_before_right_open[-2:] != b"|C" and re_before_right_open[-2:] != b"|T":
                             # [|T|W|C[|T|C|C, Counter([.]) - ok
-                            if not last_tokens_is_form_prefix(last_text, unused_tokens): # Не выносить, здесь новые unused_tokens
+                            if not last_tokens_is_form_prefix(bytes_after_right_open, unused_tokens): # Не выносить, здесь новые unused_tokens
                                 return b"|E"
-    
+    print(f"after budget: {re_before_right_open=}")
+
     #>>> fold_bracket_seq("[|T|C|C|W|C[|T|C|C[.]][", ENGLISH_RELATIONS, Counter({'.': 1}), True)
     # after text [|T|C|C|W|C[|T|C|C[|T]][
     # after fold [|T|C|C|W|C|C[
@@ -614,7 +634,7 @@ def fold_bracket_seq(prev_re_text: bytes, last_text:bytes=b"",
     #>>> fold_bracket_seq("[|T[|T|W|C|C|C[|T|C|C[of][", ENGLISH_RELATIONS, Counter([',', 'of']), True)
     #'|E'
 
-    return prev_re_text
+    return re_before_right_open
 
 
 class RestrictUncorrectLevelConstraint(Constraint):
@@ -645,10 +665,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
                     break
 
-                re_s, last_text =  create_last_text(context.prev_re_text,
-                    context.last_text, self.id_to_bytes[token_id])
+                re_s, bytes_after_right_open =  create_bytes_after_right_open(context.re_before_right_open,
+                    context.bytes_after_right_open, self.id_to_bytes[token_id.item()])
 
-                fold_res = fold_bracket_seq(re_s, last_text,
+                fold_res = fold_bracket_seq(re_s, bytes_after_right_open,
                             self.relations, context.last_unused_tokens, False)
                 print(f"{fold_res=}")
                 if b"|E" not in fold_res:
@@ -662,8 +682,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
         logits[~valid_mask] = float('-inf')
         return logits
 
-def create_last_text(prev_re_text, last_text, last_token_bytes):
-    right_open_bracket_pos = last_token_bytes.rfind(b"[")
+# '[|T[|T[|T[' + 'стол]' тоже нужно соединять и сворачивать, а right_open_bracket_pos будет пустым
+def create_bytes_after_right_open(re_before_right_open, old_bytes_after_right_open, last_token_bytes):
+    right_open_bracket_pos = max(last_token_bytes.rfind(b"["), last_token_bytes.rfind(b"]"))
+    # TODO: check and rename
     if right_open_bracket_pos != -1:
         before_open_bracket = last_token_bytes[:right_open_bracket_pos + 1]
         after_open_bracket = last_token_bytes[right_open_bracket_pos + 1:]
@@ -671,41 +693,35 @@ def create_last_text(prev_re_text, last_text, last_token_bytes):
         before_open_bracket, after_open_bracket = b"", last_token_bytes
 
     if before_open_bracket:
-        re_s = prev_re_text + \
-                (last_text + before_open_bracket).decode("utf-8")
-        last_text = after_open_bracket
+        re_s = re_before_right_open + \
+                old_bytes_after_right_open + before_open_bracket
+        bytes_after_right_open = after_open_bracket
     else:
-        re_s = prev_re_text
-        last_text = last_text + after_open_bracket
-    return re_s, last_text
+        re_s = re_before_right_open
+        bytes_after_right_open = old_bytes_after_right_open + after_open_bracket
+    return re_s, bytes_after_right_open
 
 class GenerationContext:
     def __init__(self, max_op_bracket, relations, last_unused_tokens):
-        # TODO: переделать только для первого использования
-        self.generated_text = ""
         self.generated_bytes = b""
-        self.last_token_bytes = None
         self.op_amount = 0
         self.end_amount = 0
         self.max_op_bracket = max_op_bracket
         self.last_unused_tokens = Counter([v.encode("utf-8") for v in last_unused_tokens])
-        self.last_text = b""
-        self.prev_re_text = ""
+        self.bytes_after_right_open = b""
+        self.re_before_right_open = b""
         self.relations = relations
 
     def update_context(self, last_token_bytes):
-        new_text = last_token_bytes.decode("utf-8") # TODO: здесь новый принцип работы
-        self.generated_text += new_text
         self.generated_bytes += last_token_bytes
 
-        self.last_token_bytes = last_token_bytes
         self.op_amount += last_token_bytes.count(b"[")
         self.end_amount += last_token_bytes.count(b"]")
         
-        re_s, self.last_text =  create_last_text(self.prev_re_text,
-                            self.last_text, last_token_bytes)
+        re_s, self.bytes_after_right_open =  create_bytes_after_right_open(self.re_before_right_open,
+                            self.bytes_after_right_open, last_token_bytes)
 
-        self.prev_re_text = fold_bracket_seq(re_s, self.last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
+        self.re_before_right_open = fold_bracket_seq(re_s, self.bytes_after_right_open, # TODO: не будет работать для строк с |, в SynTagRus нет
             self.relations, self.last_unused_tokens, True)
 
     def check_all_open(self):
@@ -809,10 +825,7 @@ class BracketLogitsProcessor:
 
         #torch.cuda.synchronize()
         #ts = time.perf_counter()
-        # Этап обработки нового субтокена. В generated_text есть новый элемент
-        # TODO: а, если байты ?
-        # Нужно работать с token_ids[-1] - это новый субтокен
-        self.prev_context = self.prev_context.update_context(last_token_bytes)
+        self.prev_context.update_context(last_token_bytes)
         context = self.prev_context
         print(f"{self.prev_context.__dict__=}")
 

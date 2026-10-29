@@ -101,7 +101,7 @@ class TreeDecoder:
             return "None answer"
         if self.representation_type == "grct" and check_seq:
             fold_seq = fold_bracket_seq(answer_output.encode("utf-8"))
-            if "E" in fold_seq:
+            if b"E" in fold_seq:
                 return f"Error level sequence. {answer_output}. {fold_seq}"
         parsing_res = self._parse(answer_output)
         if isinstance(parsing_res, Exception):

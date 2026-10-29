@@ -671,29 +671,33 @@ class RestrictUncorrectLevelConstraint(Constraint):
 
 
 class GenerationContext:
-    def __init__(self, token_ids, generated_text, last_token_bytes, max_op_bracket,
-            relations, prev_context, last_unused_tokens=None):
-        self.token_ids = token_ids
-        self.generated_text = generated_text
+    def __init__(self, max_op_bracket, relations, last_unused_tokens):
+        # TODO: переделать только для первого использования
+        self.generated_text = ""
+        self.last_token_bytes = None
+        self.op_amount = 0
+        self.end_amount = 0
+        self.max_op_bracket = max_op_bracket
+        self.last_unused_tokens = last_unused_tokens
+        self.last_text = b""
+        self.prev_re_text = ""
+        self.relations = relations
+
+    def update_context(self, last_token_bytes):
+        new_text = last_token_bytes.decode("utf-8") # TODO: здесь новый принцип работы
+        re_s = self.prev_re_text + self.last_text + new_text
+
+        self.generated_text += new_text
+
         self.last_token_bytes = last_token_bytes
         self.op_amount = self.generated_text.count("[")
         self.end_amount = self.generated_text.count("]")
-        self.max_op_bracket = max_op_bracket
-        if prev_context is None:
-            re_s = self.generated_text
-            if last_unused_tokens is not None:
-                self.last_unused_tokens = last_unused_tokens
-            else:
-                raise Exception("No last_unused_tokens")
-        else:
-            new_text = self.generated_text[len(prev_context.generated_text):]
-            re_s = prev_context.prev_re_text + prev_context.last_text + new_text
-            self.last_unused_tokens = prev_context.last_unused_tokens
+        
         last_op_bracket = re_s.rfind("[") # TODO: с байтами!
         last_text = re_s[last_op_bracket + 1:] # После крайней правой ]
         prev_re_text = re_s[:last_op_bracket + 1] # До крайней правой ], включительно
         prev_re_text = fold_bracket_seq(prev_re_text, last_text, # TODO: не будет работать для строк с |, в SynTagRus нет
-            relations, self.last_unused_tokens, True)
+            self.relations, self.last_unused_tokens, True)
         self.last_text = last_text
         self.prev_re_text = prev_re_text
 
@@ -769,8 +773,8 @@ class BracketLogitsProcessor:
     def create_new_context(self, input_tokens): 
         max_op_bracket = (self.mul_coeff * len(input_tokens) + \
             self.add_coeff) * 2
-        self.prev_context =  GenerationContext((), "", b"", max_op_bracket,
-                    self.relations, None, Counter(input_tokens))
+        self.prev_context =  GenerationContext(max_op_bracket,
+                    self.relations, Counter(input_tokens))
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -788,7 +792,6 @@ class BracketLogitsProcessor:
 
         #torch.cuda.synchronize()
         #ts = time.perf_counter()
-        generated_text = self.tokenizer.decode(token_ids)
         if len(token_ids) > 0:
             last_token_bytes = self.id_to_bytes[token_ids[-1]]
         else:
@@ -804,10 +807,9 @@ class BracketLogitsProcessor:
         # Этап обработки нового субтокена. В generated_text есть новый элемент
         # TODO: а, если байты ?
         # Нужно работать с token_ids[-1] - это новый субтокен
-        context = GenerationContext(token_ids, generated_text, last_token_bytes, self.max_op_bracket,
-                    self.relations, self.prev_context)
-        print(f"{context.__dict__=}")
-        self.prev_context = context
+        self.prev_context = self.prev_context.update_context(last_token_bytes)
+        print(f"{self.prev_context.__dict__=}")
+
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
 

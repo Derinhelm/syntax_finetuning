@@ -671,10 +671,11 @@ class RestrictUncorrectLevelConstraint(Constraint):
 
 
 class GenerationContext:
-    def __init__(self, token_ids, generated_text, max_op_bracket,
+    def __init__(self, token_ids, generated_text, last_token_bytes, max_op_bracket,
             relations, prev_context, last_unused_tokens=None):
         self.token_ids = token_ids
         self.generated_text = generated_text
+        self.last_token_bytes = last_token_bytes
         self.op_amount = self.generated_text.count("[")
         self.end_amount = self.generated_text.count("]")
         self.max_op_bracket = max_op_bracket
@@ -768,7 +769,7 @@ class BracketLogitsProcessor:
     def create_new_context(self, input_tokens): 
         max_op_bracket = (self.mul_coeff * len(input_tokens) + \
             self.add_coeff) * 2
-        self.prev_context =  GenerationContext((), "", max_op_bracket,
+        self.prev_context =  GenerationContext((), "", b"", max_op_bracket,
                     self.relations, None, Counter(input_tokens))
 
     def set_tokenizer(self, tokenizer):
@@ -788,6 +789,11 @@ class BracketLogitsProcessor:
         #torch.cuda.synchronize()
         #ts = time.perf_counter()
         generated_text = self.tokenizer.decode(token_ids)
+        if len(token_ids) > 0:
+            last_token_bytes = self.id_to_bytes[token_ids[-1]]
+        else:
+            last_token_bytes = b""
+
         #torch.cuda.synchronize()
 
         #tf = time.perf_counter()
@@ -798,7 +804,7 @@ class BracketLogitsProcessor:
         # Этап обработки нового субтокена. В generated_text есть новый элемент
         # TODO: а, если байты ?
         # Нужно работать с token_ids[-1] - это новый субтокен
-        context = GenerationContext(token_ids, generated_text, self.max_op_bracket,
+        context = GenerationContext(token_ids, generated_text, last_token_bytes, self.max_op_bracket,
                     self.relations, self.prev_context)
         print(f"{context.__dict__=}")
         self.prev_context = context

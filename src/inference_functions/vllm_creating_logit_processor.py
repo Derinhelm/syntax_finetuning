@@ -75,7 +75,7 @@ class PrefixGenerator:
         self.relations = relations        
 
     def _create_relation_prefixes(self, context):
-        if context.prev_re_text.count("[|T") - context.prev_re_text.count("|W") == \
+        if context.prev_re_text.count(b"[|T") - context.prev_re_text.count(b"|W") == \
                 context.last_unused_tokens.total():
             # [|T[|T[ - если 2 last_unused_tokens, нельзя генерировать relations (нечем закрыть)
             # [|T[|T[|W] - если 2 last_unused_tokens, можно генерировать relations
@@ -88,14 +88,14 @@ class PrefixGenerator:
         # '[|T|W[|T|C|W|C' - [|T|C|W|C
         # '[|T|W[|T|C|W|C[nmod' - можно добавить [Дом (если ок по количеству)
 
-        if context.last_text != "": # TODO: зачем ?
-            if "]" not in context.last_text and context.last_text in self.relations:
+        if context.last_text != b"": # TODO: зачем ?
+            if b"]" not in context.last_text and context.last_text in self.relations:
                 return context.last_unused_tokens # Нарушается логика для некоторых вариантов. Расписать
 
-        last_re_level_ind = context.prev_re_text.rfind("[|T")
+        last_re_level_ind = context.prev_re_text.rfind(b"[|T")
         if last_re_level_ind == -1:
             last_re_level_ind = 0
-        if "|W" in context.prev_re_text[last_re_level_ind:]:
+        if b"|W" in context.prev_re_text[last_re_level_ind:]:
             return []
         else:
             return context.last_unused_tokens
@@ -104,39 +104,38 @@ class PrefixGenerator:
         #print(f"{self._create_form_prefixes(context)}")
         #print(f"{self._create_relation_prefixes(context)}")
         generated_text = context.generated_text
-        root_text = "[root["
         root_bytes = b"[root["
         if context.generated_bytes == b"":
-            return [root_text]
+            return [root_bytes]
         elif root_bytes.startswith(context.generated_bytes):
-            return [root_text[len(generated_text):]]
+            return [root_bytes[len(generated_text):]]
         elif context.generated_bytes.endswith(b"]"):
             if context.op_amount == context.end_amount:
-                return ["eos"]
-            return ["]"] + ["[" + el + "]" for el in
+                return [b"eos"]
+            return [b"]"] + [b"[" + el + b"]" for el in
                 self._create_form_prefixes(context)] + \
-                ["[" + el + "[" for el in
+                [b"[" + el + b"[" for el in
                 self._create_relation_prefixes(context)]
         elif context.last_unused_tokens.total() == 0:
-            return ["]"]
+            return [b"]"]
         elif context.generated_bytes.endswith(b"["):
-            return [el + "]" for el in
+            return [el + b"]" for el in
                 self._create_form_prefixes(context)] + \
-                [el + "[" for el in
+                [el + b"[" for el in
                 self._create_relation_prefixes(context)] 
         else:
-            last_el_text = generated_text.split("[")[-1]
-            s_prefixes = [el[len(last_el_text):] + "]" for el in
+            last_el_text = generated_text.split(b"[")[-1]
+            s_prefixes = [el[len(last_el_text):] + b"]" for el in
                 self._create_form_prefixes(context)
                 if el.startswith(last_el_text)] + \
-                [el[len(last_el_text):] + "[" for el in
+                [el[len(last_el_text):] + b"[" for el in
                 self._create_relation_prefixes(context)
                 if el.startswith(last_el_text)]
-            if "[" in s_prefixes: # TODO: укорить
-                s_prefixes.remove("[")
-                s_prefixes += ["[" + el + "]" for el in
+            if b"[" in s_prefixes: # TODO: укорить
+                s_prefixes.remove(b"[")
+                s_prefixes += [b"[" + el + b"]" for el in
                     self._create_form_prefixes(context)] + \
-                        ["[" + el + "[" for el in
+                        [b"[" + el + b"[" for el in
                         self._create_relation_prefixes(context)] 
             # TODO: if "]" in s_prefixes: - ввести "]" + конец ?
             #    s_prefixes.remove("]")
@@ -154,8 +153,7 @@ class PrefixFinder:
 
     def __call__(self, prefixes: str):
         allow_ids = []
-        for target_str in prefixes:
-            target = target_str.encode("utf-8")
+        for target in prefixes:
             # Условие 1: токены, которые являются префиксом target
             target_prefixes = list(self.trie.iter_prefixes(target))
             #print(f"{target_prefixes=}")
@@ -179,7 +177,7 @@ class PrefixConstraint(Constraint):
 
     def __call__(self, logits, context):
         prefixes = self.prefix_generator(context)
-        if prefixes == ["eos"]:
+        if prefixes == [b"eos"]:
             allow_ids = self.eos_ids
         else:
             allow_ids = self.prefix_checker(prefixes)
@@ -194,8 +192,8 @@ class PrefixConstraint(Constraint):
 class ForceEndConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes, applying_max_amount):
-        self.partial_bracket_codes = partial_bracket_codes
+    def __init__(self, id_to_bytes, applying_max_amount):
+        self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
         
     def check(self, context):
@@ -204,17 +202,17 @@ class ForceEndConstraint(Constraint):
         return context.check_all_open() and \
             not context.check_all_end() and \
             len(context.generated_text) > 0 and \
-            context.generated_text[-1] == "]"
+            context.generated_text[-1] == b"]"
         # Generate some last "]"
 
     def __call__(self, logits, context):
         bracket_diff = context.op_amount - context.end_amount
         print("Forcing last ]")
-        codes_with_logits = [(token_text, token_id, float(logits[token_id]))
-                             for token_text, token_id in self.partial_bracket_codes]
+        codes_with_logits = [(token_bytes, token_id, float(logits[token_id]))
+                             for token_id, token_bytes in self.id_to_bytes.items()]
         logits[:] = -torch.inf
-        for token_text, token_id, token_logit in codes_with_logits:
-            if set(token_text) == {"]"} and bracket_diff - len(token_text) >= 0:
+        for token_bytes, token_id, token_logit in codes_with_logits:
+            if set(token_bytes) == {b"]"} and bracket_diff - len(token_bytes) >= 0:
                 logits[token_id] = token_logit
         return logits
 
@@ -250,35 +248,35 @@ class ForceFinishConstraint(Constraint):
 # Restricted constraints
 
 class RestrictBracketAfterOpenConstraint(Constraint):
-    def __init__(self, partial_bracket_codes):
-        self.partial_bracket_codes = partial_bracket_codes
+    def __init__(self, id_to_bytes):
+        self.id_to_bytes = id_to_bytes
 
     def check(self, context):
         return len(context.generated_text) > 0 and \
-            context.generated_text[-1] == "["
+            context.generated_text[-1] == b"["
         # After "[" any bracket subtoken is restricted
         
     def __call__(self, logits, context):
-        for token_text, token_id in self.partial_bracket_codes:
-            if token_text[0] in {"[", "]"}:
+        for token_id, token_bytes in self.id_to_bytes.items():
+            if token_bytes[0] in {b"[", b"]"}:
                 logits[token_id] = float('-inf')
                 #print(token_id, token_text)
         print("Restriction for bracket after open bracket")
         return logits
         
 class RestrictTextAfterEndConstraint(Constraint):
-    def __init__(self, partial_bracket_codes, eos_ids):
-        self.partial_bracket_codes = partial_bracket_codes
+    def __init__(self, id_to_bytes, eos_ids):
+        self.id_to_bytes = id_to_bytes
         self.eos_ids = eos_ids
 
     def check(self, context):
         return len(context.generated_text) > 0 and \
-            context.generated_text[-1] == "]"
+            context.generated_text[-1] == b"]"
         
     def __call__(self, logits, context): # TODO: запрет нужен для всех!!!
         mask_tensor = torch.full(logits.shape, -float('inf'), device=logits.device)
-        for token_text, token_id in self.partial_bracket_codes:
-            if token_text[0] == "]" or token_text[0] == "[":
+        for token_id, token_bytes in self.id_to_bytes.items():
+            if token_bytes[0] == b"]" or token_bytes[0] == b"[":
                 mask_tensor[token_id] = 0
         for token_id in self.eos_ids:
             mask_tensor[token_id] = 0
@@ -289,8 +287,8 @@ class RestrictTextAfterEndConstraint(Constraint):
 class RestrictBalanceBracketConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes, applying_max_amount, soft_max_amount):
-        self.partial_bracket_codes = partial_bracket_codes
+    def __init__(self, id_to_bytes, applying_max_amount, soft_max_amount):
+        self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
         self.soft_max_amount = soft_max_amount
         
@@ -299,16 +297,16 @@ class RestrictBalanceBracketConstraint(Constraint):
     
     def __call__(self, logits, context):
         bracket_diff = context.op_amount - context.end_amount
-        for token_text, token_id in self.partial_bracket_codes:
+        for token_id, token_bytes in self.id_to_bytes.items():
             inf_flag = False
-            for i in range(1, len(token_text)):
-                token_slice = token_text[:i]
-                if bracket_diff + token_slice.count("[") - token_slice.count("]") < 1:
+            for i in range(1, len(token_bytes)):
+                token_slice = token_bytes[:i]
+                if bracket_diff + token_slice.count(b"[") - token_slice.count(b"]") < 1:
                     # Ошибка вида "[Остается][" при добавлении "]["
                     inf_flag = True
             if not inf_flag:
                 new_bracket_diff = bracket_diff + \
-                    token_text.count("[") - token_text.count("]")
+                    token_bytes.count(b"[") - token_bytes.count(b"]")
                 if self.applying_max_amount and not self.soft_max_amount: # Есть жесткое ограничение по количеству открытых скобок
                     if not context.check_all_open(): # И не все [ сгенерированы
                         # То есть нельзя делать diff = 0
@@ -328,8 +326,8 @@ class RestrictBalanceBracketConstraint(Constraint):
 class RestrictOpenConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes, applying_max_amount):
-        self.partial_bracket_codes = partial_bracket_codes
+    def __init__(self, id_to_bytes, applying_max_amount):
+        self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
         
     def check(self, context):
@@ -339,8 +337,8 @@ class RestrictOpenConstraint(Constraint):
     
     def __call__(self, logits, context):
         print("Restriction for [")
-        for token_text, token_id in self.partial_bracket_codes:
-            if "[" in token_text:
+        for token_id, token_bytes in self.id_to_bytes.items():
+            if b"[" in token_bytes:
               logits[token_id] = float('-inf')
               #print(f"Restricted {token_id} ({token_text})")
         return logits
@@ -348,24 +346,22 @@ class RestrictOpenConstraint(Constraint):
 class RestrictErrorTokenConstraint(Constraint):
     """"""
     
-    def __init__(self, partial_bracket_codes, tokenizer):
+    def __init__(self, id_to_bytes):
         self.error_indexes = []
-        vocab = tokenizer.get_vocab()
-        for token_text, token_id in vocab.items():
+        for token_id, token_bytes in id_to_bytes.items():
             error_token_flag = False
-            decode_token_text = tokenizer.decode([token_id])
-            for t_i, t in enumerate(decode_token_text):
-               if t == "]":
-                   if t_i != len(decode_token_text) - 1 and \
-                     decode_token_text[t_i + 1] not in {"]", "["}:
+            for t_i, t in enumerate(token_bytes):
+               if t == b"]":
+                   if t_i != len(token_bytes) - 1 and \
+                     token_bytes[t_i + 1] not in {b"]", b"["}:
                        error_token_flag = True
                        break
-               elif t == "[":
-                   if t_i != len(decode_token_text) - 1 and \
-                     decode_token_text[t_i + 1] == "]": # "[]"
+               elif t == b"[":
+                   if t_i != len(token_bytes) - 1 and \
+                     token_bytes[t_i + 1] == b"]": # "[]"
                        error_token_flag = True
                        break
-                   if t_i != 0 and decode_token_text[t_i - 1] != "]":
+                   if t_i != 0 and token_bytes[t_i - 1] != b"]":
                        error_token_flag = True
                        break
                #elif not (t.isalnum() or t in string.punctuation or
@@ -375,9 +371,8 @@ class RestrictErrorTokenConstraint(Constraint):
                 
             if error_token_flag:
                 self.error_indexes.append(token_id)
-        for token_text in ["<think>", "</think>", "<|im_start|>"]:
-            token_id = tokenizer.convert_tokens_to_ids(token_text)
-            self.error_indexes.append(token_id)
+        for token_bytes in [b"<think>", b"</think>", b"<|im_start|>"]:
+            self.error_indexes.append(self.id_to_bytes[token_bytes])
 
         print(f"Error subtoken amount: {len(self.error_indexes)}")
         
@@ -442,7 +437,8 @@ def last_tokens_is_form_prefix(last_tokens, unused_tokens):
 def last_tokens_is_relation_prefix(last_tokens, allow_relations):
     return len([rel for rel in allow_relations if rel.startswith(last_tokens)]) != 0
 
-def fold_bracket_seq(prev_re_text, last_text=b"", allow_relations=None, unused_tokens_param=None, drop_tokens=False):
+def fold_bracket_seq(prev_re_text: bytes, last_text:bytes=b"",
+                     allow_relations=None, unused_tokens_param=None, drop_tokens=False):
     # prev_re_text - до крайней правой ], включительно (можем сворачивать, все байты уже получены)
     # last_text - после крайней правой ], еще могут прийти байты, нельзя переводить в символы
 
@@ -461,7 +457,7 @@ def fold_bracket_seq(prev_re_text, last_text=b"", allow_relations=None, unused_t
     if prev_re_text[:6] == b"[root[":
         prev_re_text = b"[|T[" + prev_re_text[6:]
     elif len(prev_re_text) < 6:
-        if b"[root[".startswith(prev_re_text.encode("utf-8") + last_text): # last_text - байты, проверка на уровне байтов # TODO: проверить логику
+        if b"[root[".startswith(prev_re_text + last_text): # last_text - байты, проверка на уровне байтов # TODO: проверить логику
             return prev_re_text
         return b"|E"
     elif not prev_re_text.startswith(b"[|T"):
@@ -623,9 +619,7 @@ def fold_bracket_seq(prev_re_text, last_text=b"", allow_relations=None, unused_t
 
 class RestrictUncorrectLevelConstraint(Constraint):
 
-    def __init__(self, partial_bracket_codes, tokenizer, relations, id_to_bytes):
-        self.partial_bracket_codes = partial_bracket_codes
-        self.tokenizer = tokenizer
+    def __init__(self, id_to_bytes, relations):
         self.relations = relations
         self.id_to_bytes = id_to_bytes
 
@@ -644,10 +638,8 @@ class RestrictUncorrectLevelConstraint(Constraint):
         ITER_SIZE = 10
         while len(valid_indexes) < MIN_VALUE_LEN and (max_logits is None or not max_logits[-1].isinf()):
             max_logits, max_indices = torch.topk(logits, k = ITER_SIZE * (iter_i + 1))
-            max_token_texts = [self.tokenizer.decode(ind) for ind in max_indices]
             print(f"{max_logits=}")
             print(f"{max_indices=}")
-            print(f"{max_token_texts=}")
             print(f"{iter_i=}")
             for token_i, token_id in enumerate(max_indices[ITER_SIZE * iter_i:]):
                 if max_logits[token_i + ITER_SIZE * iter_i].isinf():
@@ -659,7 +651,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
                 fold_res = fold_bracket_seq(re_s, last_text,
                             self.relations, context.last_unused_tokens, False)
                 print(f"{fold_res=}")
-                if "|E" not in fold_res:
+                if b"|E" not in fold_res:
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
@@ -699,7 +691,7 @@ class GenerationContext:
         self.last_unused_tokens = Counter([v.encode("utf-8") for v in last_unused_tokens])
         self.last_text = b""
         self.prev_re_text = ""
-        self.relations = [r.encode("utf-8") for r in relations]
+        self.relations = relations
 
     def update_context(self, last_token_bytes):
         new_text = last_token_bytes.decode("utf-8") # TODO: здесь новый принцип работы
@@ -740,11 +732,9 @@ class BracketLogitsProcessor:
     def __init__(self, tokenizer, logit_params):
         optional_constraints = logit_params.get("optional_constraints", set())
         relation_language = logit_params.get("relations")
-        self.relations = RELATION_DICT[relation_language]
+        self.relations = [r.encode("utf-8") for r in RELATION_DICT[relation_language]]
         self.max_op_bracket = None
         self.tokenizer = tokenizer
-        vocab = tokenizer.get_vocab()
-        partial_bracket_codes = [(k, v) for k, v in vocab.items() if "[" in k or "]" in k]
 
         applying_first_root = "root" in optional_constraints
         print(f"applying_first_root: {applying_first_root}")
@@ -755,30 +745,30 @@ class BracketLogitsProcessor:
         if soft_max_amount:
             applying_max_amount = True
 
-        self.force_finish_constraints = ForceFinishConstraint(tokenizer.eos_token_id,
-            applying_max_amount, soft_max_amount)
-        self.force_end_constraints = ForceEndConstraint(partial_bracket_codes, applying_max_amount)
-
-        eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
-        print(f"eos_ids: {eos_ids}")
-
         byte_vocab, _ = decode_vocab(tokenizer)
         bytes_to_id = {subtoken.byte_string: subtoken.token_id
                                     for subtoken in byte_vocab}
         self.id_to_bytes = {subtoken.token_id: subtoken.byte_string
                                     for subtoken in byte_vocab}
+
+        self.force_finish_constraints = ForceFinishConstraint(tokenizer.eos_token_id,
+            applying_max_amount, soft_max_amount)
+        self.force_end_constraints = ForceEndConstraint(self.id_to_bytes, applying_max_amount)
+
+        eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
+        print(f"eos_ids: {eos_ids}")
         self.prefix_constraints = PrefixConstraint(bytes_to_id, eos_ids, self.relations)
 
-        self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(partial_bracket_codes)
-        self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(partial_bracket_codes, eos_ids)
-        self.restrict_balance_constraints = RestrictBalanceBracketConstraint(partial_bracket_codes,
+        self.restrict_bracket_after_open_constraints = RestrictBracketAfterOpenConstraint(self.id_to_bytes)
+        self.restrict_text_after_end_constraints = RestrictTextAfterEndConstraint(self.id_to_bytes, eos_ids)
+        self.restrict_balance_constraints = RestrictBalanceBracketConstraint(self.id_to_bytes,
             applying_max_amount, soft_max_amount)
-        self.restrict_open_constraints = RestrictOpenConstraint(partial_bracket_codes, applying_max_amount)
-        self.restrict_error_constraints = RestrictErrorTokenConstraint(partial_bracket_codes, self.tokenizer)
+        self.restrict_open_constraints = RestrictOpenConstraint(self.id_to_bytes, applying_max_amount)
+        self.restrict_error_constraints = RestrictErrorTokenConstraint(self.id_to_bytes)
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
 
         self.restrict_uncorrect_level_constraints = RestrictUncorrectLevelConstraint(
-            partial_bracket_codes, self.tokenizer, self.relations, self.id_to_bytes)
+            self.id_to_bytes, self.relations)
 
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)
@@ -823,6 +813,7 @@ class BracketLogitsProcessor:
         # TODO: а, если байты ?
         # Нужно работать с token_ids[-1] - это новый субтокен
         self.prev_context = self.prev_context.update_context(last_token_bytes)
+        context = self.prev_context
         print(f"{self.prev_context.__dict__=}")
 
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,

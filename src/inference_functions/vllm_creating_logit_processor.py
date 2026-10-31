@@ -915,6 +915,10 @@ class BracketLogitsProcessor:
         #tf_all = time.perf_counter()
         #print(tf_all - ts_all)
         #print(time_list)
+        max_logits, _ = torch.topk(logits, k = 1) # Нет разрешенных субтокенов
+        if max_logits[0].isinf():
+            logits = self.force_finish_constraints(logits, context)
+
         return logits
 
 

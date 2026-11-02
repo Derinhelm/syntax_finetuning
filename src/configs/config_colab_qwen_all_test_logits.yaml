@@ -1,0 +1,263 @@
+dataset_config:
+ -  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Russian-SynTagRus/ru_simple_syntagrus_grct_train.json
+    dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Russian-SynTagRus/ru_simple_syntagrus_grct_dev.json
+    test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Russian-SynTagRus/ru_simple_syntagrus_grct_test.json
+    conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_Russian-SynTagRus/ru_syntagrus-ud-test.conllu
+    treebank_repr: grct
+    treebank: russian_syntagrus_grct
+ -  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_train.json
+    dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_dev.json
+    test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_test.json
+    conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_English-EWT/en_ewt-ud-test.conllu
+    treebank_repr: grct
+    treebank: english_ewt_grct
+ -  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Finnish-FTB/fi_ftb_grct_train.json
+    dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Finnish-FTB/fi_ftb_grct_dev.json
+    test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Finnish-FTB/fi_ftb_grct_test.json
+    conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_Finnish-FTB/fi_ftb-ud-test.conllu
+    treebank_repr: grct
+    treebank: fi_ftb_grct
+ -  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Chinese-GSD/zh_gsd_grct_train.json
+    dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Chinese-GSD/zh_gsd_grct_dev.json
+    test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Chinese-GSD/zh_gsd_grct_test.json
+    conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_Chinese-GSD/zh_gsd-ud-test.conllu
+    treebank_repr: grct
+    treebank: zh_gsd_grct
+ -  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_French-GSD/fr_gsd_grct_train.json
+    dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_French-GSD/fr_gsd_grct_dev.json
+    test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_French-GSD/fr_gsd_grct_test.json
+    conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_French-GSD/fr_gsd-ud-test.conllu
+    treebank_repr: grct
+    treebank: fr_gsd_grct
+ -  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Japanese-GSD/ja_gsd_grct_train.json
+    dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Japanese-GSD/ja_gsd_grct_dev.json
+    test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_Japanese-GSD/ja_gsd_grct_test.json
+    conll_test_file_path: /content/syntax_finetuning_data/conllu/UD_Japanese-GSD/ja_gsd-ud-test.conllu
+    treebank_repr: grct
+    treebank: ja_gsd_grct
+inference_models:
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_en_ewt_grct
+    is_instruct: True
+    name: Qwen3_0_6B_en_ewt_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_fi_ftb_grct
+    is_instruct: True
+    name: Qwen3_0_6B_fi_ftb_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_fr_gsd_grct
+    is_instruct: True
+    name: Qwen3_0_6B_fr_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_ja_gsd_grct
+    is_instruct: True
+    name: Qwen3_0_6B_ja_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_ru_syntagrus_grct
+    is_instruct: True
+    name: Qwen3_0_6B_ru_syntagrus_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_zh_gsd_grct
+    is_instruct: True
+    name: Qwen3_0_6B_zh_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_en_ewt_grct
+    is_instruct: True
+    name: Qwen3_4B_en_ewt_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_fi_ftb_grct
+    is_instruct: True
+    name: Qwen3_4B_fi_ftb_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_fr_gsd_grct
+    is_instruct: True
+    name: Qwen3_4B_fr_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_ja_gsd_grct
+    is_instruct: True
+    name: Qwen3_4B_ja_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_ru_syntagrus_grct
+    is_instruct: True
+    name: Qwen3_4B_ru_syntagrus_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_zh_gsd_grct
+    is_instruct: True
+    name: Qwen3_4B_zh_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_en_ewt_grct
+    is_instruct: False
+    name: Qwen3_0_6B_Base_en_ewt_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_fi_ftb_grct
+    is_instruct: False
+    name: Qwen3_0_6B_Base_fi_ftb_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_fr_gsd_grct
+    is_instruct: False
+    name: Qwen3_0_6B_Base_fr_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_ja_gsd_grct
+    is_instruct: False
+    name: Qwen3_0_6B_Base_ja_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_ru_syntagrus_grct
+    is_instruct: False
+    name: Qwen3_0_6B_Base_ru_syntagrus_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-0.6B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_0_6B_Base_zh_gsd_grct
+    is_instruct: False
+    name: Qwen3_0_6B_Base_zh_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+
+  - original_model_id: Qwen/Qwen3-4B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_Base_en_ewt_grct
+    is_instruct: False
+    name: Qwen3_4B_Base_en_ewt_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_Base_fi_ftb_grct
+    is_instruct: False
+    name: Qwen3_4B_Base_fi_ftb_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_Base_fr_gsd_grct
+    is_instruct: False
+    name: Qwen3_4B_Base_fr_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_Base_ja_gsd_grct
+    is_instruct: False
+    name: Qwen3_4B_Base_ja_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_Base_ru_syntagrus_grct
+    is_instruct: False
+    name: Qwen3_4B_Base_ru_syntagrus_grct
+    model_library: vllm
+    max_tokens: 5000
+  - original_model_id: Qwen/Qwen3-4B-Base
+    peft_model_id: /content/syntax_adapters/Qwen3_4B_Base_zh_gsd_grct
+    is_instruct: False
+    name: Qwen3_4B_Base_zh_gsd_grct
+    model_library: vllm
+    max_tokens: 5000
+
+root_output_dir_path: /content/results
+inference:
+ -  seed:
+        - 42
+    logit_parameters:
+        - name: main_logits
+          relations: eng
+    model_parameters:
+        - model_name: Qwen3_0_6B_en_ewt_grct
+        - model_name: Qwen3_4B_en_ewt_grct
+        - model_name: Qwen3_0_6B_Base_en_ewt_grct
+        - model_name: Qwen3_4B_Base_en_ewt_grct
+    treebank_parameters:
+        - treebank_name: english_ewt_grct
+ -  seed:
+        - 42
+    logit_parameters:
+        - name: main_logits
+          relations: ch
+    model_parameters:
+        - model_name: Qwen3_0_6B_zh_gsd_grct
+        - model_name: Qwen3_4B_zh_gsd_grct
+        - model_name: Qwen3_0_6B_Base_zh_gsd_grct
+        - model_name: Qwen3_4B_Base_zh_gsd_grct
+    treebank_parameters:
+        - treebank_name: zh_gsd_grct
+ -  seed:
+        - 42
+    logit_parameters:
+        - name: main_logits
+          relations: fr
+    model_parameters:
+        - model_name: Qwen3_0_6B_fr_gsd_grct
+        - model_name: Qwen3_4B_fr_gsd_grct
+        - model_name: Qwen3_0_6B_Base_fr_gsd_grct
+        - model_name: Qwen3_4B_Base_fr_gsd_grct
+    treebank_parameters:
+        - treebank_name: fr_gsd_grct
+ -  seed:
+        - 42
+    logit_parameters:
+        - name: main_logits
+          relations: fi
+    model_parameters:
+        - model_name: Qwen3_0_6B_fi_ftb_grct
+        - model_name: Qwen3_4B_fi_ftb_grct
+        - model_name: Qwen3_0_6B_Base_fi_ftb_grct
+        - model_name: Qwen3_4B_Base_fi_ftb_grct
+    treebank_parameters:
+        - treebank_name: fi_ftb_grct
+ -  seed:
+        - 42
+    logit_parameters:
+        - name: main_logits
+          relations: ja
+    model_parameters:
+        - model_name: Qwen3_0_6B_ja_gsd_grct
+        - model_name: Qwen3_4B_ja_gsd_grct
+        - model_name: Qwen3_0_6B_Base_ja_gsd_grct
+        - model_name: Qwen3_4B_Base_ja_gsd_grct
+    treebank_parameters:
+        - treebank_name: ja_gsd_grct
+ -  seed:
+        - 42
+    logit_parameters:
+        - name: main_logits
+          relations: ru
+    model_parameters:
+        - model_name: Qwen3_0_6B_ru_syntagrus_grct
+        - model_name: Qwen3_4B_ru_syntagrus_grct
+        - model_name: Qwen3_0_6B_Base_ru_syntagrus_grct
+        - model_name: Qwen3_4B_Base_ru_syntagrus_grct
+    treebank_parameters:
+        - treebank_name: russian_syntagrus_grct
+metrics:
+    - format: jsonl
+      metric_type: difference_easy

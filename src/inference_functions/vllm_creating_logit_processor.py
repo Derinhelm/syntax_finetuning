@@ -211,7 +211,7 @@ class ForceEndConstraint(Constraint):
 
     def __call__(self, logits, context):
         bracket_diff = context.op_amount - context.end_amount
-        print("Forcing last ]")
+        #print("Forcing last ]")
         codes_with_logits = [(token_bytes, token_id, float(logits[token_id]))
                              for token_id, token_bytes in self.id_to_bytes.items()]
         logits[:] = -torch.inf
@@ -340,7 +340,7 @@ class RestrictOpenConstraint(Constraint):
         return context.check_all_open() and not context.check_all_end()
     
     def __call__(self, logits, context):
-        print("Restriction for [")
+        #print("Restriction for [")
         for token_id, token_bytes in self.id_to_bytes.items():
             if b"[" in token_bytes:
               logits[token_id] = float('-inf')
@@ -400,7 +400,7 @@ class RestrictUnbalancedEOSConstraint(Constraint):
             context.op_amount != context.end_amount
     
     def __call__(self, logits, context):
-        print("Restriction for eos (because of unbalancing)")
+        #print("Restriction for eos (because of unbalancing)")
         logits[self.eos_ids] = -torch.inf
         return logits
 

@@ -18,9 +18,9 @@ def create_logit_processor(logit_params, tokenizer):
     if logit_name == "original_logits":
         logit_processor = OriginalLogitsProcessor(tokenizer, logit_params)
     elif logit_name == "structural_logits":
-        from src.inference_functions.vllm_creating_logit_structural_processor import StructuralLogitsProcessor
+        from inference_functions.vllm_creating_logit_structural_processor import StructuralLogitsProcessor
         logit_processor = StructuralLogitsProcessor(tokenizer, logit_params)
     else:
-        from src.inference_functions.vllm_creating_logit_text_processor import TextBracketLogitsProcessor
+        from inference_functions.vllm_creating_logit_text_processor import TextBracketLogitsProcessor
         logit_processor = TextBracketLogitsProcessor(tokenizer, logit_params)
     return logit_processor

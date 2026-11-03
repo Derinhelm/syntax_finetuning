@@ -38,6 +38,10 @@ class LLMInferencer:
                logit_processor = create_logit_processor(logit_parameters, self.tokenizer.tokenizer)
             else:
                logit_processor = None
+
+            if sampling_params is not None:
+                sampling_params["stop_token_ids"] = [2, self.tokenizer.tokenizer.eos_token_id,
+                                                 self.tokenizer.tokenizer.old_eos_token_id]
             self.model = VllmModel(original_model_id, peft_model_id,
                 sampling_params,
                 seed, max_tokens, logit_processor, stop_prefix)

@@ -50,7 +50,7 @@ class VllmModel:
         sampling_params = SamplingParams(
             temperature=0,
             max_tokens=self.max_tokens,
-            stop_token_ids=[2],
+            #stop_token_ids=[2],
             seed=self.seed,
             logits_processors = [self.logit_processor] if self.logit_processor is not None else None
         )

@@ -1,4 +1,4 @@
-from inference_functions.vllm_creating_logit_processor import fold_bracket_seq
+from inference_functions.vllm_creating_logit_text_processor import fold_bracket_seq
 
 OP = '['
 CP = ']'

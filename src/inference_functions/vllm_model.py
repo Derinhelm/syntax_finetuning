@@ -16,16 +16,23 @@ class VllmModel:
         # peft_model_id should be a path to directory with lora adapter
         enable_lora = peft_model_id is not None
         print(f"enable_lora: {enable_lora}")
+        if original_model_id == "yandex/YandexGPT-5-Lite-8B-pretrain": # TODO
+            dtype = torch.bfloat16
+        else:
+            dtype = torch.float16
+
         self.llm = LLM(
             seed=seed,
             model=original_model_id,
             max_seq_len_to_capture=4096, # TODO
             max_model_len=4096,
-            dtype=torch.float16,
+            dtype=dtype,
             enable_lora=enable_lora,
             skip_tokenizer_init=True,
             enforce_eager=True, # Для воспроизводимости
-        )
+            )
+
+
         self.seed = seed
         self.max_tokens = max_tokens # TODO: В sampling_params
         self.sampling_params_info = sampling_params

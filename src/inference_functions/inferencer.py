@@ -34,7 +34,7 @@ class LLMInferencer:
         elif model_library == "vllm":
             from inference_functions.vllm_model import VllmModel
             if logit_parameters != {}:
-               assert peft_model_id is not None
+               #assert peft_model_id is not None
                logit_processor = create_logit_processor(logit_parameters, self.tokenizer.tokenizer)
             else:
                logit_processor = None

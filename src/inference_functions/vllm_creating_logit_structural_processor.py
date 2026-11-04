@@ -306,12 +306,13 @@ class StructuralLogitsProcessor:
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)
 
-    def set_max_op_bracket(self, max_op_bracket): 
-        self.max_op_bracket = (self.mul_coeff * max_op_bracket + \
-            self.add_coeff) * 2
-
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
+
+    def create_new_context(self, input_tokens): 
+        max_op_bracket = len(input_tokens)
+        self.max_op_bracket = (self.mul_coeff * max_op_bracket + \
+            self.add_coeff) * 2
 
     def __call__(self, token_ids, logits):
         print(token_ids)

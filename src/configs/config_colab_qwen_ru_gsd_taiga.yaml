@@ -17,6 +17,18 @@ dataset_config:
     conll_test_file_path: /content/syntax_finetuning/src/data/conllu/UD_Russian-Taiga/ru_taiga-ud-test.conllu
     treebank_repr: grct
     treebank: russian_taiga_grct
+ -  train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_lct_train.json
+    dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_lct_dev.json
+    test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/gsd/ru_simple_gsd_lct_test.json
+    conll_test_file_path: /content/syntax_finetuning/src/data/conllu/UD_Russian-GSD-master/ru_gsd-ud-test.conllu
+    treebank_repr: lct
+    treebank: russian_gsd_lct
+ -  train_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/taiga/ru_simple_taiga_lct_train.json
+    dev_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/taiga/ru_simple_taiga_lct_dev.json
+    test_file_path: /content/syntax_finetuning/src/data/dataset_simple_rel/taiga/ru_simple_taiga_lct_test.json
+    conll_test_file_path: /content/syntax_finetuning/src/data/conllu/UD_Russian-Taiga/ru_taiga-ud-test.conllu
+    treebank_repr: lct
+    treebank: russian_taiga_lct
  -  train_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_train.json
     dev_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_dev.json
     test_file_path: /content/syntax_finetuning_data/dataset_simple_rel/UD_English-EWT/en_ewt_grct_test.json
@@ -208,6 +220,8 @@ inference:
     treebank_parameters:
         - treebank_name: russian_gsd_grct
         - treebank_name: russian_taiga_grct
+        - treebank_name: russian_gsd_lct
+        - treebank_name: russian_taiga_lct
 metrics:
     - format: jsonl
       metric_type: difference_easy

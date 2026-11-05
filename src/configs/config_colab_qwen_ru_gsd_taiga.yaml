@@ -220,8 +220,6 @@ inference:
     treebank_parameters:
         - treebank_name: russian_gsd_grct
         - treebank_name: russian_taiga_grct
-        - treebank_name: russian_gsd_lct
-        - treebank_name: russian_taiga_lct
 metrics:
     - format: jsonl
       metric_type: difference_easy

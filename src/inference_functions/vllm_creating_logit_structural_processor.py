@@ -4,23 +4,8 @@ from typing import List, Tuple
 
 import torch
 
+from src.inference_functions.constraint import Constraint
 
-class Constraint(ABC):
-    """Базовый класс для всех ограничений"""
-    
-    @abstractmethod
-    def __call__(self, logits: torch.Tensor, processor, context) -> torch.Tensor:
-        """
-        Применяет ограничение к логитам
-        
-        Returns:
-            измененные логиты
-        """
-        pass
-       
-    @abstractmethod
-    def check(self, context):
-        pass
         
 # =============================================
 # Force constraints

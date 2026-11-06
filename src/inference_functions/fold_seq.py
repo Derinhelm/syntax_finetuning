@@ -292,9 +292,10 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
 
 class RestrictUncorrectLevelConstraint(Constraint):
 
-    def __init__(self, id_to_bytes, relations):
+    def __init__(self, id_to_bytes, relations, skip_text):
         self.relations = relations
         self.id_to_bytes = id_to_bytes
+        self.skip_text = skip_text
 
     def check(self, context):
         return True
@@ -321,7 +322,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
                 re_s, bytes_after_right_open =  create_bytes_after_right_open(context.re_before_right_open,
                     context.bytes_after_right_open, self.id_to_bytes[token_id.item()])
 
-                fold_res = fold_bracket_seq(re_s, bytes_after_right_open,
+                if self.skip_text:
+                    fold_res = fold_bracket_seq(re_s, bytes_after_right_open)
+                else:
+                    fold_res = fold_bracket_seq(re_s, bytes_after_right_open,
                             self.relations, context.last_unused_tokens, False)
                 #print(f"{re_s=}\n{bytes_after_right_open=}\n{fold_res=}")
                 if b"|E" not in fold_res:

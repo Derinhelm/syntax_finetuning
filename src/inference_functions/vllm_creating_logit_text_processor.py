@@ -340,7 +340,7 @@ class RestrictUnbalancedEOSConstraint(Constraint):
         return logits
 
 class GenerationContext:
-    def __init__(self, max_op_bracket, relations, last_unused_tokens):
+    def __init__(self, max_op_bracket, relations, last_unused_tokens, skip_text):
         self.generated_bytes = b""
         self.op_amount = 0
         self.end_amount = 0
@@ -349,6 +349,7 @@ class GenerationContext:
         self.bytes_after_right_open = b""
         self.re_before_right_open = b""
         self.relations = relations
+        self.skip_text = skip_text
 
     def update_context(self, last_token_bytes):
         self.generated_bytes += last_token_bytes
@@ -359,8 +360,11 @@ class GenerationContext:
         re_s, self.bytes_after_right_open =  create_bytes_after_right_open(self.re_before_right_open,
                             self.bytes_after_right_open, last_token_bytes)
 
-        self.re_before_right_open = fold_bracket_seq(re_s, self.bytes_after_right_open, # TODO: не будет работать для строк с |, в SynTagRus нет
-            self.relations, self.last_unused_tokens, True)
+        if not self.skip_text:
+            self.re_before_right_open = fold_bracket_seq(re_s, self.bytes_after_right_open, # TODO: не будет работать для строк с |, в SynTagRus нет
+                self.relations, self.last_unused_tokens, True)
+        else:
+            self.re_before_right_open = fold_bracket_seq(re_s, self.bytes_after_right_open)
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket
@@ -372,6 +376,7 @@ class GenerationContext:
 class TextBracketLogitsProcessor:
     def __init__(self, tokenizer, logit_params):
         optional_constraints = logit_params.get("optional_constraints", set())
+        self.skip_text = logit_params.get("skip_text", False)
         relation_language = logit_params.get("relations")
         self.relations = [r.encode("utf-8") for r in RELATION_DICT[relation_language]]
         self.max_op_bracket = None
@@ -409,7 +414,7 @@ class TextBracketLogitsProcessor:
         self.restrict_unbalanced_eos_constraints = RestrictUnbalancedEOSConstraint(eos_ids)
 
         self.restrict_uncorrect_level_constraints = RestrictUncorrectLevelConstraint(
-            self.id_to_bytes, self.relations)
+            self.id_to_bytes, self.relations, self.skip_text)
 
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)
@@ -420,7 +425,7 @@ class TextBracketLogitsProcessor:
         max_op_bracket = (self.mul_coeff * len(input_tokens) + \
             self.add_coeff) * 2
         self.prev_context =  GenerationContext(max_op_bracket,
-                    self.relations, input_tokens)
+                    self.relations, input_tokens, self.skip_text)
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -475,7 +480,7 @@ class TextBracketLogitsProcessor:
         else:
             #torch.cuda.synchronize()
             #ts = time.perf_counter()
-            if self.prefix_constraints.check(context):
+            if not self.skip_text and self.prefix_constraints.check(context):
                 logits = self.prefix_constraints(logits, context)
             #torch.cuda.synchronize()
             #tf = time.perf_counter()

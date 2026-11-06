@@ -5,7 +5,7 @@ import traceback
 
 import resource
 
-from deppllama_train_qlora import conduct_experiment
+from conduct_experiment import conduct_experiment
 
 def start_parallel_experiment(inf_experiments, exp_list, metric_list, process_i,
         parallel_path, start_time):

@@ -1,4 +1,3 @@
-import copy
 import json
 import gc
 import os
@@ -7,19 +6,44 @@ from transformers import set_seed
 import time
 import yaml
 
-from conduct_evaluation import conduct_evaluation
 from constants import WARMUP_RATIO
 from creating_data import creating_data
 from creating_model import creating_model # TODO: rename all
-from inference_parser import start_inference_experiment, create_adapter_name
 from tokenize_functions import InstructTokenizer, BaseTokenizer
-
-import matplotlib.pyplot as plt
 
 import torch
 import torch._dynamo
 
 from transformers import TrainerCallback
+
+
+import matplotlib.pyplot as plt
+
+
+def plot_experiment(log_history, output_dir):
+    steps, losses, eval_steps, eval_losses = [], [], [], []
+    infinity = []
+    
+    for e in log_history:
+        if 'loss' in e:
+            steps.append(e['step'])
+            losses.append(e['loss'])
+        if 'eval_loss' in e:
+            eval_steps.append(e['step'])
+            eval_losses.append(e['eval_loss'])
+        
+        if e.get('grad_norm') in (float('inf'), 'Infinity', 'inf'):
+            infinity.append(e)
+    
+    json.dump(infinity, open(f"{output_dir}/infinity_logs.json", 'w'), indent=2)
+    
+    if steps:
+        plt.plot(steps, losses, 'b-', label='train_loss')
+        if eval_steps:
+            plt.plot(eval_steps, eval_losses, 'ro-', label='eval_loss')
+        plt.legend()
+        plt.savefig(f"{output_dir}/loss.jpg", format="jpg")
+        plt.close()
 
 class LoRACallback(TrainerCallback):
     def on_epoch_end(self, args, state, control, **kwargs):
@@ -79,40 +103,6 @@ def remove_example_by_length(lst, target_length):
 #                   MAIN
 #============================================
 
-def plot_experiment(log_history, output_dir):
-    steps, losses, eval_steps, eval_losses = [], [], [], []
-    infinity = []
-    
-    for e in log_history:
-        if 'loss' in e:
-            steps.append(e['step'])
-            losses.append(e['loss'])
-        if 'eval_loss' in e:
-            eval_steps.append(e['step'])
-            eval_losses.append(e['eval_loss'])
-        
-        if e.get('grad_norm') in (float('inf'), 'Infinity', 'inf'):
-            infinity.append(e)
-    
-    json.dump(infinity, open(f"{output_dir}/infinity_logs.json", 'w'), indent=2)
-    
-    if steps:
-        plt.plot(steps, losses, 'b-', label='train_loss')
-        if eval_steps:
-            plt.plot(eval_steps, eval_losses, 'ro-', label='eval_loss')
-        plt.legend()
-        plt.savefig(f"{output_dir}/loss.jpg", format="jpg")
-        plt.close()
-
-def mark_ready(directory):
-    """Помечает директорию как готовую, создавая файл READY"""
-    ready_file = os.path.join(directory, "READY")
-    with open(ready_file, 'w') as f:
-        f.write(f"Completed at {time.ctime()}\n")
-
-def is_ready(directory):
-    """Проверяет, готова ли директория"""
-    return os.path.exists(os.path.join(directory, "READY"))
 
 def conduct_finetuning_experiment(parameters):
     set_seed(parameters.seed)
@@ -231,62 +221,3 @@ def conduct_finetuning_experiment(parameters):
     for _ in range(3):
         gc.collect() # Сборка мусора для удаления
     torch.cuda.empty_cache()
-
-def create_inference_config_by_finetuning(parameters, inf_exp_param):
-    inf_exp = copy.deepcopy(inf_exp_param)
-    # TODO: assert, если поля не пустые
-    # TODO: assert, если не совпадают dataset
-    inf_exp["model_config"].original_model_id = parameters.model_config.model_name
-    inf_exp["model_config"].peft_model_id = parameters.output_experiment_path
-    inf_exp["model_config"].is_instruct = parameters.model_config.is_instruct
-    inf_exp["model_config"].representation_type_result = \
-        parameters.dataset_config.treebank_repr # TODO: Согласовать dataset
-    inf_exp["model_config"].adapter_name = \
-        create_adapter_name(inf_exp["model_config"].original_model_id)
-
-    inf_exp["cur_parameters"].model_name = parameters.model_config.model_name
-
-    inf_exp["root_output_dir_path"] = parameters.output_experiment_path
-
-    inf_exp['dataset_config'] = parameters.dataset_config
-    return inf_exp
-
-def conduct_experiment(parameters, inf_experiments, metric_list):
-    if not parameters.check_is_none():
-        if not is_ready(parameters.output_experiment_path):
-            conduct_finetuning_experiment(parameters)
-    # Нужна оптимизация для "раскладывания по процессам", если только Inference
-
-    if inf_experiments != []:
-            os.environ["VLLM_USE_V1"] = "0"
-            for inf_exp in inf_experiments:
-                if not parameters.check_is_none() and \
-                        not inf_exp["cur_parameters"].stub_parameter:
-                    inf_experiment = create_inference_config_by_finetuning(
-                        parameters, inf_exp)
-                else:
-                    inf_experiment = inf_exp
-                if not inf_exp["cur_parameters"].stub_parameter:
-                    inf_result_path = start_inference_experiment(inf_experiment)
-                else:
-                    inf_result_path = None
-                for metric in metric_list:
-                    if "result_path" in metric:
-                        result_path = metric["result_path"]
-                    elif inf_result_path is not None:
-                        result_path = inf_result_path
-                    else:
-                        print(f"Error. No result path for metric: {metric}")
-                        result_path = None
-                    if "conll_test_file_path" in metric:
-                        conll_test_file_path = metric["conll_test_file_path"]
-                    else: # TODO: убрать необходимость в datasets для metric
-                        conll_test_file_path = inf_experiment['dataset_config'].conll_test_file_path
-                    if result_path is not None:
-                        try:
-                            conduct_evaluation(parameters.output_experiment_path,
-                                conll_test_file_path, result_path, metric)
-                        except Exception as e:
-                            print(f"Error during evaluation {result_path}:\n{e}")
-    if not parameters.check_is_none():
-        mark_ready(parameters.output_experiment_path)

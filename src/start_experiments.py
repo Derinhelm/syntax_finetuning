@@ -2,7 +2,7 @@ from datetime import datetime
 import multiprocessing as mp
 import time
 
-from deppllama_train_qlora import conduct_experiment
+from conduct_experiment import conduct_experiment
 from start_process import start_parallel_experiment
 
 def run_all_experiments(parallel_config, ft_experiments, inf_experiments,

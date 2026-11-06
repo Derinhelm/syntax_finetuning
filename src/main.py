@@ -8,7 +8,6 @@ from config import DatasetConfig, ModelConfig
 from inference_parsing import create_inference_experiments
 from inference_parser import create_adapter_name
 from finetuning_parsing import create_finetuning_experiments
-from single_function_executor import FineTuningExecutor
 from start_experiments import run_all_experiments
 
 
@@ -69,9 +68,8 @@ def finetuning_main():
     default_metrics = [{"format": "jsonl", "metric_type": "difference_easy"}]
     metric_list = configs.get('metrics', default_metrics) # TODO: сделать тип
 
-    function_executor = FineTuningExecutor() # TODO: сделать выбор
     run_all_experiments(parallel_config, ft_experiments, inf_experiments,
-            function_executor, metric_list)
+            metric_list)
 
     collect_mean_metrics(root_output_dir_path)
 

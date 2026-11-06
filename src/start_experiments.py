@@ -2,13 +2,14 @@ from datetime import datetime
 import multiprocessing as mp
 import time
 
+from deppllama_train_qlora import conduct_experiment
 from start_process import start_parallel_experiment
 
 def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
-        function_executor, metric_list):
+        metric_list):
     if not parallel_config:
         for exp in ft_experiments:
-            function_executor(exp, inf_experiments, metric_list)
+            conduct_experiment(exp, inf_experiments, metric_list)
     else:
             process_num = 8
             exp_groups = [[] for _ in range(process_num)]
@@ -37,7 +38,7 @@ def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
                 print(f"inf_groups[i]: {inf_groups[i]}")
                 p = mp.Process(target=start_parallel_experiment,
                     args=(inf_groups[i], exp_groups[i], metric_list, i,
-                    parallel_path, start_time, function_executor))
+                    parallel_path, start_time))
                 processes.append(p)
                 p.start()
                 print(f"Process {i}. is_alive: {p.is_alive()}, params: {p.__dict__}")
@@ -50,7 +51,7 @@ def run_all_experiments(parallel_config, ft_experiments, inf_experiments,
                         print(f"{cur_time}. Error {i} process: {p.exitcode}")
                         processes[i] = mp.Process(target=start_parallel_experiment,
                             args=(inf_groups[i], exp_groups[i], metric_list, i,
-                            parallel_path, start_time, function_executor))
+                            parallel_path, start_time))
                         processes[i].start()
                         cur_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         print(f"{cur_time}. Process {i} is restarted")

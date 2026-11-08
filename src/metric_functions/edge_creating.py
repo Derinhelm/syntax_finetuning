@@ -44,7 +44,7 @@ def create_edges_by_dict(tree, id_form, additional_fun = None):
     for t in tree:
         parent_node_form = id_form.get(t["parent_id"], "None")
         node_form = id_form[t["id"]]
-        if additional_fun is not None:
+        if additional_fun is None:
             edge_res = (node_form.strip(), parent_node_form.strip())
         else:
             edge_res = (node_form.strip(), parent_node_form.strip(), additional_fun(t))

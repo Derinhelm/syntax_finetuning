@@ -21,26 +21,34 @@ def calculate_mean_correct(metrics):
     change_metrics = [r for r in metrics if r is not None]
     return sum(change_metrics) / len(change_metrics)
 
-
 def conduct_evaluation(data, metric_path, metric):
         metric_type = metric["metric_type"]
 
-        expir_res_uas, expir_res_las = evaluate_one_experiment(data, metric_type)
+        aggregate_dict = {"mean_correct": calculate_mean_correct, "mean_all": calculate_mean_all,
+                          "count": calculate_count, "wrong_count": calculate_wrong_count}
+
+        metrics =  [ {"name": "uas_f1", "metric_edge_fun": None,
+                      "aggregate": ["mean_correct", "mean_all", "count", "wrong_count"]}, 
+                     {"name": "las_f1", "metric_edge_fun": lambda t: t['relation'].strip().split(":")[0],
+                      "aggregate": ["mean_correct", "mean_all"]}
+                   ]
+
+        res = evaluate_one_experiment(data, metric_type, metrics)
         
         short_filename = metric_path.split("/")[-1].split(".")[0]
         results = {}
         mean_res = {}
+        for m in metrics:
+            m_name = m["name"]
+            for agg_name in m["aggregate"]:
+                agg_fun = aggregate_dict[agg_name]
+                mean_res[f"{m_name}_{agg_name}"] = agg_fun(res[m_name])
+        results[f"{short_filename}_aggregation"] = mean_res
 
-        mean_res["uas_right"] = calculate_mean_correct(expir_res_uas)
-        mean_res["uas_all"] = calculate_mean_all(expir_res_las)
-        mean_res["las_right"] = calculate_mean_correct(expir_res_las)
-        mean_res["las_all"] = calculate_mean_all(expir_res_las)
-        mean_res["wrong_amount"] = calculate_wrong_count(expir_res_uas)
-        mean_res["all_amount"] = calculate_count(expir_res_uas)
-        results[f"{short_filename}_mean"] = mean_res
-        
-        results[f"{short_filename}_uas"] = expir_res_uas
-        results[f"{short_filename}_las"] = expir_res_las
+        for m in metrics:
+            m_name = m["name"]
+            results[f"{short_filename}_{m_name}"] = res[m_name]
+
         with open(metric_path, 'w') as f:
             json.dump(results, f, indent=4)
 

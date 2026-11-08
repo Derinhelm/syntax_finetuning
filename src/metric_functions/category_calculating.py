@@ -2,21 +2,6 @@ from collections import Counter
 
 from metric_functions.edge_creating import create_edges_by_dict, create_nodes
 
-def process_trees(gold_text, gold_tree, pred_tree, metric_type):
-    id_value_dict = create_nodes(gold_text, pred_tree, metric_type)
-    pred_unlabeled_edges = create_edges_by_dict(pred_tree, id_value_dict)
-    pred_labeled_edges = create_edges_by_dict(pred_tree, id_value_dict, lambda t: t['relation'].strip())
-    assert len(pred_unlabeled_edges) == len(pred_labeled_edges)
-    pred_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in pred_labeled_edges]
-    # .split(":")[0] - from src.sentence_utils.simplify_relations
-
-    id_value_dict = create_nodes(gold_text, gold_tree, metric_type)
-    gold_unlabeled_edges = create_edges_by_dict(gold_tree, id_value_dict)
-    gold_labeled_edges = create_edges_by_dict(gold_tree, id_value_dict, lambda t: t['relation'].strip())
-    assert len(pred_unlabeled_edges) == len(pred_labeled_edges)
-    gold_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in gold_labeled_edges]
-    return pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges
-
 def calculate_f1(pred_eges, gold_edges):
     pred_len = len(pred_eges)
     gold_len = len(gold_edges)
@@ -82,13 +67,17 @@ def calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_ed
     return coeff_dict
 '''
     
-def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
-    pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges = process_trees(
-         gold_text, gold_tree, pred_tree, metric_type)
-    uas = calculate_f1(pred_unlabeled_edges, gold_unlabeled_edges)
-    las = calculate_f1(pred_labeled_edges, gold_labeled_edges)
-    #coeff_dict = calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges,
-    #    pred_labeled_edges, gold_labeled_edges, uas, las, metric_type)
+def create_statistics(metrics, gold_text, gold_tree, pred_tree, metric_type):
+    pred_id_value_dict = create_nodes(gold_text, pred_tree, metric_type)
+    gold_id_value_dict = create_nodes(gold_text, gold_tree, metric_type)
 
-    return uas, las
+    res = {}
+    for m in metrics:
+        metric_name = m["name"]
+        metric_edge_fun = m["metric_edge_fun"]
+        pred_edges = create_edges_by_dict(pred_tree, pred_id_value_dict, metric_edge_fun)
+        gold_edges = create_edges_by_dict(gold_tree, gold_id_value_dict, metric_edge_fun)
+        metric_value = calculate_f1(pred_edges, gold_edges)
+        res[metric_name] = metric_value
+    return res
      

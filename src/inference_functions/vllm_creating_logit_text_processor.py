@@ -3,9 +3,9 @@ from collections import Counter
 
 import torch
 
-from src.inference_functions.fold_seq import fold_bracket_seq, RestrictUncorrectLevelConstraint, \
+from inference_functions.fold_seq import fold_bracket_seq, RestrictUncorrectLevelConstraint, \
     create_bytes_after_right_open, OPEN_BYTE, END_BYTE, RELATION_DICT
-from src.inference_functions.constraint import Constraint
+from inference_functions.constraint import Constraint
 
 class PrefixGenerator:    
     def __init__(self, relations):

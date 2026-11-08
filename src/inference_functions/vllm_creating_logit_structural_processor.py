@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import torch
 
-from src.inference_functions.constraint import Constraint
+from inference_functions.constraint import Constraint
 
         
 # =============================================

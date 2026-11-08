@@ -9,7 +9,7 @@ from collections import Counter
 import torch
 
 
-from src.inference_functions.constraint import Constraint
+from inference_functions.constraint import Constraint
 
 # =============================================
 # Prefix constraints

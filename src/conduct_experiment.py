@@ -37,7 +37,7 @@ def create_inference_config_by_finetuning(parameters, inf_exp_param):
 def conduct_experiment(parameters, inf_experiments, metric_list):
     if not parameters.check_is_none():
         if not is_ready(parameters.output_experiment_path):
-            from src.deppllama_train_qlora import conduct_finetuning_experiment
+            from deppllama_train_qlora import conduct_finetuning_experiment
             conduct_finetuning_experiment(parameters)
     # Нужна оптимизация для "раскладывания по процессам", если только Inference
 

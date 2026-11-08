@@ -1,4 +1,4 @@
-from src.inference_functions.fold_seq import fold_bracket_seq
+from inference_functions.fold_seq import fold_bracket_seq
 
 OP = '['
 CP = ']'

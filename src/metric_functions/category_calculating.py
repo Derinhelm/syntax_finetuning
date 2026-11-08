@@ -35,6 +35,7 @@ def calculate_f1(pred_eges, gold_edges):
         f1 = 0.0
     return f1
 
+'''
 def calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges, uas, las, metric_type):
     pred_nodes = {e[0] for e in pred_unlabeled_edges} # Для LLM-версии это множество форм слов
     gold_nodes = {e[0] for e in gold_unlabeled_edges}
@@ -84,14 +85,15 @@ def calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_ed
     coeff_dict = { "tok_coeff": tok_coeff, "unlab_coeff": unlab_coeff, "lab_coeff": lab_coeff}
 
     return coeff_dict
-
+'''
+    
 def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
     pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges = process_trees(
          gold_text, gold_tree, pred_tree, metric_type)
     uas = calculate_f1(pred_unlabeled_edges, gold_unlabeled_edges)
     las = calculate_f1(pred_labeled_edges, gold_labeled_edges)
-    coeff_dict = calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges,
-        pred_labeled_edges, gold_labeled_edges, uas, las, metric_type)
+    #coeff_dict = calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges,
+    #    pred_labeled_edges, gold_labeled_edges, uas, las, metric_type)
 
-    return uas, las, coeff_dict
+    return uas, las
      

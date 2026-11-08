@@ -71,7 +71,7 @@ def finetuning_main():
     run_all_experiments(parallel_config, ft_experiments, inf_experiments,
             metric_list)
 
-    collect_mean_metrics(root_output_dir_path)
+    #collect_mean_metrics(root_output_dir_path)
 
 
 if __name__ == "__main__":

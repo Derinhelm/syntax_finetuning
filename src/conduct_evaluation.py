@@ -27,9 +27,10 @@ def conduct_evaluation(data, metric_path, metric):
         aggregate_dict = {"mean_correct": calculate_mean_correct, "mean_all": calculate_mean_all,
                           "count": calculate_count, "wrong_count": calculate_wrong_count}
 
-        metrics =  [ {"name": "uas_f1", "metric_edge_fun": None,
+        metrics =  [ {"name": "uas_f1", "metric_edge_fun": None, "calculate_fun": "f1",
                       "aggregate": ["mean_correct", "mean_all", "count", "wrong_count"]}, 
                      {"name": "las_f1", "metric_edge_fun": lambda t: t['relation'].strip().split(":")[0],
+                      "calculate_fun": "f1",
                       "aggregate": ["mean_correct", "mean_all"]}
                    ]
 

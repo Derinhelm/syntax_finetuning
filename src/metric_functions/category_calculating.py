@@ -68,16 +68,18 @@ def calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_ed
 '''
     
 def create_statistics(metrics, gold_text, gold_tree, pred_tree, metric_type):
+    calculate_dict = {"f1": calculate_f1}
     pred_id_value_dict = create_nodes(gold_text, pred_tree, metric_type)
     gold_id_value_dict = create_nodes(gold_text, gold_tree, metric_type)
 
     res = {}
     for m in metrics:
+        calc_fun = calculate_dict[m["calculate_fun"]]
         metric_name = m["name"]
         metric_edge_fun = m["metric_edge_fun"]
         pred_edges = create_edges_by_dict(pred_tree, pred_id_value_dict, metric_edge_fun)
         gold_edges = create_edges_by_dict(gold_tree, gold_id_value_dict, metric_edge_fun)
-        metric_value = calculate_f1(pred_edges, gold_edges)
+        metric_value = calc_fun(pred_edges, gold_edges)
         res[metric_name] = metric_value
     return res
      

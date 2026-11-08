@@ -1,5 +1,6 @@
 import json
 import gc
+import traceback
 
 from conllu import parse
 
@@ -148,3 +149,4 @@ def conduct_evaluation_main(parameters,
             gc.collect()
         except Exception as e:
             print(f"Error during evaluation {result_path}:\n{e}")
+            print(traceback.print_exc())

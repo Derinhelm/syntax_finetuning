@@ -4,8 +4,22 @@ import gc
 from conllu import parse
 
 from metric_functions.data_preparing import preprocess_tree
-from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mean_metrics
+from metric_functions.evaluate_one import evaluate_one_experiment
 
+
+def calculate_count(metrics):
+    return len(metrics)
+
+def calculate_wrong_count(metrics):
+    return sum(map(metrics, lambda x: x is None))
+
+def calculate_mean_all(metrics):
+    change_metrics = [r if r is not None else 0.0 for r in metrics]
+    return sum(change_metrics) / len(change_metrics)
+
+def calculate_mean_correct(metrics):
+    change_metrics = [r for r in metrics if r is not None]
+    return sum(change_metrics) / len(change_metrics)
 
 
 def conduct_evaluation(data, metric_path, metric):
@@ -15,8 +29,16 @@ def conduct_evaluation(data, metric_path, metric):
         
         short_filename = metric_path.split("/")[-1].split(".")[0]
         results = {}
-        results[f"{short_filename}_mean"] = calculate_mean_metrics(expir_res_uas,
-            expir_res_las)
+        mean_res = {}
+
+        mean_res["uas_right"] = calculate_mean_correct(expir_res_uas)
+        mean_res["uas_all"] = calculate_mean_all(expir_res_las)
+        mean_res["las_right"] = calculate_mean_correct(expir_res_las)
+        mean_res["las_all"] = calculate_mean_all(expir_res_las)
+        mean_res["wrong_amount"] = calculate_wrong_count(expir_res_uas)
+        mean_res["all_amount"] = calculate_count(expir_res_uas)
+        results[f"{short_filename}_mean"] = mean_res
+        
         results[f"{short_filename}_uas"] = expir_res_uas
         results[f"{short_filename}_las"] = expir_res_las
         with open(metric_path, 'w') as f:

@@ -21,8 +21,15 @@ inference:
     logit_parameters:
         #- {}
         - name: main_logits
+        - name: main_logits
+          skip_text: True # Без учета текста
+        - name: original_logits
+        - {}
     model_parameters:
         - model_name: RuadaptQwen3_4B_Hybrid_syntagrus_grct
     treebank_parameters:
         - treebank_name: gsd_test_grct
-          index_finish: 30
+          index_finish: 14
+metrics:
+    - format: jsonl
+      metric_type: difference_easy

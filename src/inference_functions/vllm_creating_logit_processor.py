@@ -15,12 +15,16 @@ class OriginalLogitsProcessor:
 
 def create_logit_processor(logit_params, tokenizer):
     logit_name = logit_params.get("name", "")
-    if logit_name == "original_logits":
-        logit_processor = OriginalLogitsProcessor(tokenizer, logit_params)
-    elif logit_name == "structural_logits":
+    if logit_name == "structural_logits": # TODO: to delete
         from inference_functions.vllm_creating_logit_structural_processor import StructuralLogitsProcessor
         logit_processor = StructuralLogitsProcessor(tokenizer, logit_params)
-    else:
+    elif logit_name == "main_logits": # Без текста тоже здесь
         from inference_functions.vllm_creating_logit_text_processor import TextBracketLogitsProcessor
         logit_processor = TextBracketLogitsProcessor(tokenizer, logit_params)
+    elif logit_name == "original_logits":
+        logit_processor = OriginalLogitsProcessor(tokenizer, logit_params)
+    else:
+        print(f"Wrong logit processor: {logit_name}, use OriginalLogitsProcessor")
+        logit_processor = OriginalLogitsProcessor(tokenizer, logit_params)
+
     return logit_processor

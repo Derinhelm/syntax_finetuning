@@ -1,5 +1,3 @@
-import json
-import gc
 from conllu import parse
 
 from metric_functions.category_calculating \
@@ -60,6 +58,4 @@ def evaluate_one_experiment(gold_sentences, pred_trees, metric_type):
             sent_coeff_dict["index"] = sent_i
         expir_res_coeffs.append(sent_coeff_dict)
 
-    del pred_trees
-    gc.collect()
     return expir_res_uas, expir_res_las, expir_res_coeffs

@@ -1,8 +1,5 @@
-from conllu import parse
-
 from metric_functions.category_calculating \
             import create_statistics
-from metric_functions.data_preparing import preprocess_tree
 
 
 def calculate_mean_metrics(uas_metrics, las_metrics, coeffs):
@@ -28,27 +25,18 @@ def calculate_mean_metrics(uas_metrics, las_metrics, coeffs):
 
     return mean_res
 
-def evaluate_one_experiment(gold_sentences, pred_trees, metric_type):
-
+def evaluate_one_experiment(data, metric_type):
     expir_res_uas, expir_res_las, expir_res_coeffs = [], [], []
-    pred_trees_dict = {tree['index']:tree for tree in pred_trees}
-    assert len(pred_trees_dict) == len(pred_trees)
-    for sent_i, sent_r in enumerate(gold_sentences):
+    for sent_i, d in enumerate(data):
         try:
-            if isinstance(pred_trees_dict[sent_i]["pred_tree"], list):
-                gold_tree = [{'id': str(t['id']), 'form': t['form'],
-                    'parent_id': str(t['head']), 'relation': t['deprel'],
-                    'pos': t['upos'], 'feats': t['feats']}
-                        for t in gold_sentences[sent_i]]
-                gold_text = gold_sentences[sent_i].metadata['text']
-                gold_tree = preprocess_tree(gold_tree)
-                pred_tree = preprocess_tree(
-                    pred_trees_dict[sent_i]["pred_tree"])
+            gold_tree = d["gold_tree"]
+            pred_tree = d["pred_tree"]
+            gold_text = d["gold_text"]
+            if gold_tree is not None and pred_tree is not None:
                 sent_uas, sent_las, sent_coeff_dict = create_statistics(
                     gold_text, gold_tree, pred_tree, metric_type)
             else: # Предложение с некорректным результатом
                 sent_uas, sent_las, sent_coeff_dict = None, None, None
-
         except Exception as e:
             print(sent_i, e)
             sent_uas, sent_las, sent_coeff_dict = None, None, None

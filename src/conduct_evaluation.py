@@ -3,14 +3,15 @@ import gc
 
 from conllu import parse
 
+from metric_functions.data_preparing import preprocess_tree
 from metric_functions.evaluate_one import evaluate_one_experiment, calculate_mean_metrics
 
 
-def conduct_evaluation(gold_sentences,
-            pred_trees, metric_path, metric):
+
+def conduct_evaluation(data, metric_path, metric):
         metric_type = metric["metric_type"]
-        expir_res_uas, expir_res_las, expir_res_coeffs = evaluate_one_experiment(
-            gold_sentences, pred_trees, metric_type)
+
+        expir_res_uas, expir_res_las, expir_res_coeffs = evaluate_one_experiment(data, metric_type)
         
         short_filename = metric_path.split("/")[-1].split(".")[0]
         results = {}
@@ -44,6 +45,53 @@ def get_pred_trees(pred_filename, pred_format):
             pred_trees = json.load(f)
     return pred_trees
 
+def prepare_evaluation_data(conll_test_file_path, result_path, pred_format):
+    with open(conll_test_file_path, 'r') as file: # TODO: вынести из for ?
+        content = file.read()
+    gold_sentences = parse(content)
+
+    pred_trees = get_pred_trees(result_path, pred_format)
+    if len(gold_sentences) != len(pred_trees):
+                print(f"Gold sents: {len(gold_sentences)}, pred sents: {len(pred_trees)}")
+                gold_sent_ids = set(range(len(gold_sentences)))
+                pred_sent_ids = {s['index'] for s in pred_trees}
+                #print(list(gold_sent_ids)[:10])
+                #print(list(pred_sent_ids)[:10])
+                print(f"Extra: {sorted(list(pred_sent_ids - gold_sent_ids))}")
+                print(f"Lost: {sorted(list(gold_sent_ids - pred_sent_ids))}")
+    
+    assert len(gold_sentences) == len(pred_trees)
+
+
+    pred_trees_dict = {tree['index']:tree for tree in pred_trees}
+    assert len(pred_trees_dict) == len(pred_trees)
+    data = [] # (gold, pred)
+    for sent_i, sent_r in enumerate(gold_sentences):
+        try:
+            if isinstance(pred_trees_dict[sent_i]["pred_tree"], list):
+                gold_tree = [{'id': str(t['id']), 'form': t['form'],
+                    'parent_id': str(t['head']), 'relation': t['deprel'],
+                    'pos': t['upos'], 'feats': t['feats']}
+                        for t in gold_sentences[sent_i]]
+                gold_text = gold_sentences[sent_i].metadata['text']
+                gold_tree = preprocess_tree(gold_tree)
+                pred_tree = preprocess_tree(
+                    pred_trees_dict[sent_i]["pred_tree"])
+                data.append({"gold_text": gold_text, "gold_tree": gold_tree, "pred_tree": pred_tree})
+            else:
+                data.append({"gold_text": gold_text, "gold_tree": gold_tree, "pred_tree": None})
+        except Exception as e:
+                data.append({"gold_text": None, "gold_tree": None, "pred_tree": None})
+
+    return data
+
+def create_metric_path(parameters, result_path, metric):
+    res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
+    metric_type = metric["metric_type"]
+    pred_format = metric["format"]
+    metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}_{pred_format}_{metric_type}.jsonl"
+    return metric_path
+
 def conduct_evaluation_main(parameters,
         inf_experiment, inf_result_path, metric): # TODO: rename
 
@@ -60,31 +108,13 @@ def conduct_evaluation_main(parameters,
         conll_test_file_path = inf_experiment['dataset_config'].conll_test_file_path
     if result_path is not None:
         try:
-            with open(conll_test_file_path, 'r') as file: # TODO: вынести из for ?
-                content = file.read()
-            gold_sentences = parse(content)
+            data = prepare_evaluation_data(
+                 conll_test_file_path, result_path, metric["format"])
+            metric_path = create_metric_path(parameters, result_path, metric)
 
-            pred_format = metric["format"]
-            pred_trees = get_pred_trees(result_path, pred_format)
-            if len(gold_sentences) != len(pred_trees):
-                        print(f"Gold sents: {len(gold_sentences)}, pred sents: {len(pred_trees)}")
-                        gold_sent_ids = set(range(len(gold_sentences)))
-                        pred_sent_ids = {s['index'] for s in pred_trees}
-                        #print(list(gold_sent_ids)[:10])
-                        #print(list(pred_sent_ids)[:10])
-                        print(f"Extra: {sorted(list(pred_sent_ids - gold_sent_ids))}")
-                        print(f"Lost: {sorted(list(gold_sent_ids - pred_sent_ids))}")
-            
-            assert len(gold_sentences) == len(pred_trees)
-            res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
+            conduct_evaluation(data, metric_path, metric)
 
-            pred_format = metric["format"]
-            metric_type = metric["metric_type"]
-            metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}_{pred_format}_{metric_type}.jsonl"
-
-            conduct_evaluation(gold_sentences, pred_trees, metric_path, metric)
-
-            del pred_trees
+            del data
             gc.collect()
         except Exception as e:
             print(f"Error during evaluation {result_path}:\n{e}")

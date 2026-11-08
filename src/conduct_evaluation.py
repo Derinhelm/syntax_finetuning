@@ -12,7 +12,7 @@ def calculate_count(metrics):
     return len(metrics)
 
 def calculate_wrong_count(metrics):
-    return sum(map(metrics, lambda x: x is None))
+    return sum(map(lambda x: x is None, metrics))
 
 def calculate_mean_all(metrics):
     change_metrics = [r if r is not None else 0.0 for r in metrics]

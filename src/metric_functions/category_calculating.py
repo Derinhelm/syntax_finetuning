@@ -1,11 +1,8 @@
 from collections import Counter
 from copy import deepcopy
 
-def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
-    if metric_type == "difference":
-        from metric_functions.edge_creating.creating_edges_difference import create_edges
-        create_fun = create_edges
-    elif metric_type == "difference_easy":
+def process_trees(gold_text, gold_tree, pred_tree, metric_type):
+    if metric_type == "difference_easy":
         from metric_functions.edge_creating.creating_edges_difference_easy import create_edges
         create_fun = create_edges
     elif metric_type == "normal":
@@ -23,36 +20,34 @@ def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
 
     gold_unlabeled_edges, gold_labeled_edges = create_fun(gold_tree)
     gold_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in gold_labeled_edges]
+    return pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges
 
-    pred_len = len(pred_unlabeled_edges)
-    gold_len = len(gold_unlabeled_edges)
+def calculate_f1(pred_eges, gold_edges):
+    pred_len = len(pred_eges)
+    gold_len = len(gold_edges)
+    numerator = len(Counter(pred_eges) & Counter(gold_edges)) # Числитель
 
-    uas_numerator = len(Counter(pred_unlabeled_edges) &
-                        Counter(gold_unlabeled_edges)) # Числитель
-    las_numerator = len(Counter(pred_labeled_edges) &
-                        Counter(gold_labeled_edges)) # Числитель
-
-    uas_precision = uas_numerator / pred_len
-    uas_recall = uas_numerator / gold_len
-
-    las_precision = las_numerator / pred_len
-    las_recall = las_numerator / gold_len
-
-    if uas_precision + uas_recall > 0:
-        uas = (2 * uas_precision * uas_recall) / (uas_precision + uas_recall)
+    precision = numerator / pred_len
+    recall = numerator / gold_len
+    if precision + recall > 0:
+        f1 = (2 * precision * recall) / (precision + recall)
     else:
-        uas = 0.0
+        f1 = 0.0
+    return f1
 
-    if (las_precision + las_recall) > 0:
-        las = (2 * las_precision * las_recall) / (las_precision + las_recall)
-    else:
-        las = 0.0
-
+def calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges, uas, las, metric_type):
     pred_nodes = {e[0] for e in pred_unlabeled_edges} # Для LLM-версии это множество форм слов
     gold_nodes = {e[0] for e in gold_unlabeled_edges}
 
     g_not_p = len([e for e in gold_unlabeled_edges if e[0] not in pred_nodes])
     p_not_g = len([e for e in pred_unlabeled_edges if e[0] not in gold_nodes])
+
+    las_numerator = len(Counter(pred_labeled_edges) & Counter(gold_labeled_edges)) # Числитель
+    uas_numerator = len(Counter(pred_unlabeled_edges) & Counter(gold_unlabeled_edges)) # Числитель
+
+
+    pred_len = len(pred_unlabeled_edges)
+    gold_len = len(gold_unlabeled_edges)
 
     g_p_h_m_r = las_numerator
     g_p_h_m_not_r = uas_numerator - las_numerator
@@ -88,4 +83,15 @@ def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
 
     coeff_dict = { "tok_coeff": tok_coeff, "unlab_coeff": unlab_coeff, "lab_coeff": lab_coeff}
 
+    return coeff_dict
+
+def create_statistics(gold_text, gold_tree, pred_tree, metric_type):
+    pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges = process_trees(
+         gold_text, gold_tree, pred_tree, metric_type)
+    uas = calculate_f1(pred_unlabeled_edges, gold_unlabeled_edges)
+    las = calculate_f1(pred_labeled_edges, gold_labeled_edges)
+    coeff_dict = calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges,
+        pred_labeled_edges, gold_labeled_edges, uas, las, metric_type)
+
     return uas, las, coeff_dict
+     

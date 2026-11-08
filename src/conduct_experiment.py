@@ -1,6 +1,10 @@
 import copy
+import json
 import os
 import time
+
+from conllu import parse
+
 
 def mark_ready(directory):
     """Помечает директорию как готовую, создавая файл READY"""
@@ -32,6 +36,29 @@ def create_inference_config_by_finetuning(parameters, inf_exp_param):
 
     inf_exp['dataset_config'] = parameters.dataset_config
     return inf_exp
+
+
+def get_pred_trees(pred_filename, pred_format):
+    if pred_format == "jsonl":
+        pred_trees = []
+        with open(pred_filename, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):         
+                item = json.loads(line)
+                pred_trees.append(item)
+    elif pred_format == "conll":
+        with open(pred_filename, 'r') as file:
+            content = file.read()
+        conll_sentences = parse(content)
+        pred_trees = []
+        for i, conll_res in enumerate(conll_sentences):
+            tree_nodes = [{'id': str(t['id']), 'form': t['form'],
+                    'parent_id': str(t['head']), 'relation': t['deprel']}
+                    for t in conll_res ]
+            pred_trees.append({'index': i, 'pred_tree': tree_nodes})
+    else:
+        with open(pred_filename, 'r', encoding='utf-8') as f:
+            pred_trees = json.load(f)
+    return pred_trees
 
 def conduct_experiment(parameters, inf_experiments, metric_list):
     if not parameters.check_is_none():
@@ -69,8 +96,29 @@ def conduct_experiment(parameters, inf_experiments, metric_list):
                     if result_path is not None:
                         try:
                             from conduct_evaluation import conduct_evaluation
-                            conduct_evaluation(parameters.output_experiment_path,
-                                conll_test_file_path, result_path, metric)
+                            with open(conll_test_file_path, 'r') as file: # TODO: вынести из for ?
+                                content = file.read()
+                            gold_sentences = parse(content)
+
+                            pred_format = metric["format"]
+                            pred_trees = get_pred_trees(result_path, pred_format)
+                            if len(gold_sentences) != len(pred_trees):
+                                        print(f"Gold sents: {len(gold_sentences)}, pred sents: {len(pred_trees)}")
+                                        gold_sent_ids = set(range(len(gold_sentences)))
+                                        pred_sent_ids = {s['index'] for s in pred_trees}
+                                        #print(list(gold_sent_ids)[:10])
+                                        #print(list(pred_sent_ids)[:10])
+                                        print(f"Extra: {sorted(list(pred_sent_ids - gold_sent_ids))}")
+                                        print(f"Lost: {sorted(list(gold_sent_ids - pred_sent_ids))}")
+                            
+                            assert len(gold_sentences) == len(pred_trees)
+                            res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
+
+                            pred_format = metric["format"]
+                            metric_type = metric["metric_type"]
+                            metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}_{pred_format}_{metric_type}.jsonl"
+
+                            conduct_evaluation(gold_sentences, pred_trees, metric_path, metric)
                         except Exception as e:
                             print(f"Error during evaluation {result_path}:\n{e}")
     if not parameters.check_is_none():

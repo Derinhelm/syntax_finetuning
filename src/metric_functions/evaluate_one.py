@@ -30,42 +30,7 @@ def calculate_mean_metrics(uas_metrics, las_metrics, coeffs):
 
     return mean_res
 
-
-def get_pred_trees(pred_filename, pred_format):
-    if pred_format == "jsonl":
-        pred_trees = []
-        with open(pred_filename, 'r', encoding='utf-8') as f:
-            for line_num, line in enumerate(f, 1):         
-                item = json.loads(line)
-                pred_trees.append(item)
-    elif pred_format == "conll":
-        with open(pred_filename, 'r') as file:
-            content = file.read()
-        conll_sentences = parse(content)
-        pred_trees = []
-        for i, conll_res in enumerate(conll_sentences):
-            tree_nodes = [{'id': str(t['id']), 'form': t['form'],
-                    'parent_id': str(t['head']), 'relation': t['deprel']}
-                    for t in conll_res ]
-            pred_trees.append({'index': i, 'pred_tree': tree_nodes})
-    else:
-        with open(pred_filename, 'r', encoding='utf-8') as f:
-            pred_trees = json.load(f)
-    return pred_trees
-
-def evaluate_one_experiment(gold_sentences, pred_filename,
-        pred_format, metric_type):
-    pred_trees = get_pred_trees(pred_filename, pred_format)
-    if len(gold_sentences) != len(pred_trees):
-        print(f"Gold sents: {len(gold_sentences)}, pred sents: {len(pred_trees)}")
-        gold_sent_ids = set(range(len(gold_sentences)))
-        pred_sent_ids = {s['index'] for s in pred_trees}
-        #print(list(gold_sent_ids)[:10])
-        #print(list(pred_sent_ids)[:10])
-        print(f"Extra: {sorted(list(pred_sent_ids - gold_sent_ids))}")
-        print(f"Lost: {sorted(list(gold_sent_ids - pred_sent_ids))}")
-
-    assert len(gold_sentences) == len(pred_trees)
+def evaluate_one_experiment(gold_sentences, pred_trees, metric_type):
 
     expir_res_uas, expir_res_las, expir_res_coeffs = [], [], []
     pred_trees_dict = {tree['index']:tree for tree in pred_trees}

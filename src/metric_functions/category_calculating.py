@@ -1,24 +1,19 @@
 from collections import Counter
-from copy import deepcopy
+
+from metric_functions.edge_creating import create_edges_by_dict, create_nodes
 
 def process_trees(gold_text, gold_tree, pred_tree, metric_type):
-    if metric_type == "difference_easy":
-        from metric_functions.edge_creating.creating_edges_difference_easy import create_edges
-        create_fun = create_edges
-    elif metric_type == "normal":
-        from metric_functions.edge_creating.create_edges_normal import create_edges
-        create_fun = lambda tree_param: create_edges(gold_text, tree_param)
-    else:
-        print(f"Error metric_type: {metric_type}")
-        return None, None, None
-
-    pred_unlabeled_edges, pred_labeled_edges = create_fun(pred_tree)
+    id_value_dict = create_nodes(gold_text, pred_tree, metric_type)
+    pred_unlabeled_edges = create_edges_by_dict(pred_tree, id_value_dict)
+    pred_labeled_edges = create_edges_by_dict(pred_tree, id_value_dict, lambda t: t['relation'].strip())
+    assert len(pred_unlabeled_edges) == len(pred_labeled_edges)
     pred_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in pred_labeled_edges]
-
-    #print(pred_labeled_edges_set)
     # .split(":")[0] - from src.sentence_utils.simplify_relations
 
-    gold_unlabeled_edges, gold_labeled_edges = create_fun(gold_tree)
+    id_value_dict = create_nodes(gold_text, gold_tree, metric_type)
+    gold_unlabeled_edges = create_edges_by_dict(gold_tree, id_value_dict)
+    gold_labeled_edges = create_edges_by_dict(gold_tree, id_value_dict, lambda t: t['relation'].strip())
+    assert len(pred_unlabeled_edges) == len(pred_labeled_edges)
     gold_labeled_edges = [(e[0], e[1], e[2].split(":")[0]) for e in gold_labeled_edges]
     return pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges
 

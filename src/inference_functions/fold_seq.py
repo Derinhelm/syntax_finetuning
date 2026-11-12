@@ -340,9 +340,10 @@ class RestrictUncorrectLevelConstraint(Constraint):
             iter_i += 1
             #print(f"{valid_indexes=}")
 
-        valid_mask = torch.zeros_like(logits, dtype=torch.bool)
-        valid_mask[valid_indexes] = True
-        logits[~valid_mask] = float('-inf')
+
+        saved = logits[valid_indexes].clone()
+        logits.fill_(-float('inf'))
+        logits[valid_indexes] = saved
         return logits
 
 # '[|T[|T[|T[' + 'стол]' тоже нужно соединять и сворачивать, а right_open_bracket_pos будет пустым

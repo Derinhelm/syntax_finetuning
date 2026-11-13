@@ -87,7 +87,9 @@ def get_pred_trees(pred_filename, pred_format):
         with open(pred_filename, 'rb') as file:
             loaded_data = pickle.load(file)
         pred_trees = []
-        for i, grct_d in loaded_data:
+        for i, grct_d in enumerate(loaded_data):
+            if isinstance(grct_d, tuple):
+                grct_d = grct_d[0]
             tree = tree_decoder.decode_tree(grct_d, True)
             pred_trees.append({'index': i, 'pred_output': grct_d, 'pred_tree': tree})
     else:

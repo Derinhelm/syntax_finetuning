@@ -22,17 +22,26 @@ def calculate_mean_correct(metrics):
     change_metrics = [r for r in metrics if r is not None]
     return sum(change_metrics) / len(change_metrics)
 
+def calculate_amount_correct_grct(metrics):
+    good = [r for r in metrics if r is not None and "Correct GRCT" in r]
+    wrong = [r for r in metrics if r is not None and not "Correct GRCT" in r]
+    return len(good)
+
+
 def conduct_evaluation(data, metric_path, metric):
         metric_type = metric["metric_type"]
 
         aggregate_dict = {"mean_correct": calculate_mean_correct, "mean_all": calculate_mean_all,
-                          "count": calculate_count, "wrong_count": calculate_wrong_count}
+                          "count": calculate_count, "wrong_count": calculate_wrong_count,
+                          "amount_correct_grct": calculate_amount_correct_grct}
 
         metrics =  [ {"name": "uas_f1", "metric_edge_fun": None, "calculate_fun": "f1",
                       "aggregate": ["mean_correct", "mean_all", "count", "wrong_count"]}, 
                      {"name": "las_f1", "metric_edge_fun": lambda t: t['relation'].strip().split(":")[0],
                       "calculate_fun": "f1",
-                      "aggregate": ["mean_correct", "mean_all"]}
+                      "aggregate": ["mean_correct", "mean_all"]},
+                      {"name": "GRCT", "metric_edge_fun": None, "calculate_fun": "GRCT-correct",
+                      "aggregate": ["amount_correct_grct"]}, # TODO: Убрать node_fun и edge_fun
                    ]
 
         res = evaluate_one_experiment(data, metric_type, metrics)
@@ -108,11 +117,13 @@ def prepare_evaluation_data(conll_test_file_path, result_path, pred_format):
                 gold_tree = preprocess_tree(gold_tree)
                 pred_tree = preprocess_tree(
                     pred_trees_dict[sent_i]["pred_tree"])
-                data.append({"gold_text": gold_text, "gold_tree": gold_tree, "pred_tree": pred_tree})
+                pred_data = pred_trees_dict[sent_i]
+                pred_data.pop("pred_tree")
+                data.append({"gold_text": gold_text, "gold_tree": gold_tree, "pred_tree": pred_tree, "pred_data": pred_data})
             else:
-                data.append({"gold_text": gold_text, "gold_tree": gold_tree, "pred_tree": None})
+                data.append({"gold_text": gold_text, "gold_tree": gold_tree, "pred_tree": None, "pred_data": None})
         except Exception as e:
-                data.append({"gold_text": None, "gold_tree": None, "pred_tree": None})
+                data.append({"gold_text": None, "gold_tree": None, "pred_tree": None, "pred_data": None})
 
     return data
 

@@ -2,7 +2,7 @@ from collections import Counter
 
 from metric_functions.edge_creating import create_edges_by_dict, create_nodes
 
-def calculate_f1(pred_eges, gold_edges):
+def calculate_f1(pred_eges, gold_edges, pred_data):
     pred_len = len(pred_eges)
     gold_len = len(gold_edges)
     numerator = len(Counter(pred_eges) & Counter(gold_edges)) # Числитель
@@ -14,6 +14,18 @@ def calculate_f1(pred_eges, gold_edges):
     else:
         f1 = 0.0
     return f1
+
+def check_fold(pred_eges, gold_edges, pred_data):
+    if "pred_output" in pred_data:
+        from inference_functions.fold_seq import fold_bracket_seq
+        answer_output = pred_data["pred_output"]
+        fold_seq = fold_bracket_seq(answer_output.encode("utf-8"))
+        if b"E" in fold_seq or fold_seq != b"|C":
+            return f"Error level sequence. {fold_seq.decode('utf-8')}. {answer_output}"
+        else:
+            return f"Correct GRCT: {answer_output}"
+    else:
+        return f"No pred_output"
 
 '''
 def calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_edges, gold_labeled_edges, uas, las, metric_type):
@@ -67,19 +79,28 @@ def calculate_coeffs(pred_unlabeled_edges, gold_unlabeled_edges, pred_labeled_ed
     return coeff_dict
 '''
     
-def create_statistics(metrics, gold_text, gold_tree, pred_tree, metric_type):
-    calculate_dict = {"f1": calculate_f1}
-    pred_id_value_dict = create_nodes(gold_text, pred_tree, metric_type)
-    gold_id_value_dict = create_nodes(gold_text, gold_tree, metric_type)
+def create_statistics(metrics, d, metric_type):
+    gold_tree = d["gold_tree"]
+    pred_tree = d["pred_tree"]
+    gold_text = d["gold_text"]
+    pred_data = d["pred_data"]
+    if gold_tree is not None and pred_tree is not None:
+        calculate_dict = {"f1": calculate_f1, "GRCT-correct": check_fold}
+        pred_id_value_dict = create_nodes(gold_text, pred_tree, metric_type)
+        gold_id_value_dict = create_nodes(gold_text, gold_tree, metric_type)
 
-    res = {}
-    for m in metrics:
-        calc_fun = calculate_dict[m["calculate_fun"]]
-        metric_name = m["name"]
-        metric_edge_fun = m["metric_edge_fun"]
-        pred_edges = create_edges_by_dict(pred_tree, pred_id_value_dict, metric_edge_fun)
-        gold_edges = create_edges_by_dict(gold_tree, gold_id_value_dict, metric_edge_fun)
-        metric_value = calc_fun(pred_edges, gold_edges)
-        res[metric_name] = metric_value
+        res = {}
+        for m in metrics:
+            calc_fun = calculate_dict[m["calculate_fun"]]
+            metric_name = m["name"]
+            metric_edge_fun = m["metric_edge_fun"]
+            pred_edges = create_edges_by_dict(pred_tree, pred_id_value_dict, metric_edge_fun)
+            gold_edges = create_edges_by_dict(gold_tree, gold_id_value_dict, metric_edge_fun)
+            metric_value = calc_fun(pred_edges, gold_edges, pred_data)
+            res[metric_name] = metric_value
+    else:
+        res = {m["name"]: None for m in metrics}
     return res
-     
+# 1. везде передавать дерево
+# 2. если есть metric_node и metric_edge - применить и добавить поля
+# 3. в calulate_f1 тоже передавать дерево

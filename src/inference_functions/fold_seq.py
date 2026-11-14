@@ -179,7 +179,7 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
     if b"|E" in re_before_right_open:
         return re_before_right_open
 
-    f_check_level_two_words = lambda x: b"|E" if x.count(b"|W") > 1 else x
+    f_check_level_two_words = lambda x: b"|E (many |W)" if x.count(b"|W") > 1 else x
 
     # Против [|T|C|W|W[
     # Только для закрытых уровней. Открытый рассматривается раньше
@@ -201,15 +201,19 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
         end_bracket = re_before_right_open.find(b"]")
         op_bracket = re_before_right_open[:end_bracket].rfind(b"[")
         if re_before_right_open[op_bracket + 1:op_bracket + 3] != b"|T" or re_before_right_open[op_bracket + 2: end_bracket].count(b"|W") != 1:
-            re_before_right_open = re_before_right_open[:op_bracket + 1] + b"|E" + re_before_right_open[end_bracket:]
+            re_before_right_open = re_before_right_open[:op_bracket + 1] + b"|E" + re_before_right_open[end_bracket:] + \
+                b"(wrong fragment " + re_before_right_open[op_bracket: end_bracket + 1] + b")"
             break
         else:
             re_before_right_open = re_before_right_open[:op_bracket] + b"|C" + re_before_right_open[end_bracket + 1:]
     #print(f"after while: {re_before_right_open=}")
 
+    if b"|E" in re_before_right_open:
+        return re_before_right_open
+    
     if re_before_right_open != b"" and re_before_right_open[0] != OPEN_BYTE and re_before_right_open != b"|C":
-        re_before_right_open = b"|E"
-
+        re_before_right_open = b"|E (" + re_before_right_open + b")"
+        return re_before_right_open
     #print(f"after !=: {re_before_right_open=}")
     if unused_tokens is not None:
         # [|T|W[|T|C|W|C[|T[Home]] - Counter({'Home': 1})

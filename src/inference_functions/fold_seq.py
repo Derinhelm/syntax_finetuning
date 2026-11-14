@@ -336,8 +336,11 @@ class RestrictUncorrectLevelConstraint(Constraint):
                         # TODO: Проверка с учетом типа связи/формы и без них
                         # Проверка, без изменения набора токенов
                     valid_indexes.append(token_id.item())
+                    if len(valid_indexes) >= MIN_VALUE_LEN:
+                        break
             iter_i += 1
             #print(f"{valid_indexes=}")
+
         valid_mask = torch.zeros_like(logits, dtype=torch.bool)
         valid_mask[valid_indexes] = True
         logits[~valid_mask] = float('-inf')

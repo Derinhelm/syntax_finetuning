@@ -1,9 +1,11 @@
 import json
 import gc
+import pickle
 import traceback
 
 from conllu import parse
 
+from inference_parser import create_decoder
 from metric_functions.data_preparing import preprocess_tree
 from metric_functions.evaluate_one import evaluate_one_experiment
 
@@ -80,6 +82,14 @@ def get_pred_trees(pred_filename, pred_format):
                     'parent_id': str(t['head']), 'relation': t['deprel']}
                     for t in conll_res ]
             pred_trees.append({'index': i, 'pred_tree': tree_nodes})
+    elif pred_format == "grct_pickle":
+        tree_decoder = create_decoder("grct")
+        with open(pred_filename, 'rb') as file:
+            loaded_data = pickle.load(file)
+        pred_trees = []
+        for i, grct_d in loaded_data:
+            tree = tree_decoder.decode_tree(grct_d, True)
+            pred_trees.append({'index': i, 'pred_output': grct_d, 'pred_tree': tree})
     else:
         with open(pred_filename, 'r', encoding='utf-8') as f:
             pred_trees = json.load(f)

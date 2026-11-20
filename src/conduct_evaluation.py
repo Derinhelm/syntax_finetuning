@@ -13,37 +13,42 @@ from metric_functions.evaluate_one import evaluate_one_experiment
 def calculate_count(metrics):
     return len(metrics)
 
-def calculate_wrong_count(metrics):
-    return sum(map(lambda x: x is None, metrics))
+def calculate_none_count(metrics):
+    return sum(map(lambda r: r['metric'] is None, metrics))
 
 def calculate_mean_all(metrics):
-    change_metrics = [r if r is not None else 0.0 for r in metrics]
-    return sum(change_metrics) / len(change_metrics)
+    change_metrics = [r['metric'] if r['metric'] is not None else 0.0 for r in metrics]
+    return round(sum(change_metrics) / len(change_metrics), 3)
 
 def calculate_mean_correct(metrics):
-    change_metrics = [r for r in metrics if r is not None]
-    return sum(change_metrics) / len(change_metrics)
+    change_metrics = [r['metric'] for r in metrics if r['metric'] is not None]
+    return round(sum(change_metrics) / len(change_metrics), 3)
 
 def calculate_amount_correct_grct(metrics):
-    good = [r for r in metrics if r is not None and "Correct GRCT" in r]
-    wrong = [r for r in metrics if r is not None and not "Correct GRCT" in r]
+    good = [r['metric'] for r in metrics if r['metric'] is not None and "Correct GRCT" in r['metric']]
     return len(good)
 
+def calculate_amount_wrong_grct(metrics):
+    wrong = [r['metric'] for r in metrics if r['metric'] is not None and "Correct GRCT" not in r['metric']]
+    return len(wrong)
 
 def conduct_evaluation(data, metric_path, metric):
         metric_type = metric["metric_type"]
 
         aggregate_dict = {"mean_correct": calculate_mean_correct, "mean_all": calculate_mean_all,
-                          "count": calculate_count, "wrong_count": calculate_wrong_count,
-                          "amount_correct_grct": calculate_amount_correct_grct}
+                          "count": calculate_count, "none_count": calculate_none_count,
+                          "amount_correct_grct": calculate_amount_correct_grct, "amount_wrong_grct": calculate_amount_wrong_grct}
 
-        metrics =  [ {"name": "uas_f1", "metric_edge_fun": None, "calculate_fun": "f1",
-                      "aggregate": ["mean_correct", "mean_all", "count", "wrong_count"]}, 
-                     {"name": "las_f1", "metric_edge_fun": lambda t: t['relation'].strip().split(":")[0],
+        metrics =  [ {"name": "uas_llm_f1", "metric_edge_fun": None, "calculate_fun": "f1",
+                      "aggregate": ["mean_correct", "mean_all"]},#, "count", "none_count"]}, 
+                     {"name": "las_llm_relaxed_f1", "metric_edge_fun": lambda t: t['relation'].strip().split(":")[0],
+                      "calculate_fun": "f1",
+                      "aggregate": ["mean_correct", "mean_all"]},
+                     {"name": "las_llm_f1", "metric_edge_fun": lambda t: t['relation'].strip(),
                       "calculate_fun": "f1",
                       "aggregate": ["mean_correct", "mean_all"]},
                       {"name": "GRCT", "metric_edge_fun": None, "calculate_fun": "GRCT-correct",
-                      "aggregate": ["amount_correct_grct"]}, # TODO: Убрать node_fun и edge_fun
+                      "aggregate": ["amount_correct_grct", "amount_wrong_grct", "none_count"]}, # TODO: Убрать node_fun и edge_fun
                    ]
 
         res = evaluate_one_experiment(data, metric_type, metrics)
@@ -63,7 +68,7 @@ def conduct_evaluation(data, metric_path, metric):
             results[f"{short_filename}_{m_name}"] = res[m_name]
 
         with open(metric_path, 'w') as f:
-            json.dump(results, f, indent=4)
+            json.dump(results, f, indent=4, ensure_ascii=False)
 
 def get_pred_trees(pred_filename, pred_format):
     if pred_format == "jsonl":
@@ -97,7 +102,8 @@ def get_pred_trees(pred_filename, pred_format):
             pred_trees = json.load(f)
     return pred_trees
 
-def prepare_evaluation_data(conll_test_file_path, result_path, pred_format):
+def prepare_evaluation_data(conll_test_file_path, result_path,
+        pred_format, metric_skip_none_sentences):
     with open(conll_test_file_path, 'r') as file: # TODO: вынести из for ?
         content = file.read()
     gold_sentences = parse(content)
@@ -111,8 +117,9 @@ def prepare_evaluation_data(conll_test_file_path, result_path, pred_format):
                 #print(list(pred_sent_ids)[:10])
                 print(f"Extra: {sorted(list(pred_sent_ids - gold_sent_ids))}")
                 print(f"Lost: {sorted(list(gold_sent_ids - pred_sent_ids))}")
-    
-    assert len(gold_sentences) == len(pred_trees)
+
+    if not metric_skip_none_sentences:
+        assert len(gold_sentences) == len(pred_trees)
 
 
     pred_trees_dict = {tree['index']:tree for tree in pred_trees}
@@ -120,7 +127,7 @@ def prepare_evaluation_data(conll_test_file_path, result_path, pred_format):
     data = [] # (gold, pred)
     for sent_i, sent_r in enumerate(gold_sentences):
         try:
-            if isinstance(pred_trees_dict[sent_i]["pred_tree"], list):
+            if sent_i in pred_trees_dict and isinstance(pred_trees_dict[sent_i]["pred_tree"], list):
                 gold_tree = [{'id': str(t['id']), 'form': t['form'],
                     'parent_id': str(t['head']), 'relation': t['deprel'],
                     'pos': t['upos'], 'feats': t['feats']}
@@ -141,9 +148,11 @@ def prepare_evaluation_data(conll_test_file_path, result_path, pred_format):
 
 def create_metric_path(parameters, result_path, metric):
     res_name = "_".join(result_path.split("/")[-1].split(".")[:-1])
-    metric_type = metric["metric_type"]
+    metric_type = metric["metric_type"].replace("difference_easy", "llm_metric")
     pred_format = metric["format"]
-    metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}_{pred_format}_{metric_type}.jsonl"
+    #metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}_{pred_format}_{metric_type}.jsonl"
+
+    metric_path = f"{parameters.output_experiment_path}/metrics_{res_name}.json"
     return metric_path
 
 def conduct_evaluation_main(parameters,
@@ -162,8 +171,10 @@ def conduct_evaluation_main(parameters,
         conll_test_file_path = inf_experiment['dataset_config'].conll_test_file_path
     if result_path is not None:
         try:
+            metric_skip_none_sentences = metric.get("skip_empty_sentence", False)
             data = prepare_evaluation_data(
-                 conll_test_file_path, result_path, metric["format"])
+                 conll_test_file_path, result_path, metric["format"],
+                 metric_skip_none_sentences)
             metric_path = create_metric_path(parameters, result_path, metric)
 
             conduct_evaluation(data, metric_path, metric)

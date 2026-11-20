@@ -13,5 +13,5 @@ def evaluate_one_experiment(data, metric_type, metrics):
             print(traceback.print_exc())
             sent_res = {m["name"]: None for m in metrics}
         for m_name in res:
-            res[m_name].append(sent_res[m_name])
+            res[m_name].append({"index": sent_i, "metric": sent_res[m_name]})
     return res

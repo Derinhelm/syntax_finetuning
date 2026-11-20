@@ -300,6 +300,48 @@ def group_loss_new(data, exp_name, m_res, m_path_str, f_table_loss_uas, f_table_
 
 
 def collect_mean_metrics(root_output_dir_path):
+    mean_dict = {}
+    p = Path(root_output_dir_path)
+    for m_path in list(p.glob(f"**/metrics_*.json")) + list(p.glob(f"**/**/metrics_*.json")): # TODO: фиксация
+        m_path_str = str(m_path)
+        with open(m_path_str, 'r') as f:
+            data = json.load(f)
+        exp_name = m_path.stem
+        mean_dict[exp_name] = data[f"{exp_name}_aggregation"]
+    fields = set()
+    for exp_fields in mean_dict.values():
+        fields |= set(exp_fields.keys())
+    def sort_fun(metric_name):
+        if "uas" in metric_name:
+            first_label = -3
+        elif "las" in metric_name:
+            first_label = -2
+        else:
+            first_label = -1
+        if "all" in metric_name:
+            second_label = -4
+        elif "correct" in metric_name:
+            second_label = -3
+        elif "count" in metric_name:
+            second_label = -2
+        else:
+            second_label = -1
+        return (first_label, second_label, metric_name)
+    
+    fields = sorted(list(fields), key=sort_fun)
+    field_mean_dict = {}
+    for field in fields:
+        field_mean_dict[field] = {}
+        for exp_name, exp_mean in mean_dict.items():
+            if field in exp_mean:
+                field_mean_dict[field][exp_name] = exp_mean[field]
+
+    with open(f"{root_output_dir_path}/mean_metrics.json", 'w') as f:
+        json.dump(field_mean_dict, f, indent=4)
+    return mean_dict
+
+
+def collect_mean_metrics_old(root_output_dir_path):
     f_table_mean_other = open(f"{root_output_dir_path}/mean_metrics_table_mean_other.txt", 'w')
     f_table_mean_full_prompt = open(f"{root_output_dir_path}/mean_metrics_table_mean_prompt_full.txt", 'w')
     f_table_mean_short_prompt = open(f"{root_output_dir_path}/mean_metrics_table_mean_prompt_short.txt", 'w')

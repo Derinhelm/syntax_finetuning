@@ -1,5 +1,8 @@
-from collections import Counter
 
+from collections import Counter
+from cachetools import LRUCache
+
+import itertools
 
 import torch
 
@@ -88,22 +91,22 @@ class PrefixFinder:
         super().__init__()
         self.bytes_to_id = bytes_to_id
         self.trie = marisa_trie.BinaryTrie(list(bytes_to_id.keys()))
+        self._cache = LRUCache(maxsize=256)
 
-    def __call__(self, prefixes: str):
-        allow_ids = []
-        print(f"{prefixes=}")
+    def __call__(self, prefixes: list[bytes]):
+        allow_ids = set()
         for target in prefixes:
-            # Условие 1: токены, которые являются префиксом target
-            target_prefixes = list(self.trie.iter_prefixes(target))
-            #print(f"{target_prefixes=}")
-            # Условие 2: токены, для которых target — префикс
-            target_continuations = list(self.trie.iterkeys(target))
-            #print(f"{target_continuations=}")
-            allow_ids += [self.bytes_to_id[b] \
-                for b in target_prefixes + target_continuations]
-            #print(f"{allow_ids=}")
+            if target in self._cache:
+                allow_ids.update(self._cache[target])
+            else:
+                # Условие 1: токены, которые являются префиксом target
+                new_ids = { self.bytes_to_id[b] for b in \
+                    itertools.chain(self.trie.iter_prefixes(target), self.trie.iterkeys(target)) }
+                allow_ids.update(new_ids)
+                #print(f"{allow_ids=}")
+                self._cache[target] = new_ids
 
-        return list(set(allow_ids))
+        return list(allow_ids)
 
 class PrefixConstraint(Constraint):
     def __init__(self, bytes_to_id, eos_ids, relations):
@@ -132,28 +135,33 @@ class ForceEndConstraint(Constraint):
     """"""
     
     def __init__(self, id_to_bytes, applying_max_amount):
-        self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
+        self.end_tokens = []
+        for token_id, token_bytes in id_to_bytes.items():
+            if len(token_bytes) > 0 and set(token_bytes) == {END_BYTE}:
+                self.end_tokens.append((token_id, len(token_bytes))) # Токенов мало, поэтому не словарь
+        print(f"{self.end_tokens=}")
         
     def check(self, context):
         if not self.applying_max_amount:
             return False
-        return context.check_all_open() and \
-            not context.check_all_end() and \
-            len(context.generated_bytes) > 0 and \
-            context.generated_bytes[-1] == END_BYTE
+        return  len(context.generated_bytes) > 0 and \
+                context.generated_bytes[-1] == END_BYTE and \
+                context.check_all_open() and \
+                not context.check_all_end()
+            
         # Generate some last "]"
-
     def __call__(self, logits, context):
         bracket_diff = context.op_amount - context.end_amount
-        #print("Forcing last ]")
-        codes_with_logits = [(token_bytes, token_id, float(logits[token_id]))
-                             for token_id, token_bytes in self.id_to_bytes.items()]
-        logits[:] = -torch.inf
-        for token_bytes, token_id, token_logit in codes_with_logits:
-            if set(token_bytes) == {END_BYTE} and bracket_diff - len(token_bytes) >= 0:
-                logits[token_id] = token_logit
-        return logits
+        valid_ids = [
+            token_id for token_id, length in self.end_tokens 
+            if length <= bracket_diff
+        ]
+
+        new_logits = torch.full_like(logits, -torch.inf)
+        new_logits[valid_ids] = logits[valid_ids]
+
+        return new_logits
 
 class ForceFinishConstraint(Constraint):
     """"""
@@ -351,6 +359,18 @@ class GenerationContext:
         self.relations = relations
         self.skip_text = skip_text
 
+    def snapshot(self):
+        return  { 'generated_bytes': self.generated_bytes
+                , 'op_amount': self.op_amount
+                , 'end_amount': self.end_amount
+                , 'max_op_bracket': self.max_op_bracket
+                , 'last_unused_tokens': dict(self.last_unused_tokens)
+                , 'bytes_after_right_open': self.bytes_after_right_open
+                , 're_before_right_open': self.re_before_right_open
+                , 'relations': self.relations
+                , 'skip_text': self.skip_text
+                }
+
     def update_context(self, last_token_bytes):
         self.generated_bytes += last_token_bytes
 
@@ -419,9 +439,13 @@ class TextBracketLogitsProcessor:
         self.mul_coeff = logit_params.get("mul_coeff", 1)
         self.add_coeff = logit_params.get("add_coeff", 0)
         self.prev_context = None
+        self.current_contexts = []
 
 
-    def create_new_context(self, input_tokens): 
+    def create_new_context(self, input_tokens):
+        if self.current_contexts:
+            print(*self.current_contexts, sep='\n')
+            self.current_contexts = []
         max_op_bracket = (self.mul_coeff * len(input_tokens) + \
             self.add_coeff) * 2
         self.prev_context =  GenerationContext(max_op_bracket,
@@ -457,7 +481,7 @@ class TextBracketLogitsProcessor:
         #ts = time.perf_counter()
         self.prev_context.update_context(last_token_bytes)
         context = self.prev_context
-        print(f"{self.prev_context.__dict__=}")
+        self.current_contexts.append(context.snapshot())
 
         # max_op_bracket в контекст, т.к. используется в ForceClosingConstraint,
         # а его нельзя создавать до create_new_context
@@ -545,8 +569,6 @@ class TextBracketLogitsProcessor:
         #tf_all = time.perf_counter()
         #print(tf_all - ts_all)
         #print(time_list)
-        max_logits, _ = torch.topk(logits, k = 1) # Нет разрешенных субтокенов
-        if max_logits[0].isinf():
+        if torch.isneginf(logits.max()):
             logits = self.force_finish_constraints(logits, context)
-
         return logits

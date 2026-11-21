@@ -28,7 +28,7 @@ class PrefixGenerator:
 
         # TODO1
         if context.bytes_after_right_open != b"": # TODO: зачем ?
-            if b"]" not in context.bytes_after_right_open and context.bytes_after_right_open in self.relations:
+            if END_BYTE not in context.bytes_after_right_open and context.bytes_after_right_open in self.relations:
                 return context.last_unused_tokens # Нарушается логика для некоторых вариантов. Расписать
 
         last_re_level_ind = context.re_before_right_open.rfind(b"[|T")
@@ -151,7 +151,7 @@ class ForceEndConstraint(Constraint):
                              for token_id, token_bytes in self.id_to_bytes.items()]
         logits[:] = -torch.inf
         for token_bytes, token_id, token_logit in codes_with_logits:
-            if set(token_bytes) == {b"]"} and bracket_diff - len(token_bytes) >= 0:
+            if set(token_bytes) == {END_BYTE} and bracket_diff - len(token_bytes) >= 0:
                 logits[token_id] = token_logit
         return logits
 
@@ -197,7 +197,7 @@ class RestrictBracketAfterOpenConstraint(Constraint):
         
     def __call__(self, logits, context):
         for token_id, token_bytes in self.id_to_bytes.items():
-            if token_bytes[0] in {b"[", b"]"}:
+            if token_bytes[0] in {OPEN_BYTE, END_BYTE}:
                 logits[token_id] = float('-inf')
                 #print(token_id, token_text)
         #print("Restriction for bracket after open bracket")
@@ -240,12 +240,12 @@ class RestrictBalanceBracketConstraint(Constraint):
             inf_flag = False
             for i in range(1, len(token_bytes)):
                 token_slice = token_bytes[:i]
-                if bracket_diff + token_slice.count(b"[") - token_slice.count(b"]") < 1:
+                if bracket_diff + token_slice.count(OPEN_BYTE) - token_slice.count(END_BYTE) < 1:
                     # Ошибка вида "[Остается][" при добавлении "]["
                     inf_flag = True
             if not inf_flag:
                 new_bracket_diff = bracket_diff + \
-                    token_bytes.count(b"[") - token_bytes.count(b"]")
+                    token_bytes.count(OPEN_BYTE) - token_bytes.count(END_BYTE)
                 if self.applying_max_amount and not self.soft_max_amount: # Есть жесткое ограничение по количеству открытых скобок
                     if not context.check_all_open(): # И не все [ сгенерированы
                         # То есть нельзя делать diff = 0
@@ -277,7 +277,7 @@ class RestrictOpenConstraint(Constraint):
     def __call__(self, logits, context):
         #print("Restriction for [")
         for token_id, token_bytes in self.id_to_bytes.items():
-            if b"[" in token_bytes:
+            if OPEN_BYTE in token_bytes:
               logits[token_id] = float('-inf')
               #print(f"Restricted {token_id} ({token_text})")
         return logits
@@ -292,7 +292,7 @@ class RestrictErrorTokenConstraint(Constraint):
             for t_i, t in enumerate(token_bytes):
                if t == END_BYTE:
                    if t_i != len(token_bytes) - 1 and \
-                     token_bytes[t_i + 1] not in {b"]", b"["}:
+                     token_bytes[t_i + 1] not in {END_BYTE, OPEN_BYTE}:
                        error_token_flag = True
                        break
                elif t == OPEN_BYTE:
@@ -354,8 +354,8 @@ class GenerationContext:
     def update_context(self, last_token_bytes):
         self.generated_bytes += last_token_bytes
 
-        self.op_amount += last_token_bytes.count(b"[")
-        self.end_amount += last_token_bytes.count(b"]")
+        self.op_amount += last_token_bytes.count(OPEN_BYTE)
+        self.end_amount += last_token_bytes.count(END_BYTE)
         
         re_s, self.bytes_after_right_open =  create_bytes_after_right_open(self.re_before_right_open,
                             self.bytes_after_right_open, last_token_bytes)

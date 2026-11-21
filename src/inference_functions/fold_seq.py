@@ -58,13 +58,13 @@ OPEN_BYTE = b"["[0]
 END_BYTE = b"]"[0]
 
 def constant_check(x):
-    return b"[" not in x[1:-1] and b"]" not in x[1:-1] and \
+    return OPEN_BYTE not in x[1:-1] and END_BYTE not in x[1:-1] and \
         b"|T" not in x and b"|C" not in x and b"|W" not in x and b"|E" not in x
 
 def change_text(change_fun, right_border_symbol, s):
     #print(f"{right_border_symbol=}")
     ready_border = 0
-    left_border_in_fragment = s[ready_border:].find(b"[")
+    left_border_in_fragment = s[ready_border:].find(OPEN_BYTE)
     right_border_in_fragment = s[ready_border + left_border_in_fragment + 1:].find(right_border_symbol)
     while left_border_in_fragment != -1 and right_border_in_fragment != -1:
         left_border = ready_border + left_border_in_fragment
@@ -75,8 +75,7 @@ def change_text(change_fun, right_border_symbol, s):
             return new_s
         ready_border = left_border + 1 # Все, что левее left_border - неизменно
         s = new_s
-        #print(f"start with ready_border: {s[ready_border:]} {s[ready_border:].find(b"[")}")
-        left_border_in_fragment = s[ready_border:].find(b"[")
+        left_border_in_fragment = s[ready_border:].find(OPEN_BYTE)
         if left_border_in_fragment == -1:
             break
         #print(f"{left_border_in_fragment=}")
@@ -132,7 +131,7 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
     # >>> fold_bracket_seq('[root[Дом]]', {'nmod'}, Counter(['Дым', 'Дом'])) - |
     #TODO1
     if not bytes_after_right_open.startswith(b"|T") and \
-        b"]" not in bytes_after_right_open and unused_tokens is not None and \
+        END_BYTE not in bytes_after_right_open and unused_tokens is not None and \
             (not last_tokens_is_form_prefix(bytes_after_right_open, unused_tokens) and
             not last_tokens_is_relation_prefix(bytes_after_right_open, allow_relations)):
         return re_before_right_open + b"|E"
@@ -170,11 +169,11 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
         f_form = lambda x: b"[|T]" if constant_check(x) else x
 
     # >>> fold_bracket_seq('[root[Дом][nmod[Тен]]]', {'nmod'}, Counter(['Дым', 'Дом', 'Тен'])) - |C
-    re_before_right_open = change_text(f_form, b"]", re_before_right_open)
+    re_before_right_open = change_text(f_form, END_BYTE, re_before_right_open)
     #print(f"after change_text 1: {re_before_right_open=}")
     if b"|E" in re_before_right_open:
         return re_before_right_open
-    re_before_right_open = change_text(f_rel, b"[", re_before_right_open)
+    re_before_right_open = change_text(f_rel, OPEN_BYTE, re_before_right_open)
     #print(f"after change_text 2: {re_before_right_open=}")
     if b"|E" in re_before_right_open:
         return re_before_right_open
@@ -183,7 +182,7 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
 
     # Против [|T|C|W|W[
     # Только для закрытых уровней. Открытый рассматривается раньше
-    re_before_right_open = change_text(f_check_level_two_words, b"[", re_before_right_open)
+    re_before_right_open = change_text(f_check_level_two_words, OPEN_BYTE, re_before_right_open)
     #print(f"after change_text 3: {re_before_right_open=}")
 
     if b"|E" in re_before_right_open:
@@ -196,10 +195,10 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
     #print(f"after re sub: {re_before_right_open=}")
 
 
-    while b"|E" not in re_before_right_open and b"]" in re_before_right_open and re_before_right_open[0] == OPEN_BYTE:
+    while b"|E" not in re_before_right_open and END_BYTE in re_before_right_open and re_before_right_open[0] == OPEN_BYTE:
         #print(f"while: {re_before_right_open=}")
-        end_bracket = re_before_right_open.find(b"]")
-        op_bracket = re_before_right_open[:end_bracket].rfind(b"[")
+        end_bracket = re_before_right_open.find(END_BYTE)
+        op_bracket = re_before_right_open[:end_bracket].rfind(OPEN_BYTE)
         if re_before_right_open[op_bracket + 1:op_bracket + 3] != b"|T" or re_before_right_open[op_bracket + 2: end_bracket].count(b"|W") != 1:
             re_before_right_open = re_before_right_open[:op_bracket + 1] + b"|E" + re_before_right_open[end_bracket:] + \
                 b"(wrong fragment " + re_before_right_open[op_bracket: end_bracket + 1] + b")"
@@ -231,7 +230,7 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
                 #print(f"{last_level_text=}")
                 if level_openers == level_closers:
                 # Бюджет сведен
-                    if last_level_text.count(b"[") > 1:
+                    if last_level_text.count(OPEN_BYTE) > 1:
                         return b"|E"
             # >>> fold_bracket_seq("[|T|W|C[|T|C|C|W|C[|T|C|W[|T|W", ENGLISH_RELATIONS, Counter(), True)
             # '[|T|W|C[|T|C|C|W|C[|T|C|W[|T|W'
@@ -242,7 +241,7 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
                     # На последнем уровне уже есть |W, второе |W не может быть,
                     # все [ - открывают уровень
                     if b"|W" in last_level_text:
-                        if last_level_text.count(b"[") > 1:
+                        if last_level_text.count(OPEN_BYTE) > 1:
                             return b"|E"
                     else: # Нужно сгенерировать слово.
                         # За запрет генерации типа связи отвечает генератор префиксов
@@ -348,7 +347,7 @@ class RestrictUncorrectLevelConstraint(Constraint):
 
 # '[|T[|T[|T[' + 'стол]' тоже нужно соединять и сворачивать, а right_open_bracket_pos будет пустым
 def create_bytes_after_right_open(re_before_right_open, old_bytes_after_right_open, last_token_bytes):
-    right_open_bracket_pos = max(last_token_bytes.rfind(b"["), last_token_bytes.rfind(b"]"))
+    right_open_bracket_pos = max(last_token_bytes.rfind(OPEN_BYTE), last_token_bytes.rfind(END_BYTE))
     # TODO: check and rename
     if right_open_bracket_pos != -1:
         before_open_bracket = last_token_bytes[:right_open_bracket_pos + 1]

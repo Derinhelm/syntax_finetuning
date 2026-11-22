@@ -127,7 +127,6 @@ class PrefixConstraint(Constraint):
         print(f"PrefixConstraint. {allowed_ids=}\n{allowed_logits=}")
         logits.fill_(-float('inf'))
         logits[allowed_ids] = allowed_logits
-        print(logits[allowed_ids])
         return logits
 
 # =============================================
@@ -166,7 +165,6 @@ class ForceEndConstraint(Constraint):
             logits.fill_(-float('inf'))
             logits[valid_ids] = saved
             print(f"ForceEndConstraint. {valid_ids=}\n{saved=}")
-            print(logits[valid_ids])
 
         else:
             logits.fill_(-float('inf'))
@@ -200,7 +198,6 @@ class ForceFinishConstraint(Constraint):
         logits.fill_(-float('inf'))
         logits[self.eos_id] = saved
         print(f"ForceFinishConstraint. {saved=}\n{self.eos_id=}")
-        print(f"{logits[self.eos_id]=}")
         #print("Finish restriction")
         return logits
 # =============================================
@@ -248,7 +245,6 @@ class RestrictBalanceBracketConstraint(Constraint):
         self.id_to_bytes = id_to_bytes
         self.applying_max_amount = applying_max_amount
         self.soft_max_amount = soft_max_amount
-        full_deltas = []
         bracketed_token_ids = []
         min_deltas = []
         for token_id, token_bytes in self.id_to_bytes.items():
@@ -261,9 +257,7 @@ class RestrictBalanceBracketConstraint(Constraint):
                         min_delta = delta
                 bracketed_token_ids.append(token_id)
                 min_deltas.append(min_delta)
-                full_deltas.append(token_bytes.count(OPEN_BYTE) - token_bytes.count(END_BYTE))
         self.bracketed_token_ids = torch.tensor(bracketed_token_ids, dtype=torch.long)
-        self.full_deltas = torch.tensor(full_deltas, dtype=torch.int32)
         self.min_deltas = torch.tensor(min_deltas, dtype=torch.int32)
 
 
@@ -283,16 +277,13 @@ class RestrictBalanceBracketConstraint(Constraint):
             threshold = 0
         print(f"{threshold=}")
         # Ошибка вида "[Остается][" при добавлении "]["
-        min_filter = (bracket_diff + self.min_deltas < 1)
-        full_filter = (bracket_diff + self.full_deltas < threshold)
-        wrong_ids = self.bracketed_token_ids[min_filter | full_filter]
+        min_filter = (bracket_diff + self.min_deltas < threshold)
+        wrong_ids = self.bracketed_token_ids[min_filter]
         print(f"RestrictBalanceBracketConstraint. {wrong_ids=}")
         print(f"{bracket_diff=}")
-        print(f"{self.bracketed_token_ids=}")
-        print(f"{self.full_deltas=}")
-        print(f"{self.min_deltas=}")
-        print(f"{min_filter=}")
-        print(f"{full_filter=}")
+        print(f"{self.bracketed_token_ids.tolist()=}")
+        print(f"{self.min_deltas.tolist()=}")
+        print(f"{min_filter.tolist()=}")
         logits[wrong_ids] = float('-inf')
         return logits
 

@@ -550,14 +550,6 @@ class TextBracketLogitsProcessor:
 
             #torch.cuda.synchronize()
             #ts = time.perf_counter()
-            if self.restrict_unbalanced_eos_constraints.check(context):
-                logits = self.restrict_unbalanced_eos_constraints(logits, context)
-            #torch.cuda.synchronize()
-            #tf = time.perf_counter()
-            #time_list.append(("unbal", tf - ts))
-
-            #torch.cuda.synchronize()
-            #ts = time.perf_counter()
             if self.restrict_balance_constraints.check(context):
                 logits = self.restrict_balance_constraints(logits, context)
             #torch.cuda.synchronize()
@@ -577,4 +569,7 @@ class TextBracketLogitsProcessor:
         #print(time_list)
         if torch.isneginf(logits.max()):
             logits = self.force_finish_constraints(logits, context)
+        else:
+            if self.restrict_unbalanced_eos_constraints.check(context):
+                logits = self.restrict_unbalanced_eos_constraints(logits, context)
         return logits

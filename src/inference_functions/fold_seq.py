@@ -94,6 +94,19 @@ def last_tokens_is_form_prefix(last_tokens, unused_tokens):
 def last_tokens_is_relation_prefix(last_tokens, allow_relations):
     return len([rel for rel in allow_relations if rel.startswith(last_tokens)]) != 0
 
+def make_test_fold(s):
+    while b"|E" not in s and END_BYTE in s and s[0] == OPEN_BYTE:
+        #print(f"while: {s=}")
+        end_bracket = s.find(END_BYTE)
+        op_bracket = s[:end_bracket].rfind(OPEN_BYTE)
+        if s[op_bracket + 1:op_bracket + 3] != b"|T" or s[op_bracket + 2: end_bracket].count(b"|W") != 1:
+            s = s[:op_bracket + 1] + b"|E" + s[end_bracket:] + \
+                b"(wrong fragment " + s[op_bracket: end_bracket + 1] + b")"
+            break
+        else:
+            s = s[:op_bracket] + b"|C" + s[end_bracket + 1:]
+    return s
+
 def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b"",
                      allow_relations=None, unused_tokens_param=None, drop_tokens=False):
     # re_before_right_open - до крайней правой ], включительно (можем сворачивать, все байты уже получены)
@@ -135,17 +148,7 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
             (not last_tokens_is_form_prefix(bytes_after_right_open, unused_tokens) and
             not last_tokens_is_relation_prefix(bytes_after_right_open, allow_relations)):
         return re_before_right_open + b"|E"
-    last_re_level_ind = re_before_right_open.rfind(b"[|T")
-    if last_re_level_ind == -1:
-        last_re_level_ind = 0
-    last_re_level = re_before_right_open[last_re_level_ind:]
-    if last_re_level.count(b"|W") > 1:
-        return re_before_right_open + b"|E"
-    if last_re_level.count(b"|W") == 1 and \
-        (last_tokens_is_form_prefix(bytes_after_right_open, unused_tokens) and
-            not last_tokens_is_relation_prefix(bytes_after_right_open, allow_relations)):
-        # [|T|W[|T|W|C|C|C[$ - E (два на уровне будут)
-        return re_before_right_open + b"|E"
+
     if allow_relations is not None:
         f_rel = lambda x: (b"[|T[" if x[1:-1] in allow_relations else b"[|E[") if constant_check(x) else x
 
@@ -178,6 +181,20 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
     if b"|E" in re_before_right_open:
         return re_before_right_open
 
+    last_re_level_ind = re_before_right_open.rfind(b"[|T") # TODO: Мог появится сразу [[текст][текст
+    if last_re_level_ind == -1:
+        last_re_level_ind = 0
+    last_re_level = re_before_right_open[last_re_level_ind:]
+    last_re_level = make_test_fold(last_re_level)
+
+    if last_re_level.count(b"|W") > 1:
+        return re_before_right_open + b"|E"
+    if last_re_level.count(b"|W") == 1 and \
+        (last_tokens_is_form_prefix(bytes_after_right_open, unused_tokens) and
+            not last_tokens_is_relation_prefix(bytes_after_right_open, allow_relations)):
+        # [|T|W[|T|W|C|C|C[$ - E (два на уровне будут)
+        return re_before_right_open + b"|E"
+
     f_check_level_two_words = lambda x: b"|E (many |W)" if x.count(b"|W") > 1 else x
 
     # Против [|T|C|W|W[
@@ -194,17 +211,8 @@ def fold_bracket_seq(re_before_right_open: bytes, bytes_after_right_open:bytes=b
     re_before_right_open = re.sub(rb"\[\|T\]", b"|W", re_before_right_open)
     #print(f"after re sub: {re_before_right_open=}")
 
+    re_before_right_open = make_test_fold(re_before_right_open)
 
-    while b"|E" not in re_before_right_open and END_BYTE in re_before_right_open and re_before_right_open[0] == OPEN_BYTE:
-        #print(f"while: {re_before_right_open=}")
-        end_bracket = re_before_right_open.find(END_BYTE)
-        op_bracket = re_before_right_open[:end_bracket].rfind(OPEN_BYTE)
-        if re_before_right_open[op_bracket + 1:op_bracket + 3] != b"|T" or re_before_right_open[op_bracket + 2: end_bracket].count(b"|W") != 1:
-            re_before_right_open = re_before_right_open[:op_bracket + 1] + b"|E" + re_before_right_open[end_bracket:] + \
-                b"(wrong fragment " + re_before_right_open[op_bracket: end_bracket + 1] + b")"
-            break
-        else:
-            re_before_right_open = re_before_right_open[:op_bracket] + b"|C" + re_before_right_open[end_bracket + 1:]
     #print(f"after while: {re_before_right_open=}")
 
     if b"|E" in re_before_right_open:

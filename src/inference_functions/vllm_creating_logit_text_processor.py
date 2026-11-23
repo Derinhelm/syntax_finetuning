@@ -124,7 +124,7 @@ class PrefixConstraint(Constraint):
         else:
             allowed_ids = self.prefix_checker(prefixes)
         allowed_logits = logits[allowed_ids].clone()
-        print(f"PrefixConstraint. {allowed_ids=}\n{allowed_logits=}")
+        #print(f"PrefixConstraint. {allowed_ids=}\n{allowed_logits=}")
         logits.fill_(-float('inf'))
         logits[allowed_ids] = allowed_logits
         return logits
@@ -164,7 +164,7 @@ class ForceEndConstraint(Constraint):
             saved = logits[valid_ids].clone()
             logits.fill_(-float('inf'))
             logits[valid_ids] = saved
-            print(f"ForceEndConstraint. {valid_ids=}\n{saved=}")
+            #print(f"ForceEndConstraint. {valid_ids=}\n{saved=}")
 
         else:
             logits.fill_(-float('inf'))
@@ -197,7 +197,7 @@ class ForceFinishConstraint(Constraint):
         saved = logits[self.eos_id].clone()
         logits.fill_(-float('inf'))
         logits[self.eos_id] = saved
-        print(f"ForceFinishConstraint. {saved=}\n{self.eos_id=}")
+        #print(f"ForceFinishConstraint. {saved=}\n{self.eos_id=}")
         #print("Finish restriction")
         return logits
 # =============================================
@@ -216,7 +216,7 @@ class RestrictBracketAfterOpenConstraint(Constraint):
         
     def __call__(self, logits, context):
         logits[self.wrong_ids] = float('-inf')
-        print(f"RestrictBracketAfterOpenConstraint. {self.wrong_ids=}")
+        #print(f"RestrictBracketAfterOpenConstraint. {self.wrong_ids=}")
         #print("Restriction for bracket after open bracket")
         return logits
         
@@ -234,7 +234,7 @@ class RestrictTextAfterEndConstraint(Constraint):
         allowed_logits = logits[self.allowed_ids].clone()
         logits.fill_(-float('inf'))
         logits[self.allowed_ids] = allowed_logits
-        print(f"RestrictTextAfterEndConstraint. {self.allowed_ids=}\n{allowed_logits=}")
+        #print(f"RestrictTextAfterEndConstraint. {self.allowed_ids=}\n{allowed_logits=}")
         return logits
 
         
@@ -275,15 +275,15 @@ class RestrictBalanceBracketConstraint(Constraint):
         else: 
             # Ограничений по количеству скобок нет, можно уходить в ноль (тогда потом будет force end)
             threshold = 0
-        print(f"{threshold=}")
+        #print(f"{threshold=}")
         # Ошибка вида "[Остается][" при добавлении "]["
         min_filter = (bracket_diff + self.min_deltas < threshold)
         wrong_ids = self.bracketed_token_ids[min_filter]
-        print(f"RestrictBalanceBracketConstraint. {wrong_ids=}")
-        print(f"{bracket_diff=}")
-        print(f"{self.bracketed_token_ids.tolist()=}")
-        print(f"{self.min_deltas.tolist()=}")
-        print(f"{min_filter.tolist()=}")
+        #print(f"RestrictBalanceBracketConstraint. {wrong_ids=}")
+        #print(f"{bracket_diff=}")
+        #print(f"{self.bracketed_token_ids.tolist()=}")
+        #print(f"{self.min_deltas.tolist()=}")
+        #print(f"{min_filter.tolist()=}")
         logits[wrong_ids] = float('-inf')
         return logits
 
@@ -303,7 +303,7 @@ class RestrictOpenConstraint(Constraint):
         return context.check_all_open() and not context.check_all_end()
     
     def __call__(self, logits, context):
-        print(f"RestrictOpenConstraint. {self.wrong_ids=}")
+        #print(f"RestrictOpenConstraint. {self.wrong_ids=}")
         logits[self.wrong_ids] = float('-inf')
         return logits
 
@@ -461,6 +461,7 @@ class TextBracketLogitsProcessor:
         self.current_contexts = []
 
         self.debug_flag = debug_flag
+        self.debug_flag = True # TODO
 
     def create_new_context(self, input_tokens):
         if self.debug_flag and self.current_contexts:
@@ -501,7 +502,7 @@ class TextBracketLogitsProcessor:
         #ts = time.perf_counter()
         self.prev_context.update_context(last_token_bytes)
         context = self.prev_context
-        print(f"{context.__dict__=}")
+        #print(f"{context.__dict__=}")
         if self.debug_flag:
             self.current_contexts.append(context.snapshot())
 

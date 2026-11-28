@@ -2,6 +2,7 @@
 from collections import Counter
 from cachetools import LRUCache
 
+import json
 import itertools
 
 import torch
@@ -366,8 +367,25 @@ class RestrictUnbalancedEOSConstraint(Constraint):
         logits[self.eos_ids] = -torch.inf
         return logits
 
+
+class UpgradeLogitValues:
+    '''Есть цепочка логитов из прошлого запуска, по возможности возвращать логиты из нее (до первого несовпадения).
+       Нужно для воспроизводимости экспериментов по применению системы ограничений.
+    '''
+    def ___init__(self):
+        self.name = "upgrade"
+
+    def check(self, context):
+        return context.prev_sent_logits is not None and context.prev_sent_logits
+
+    def __call__(self, logits, context):
+        next_token_id = context.prev_sent_logits[0]
+        max_logit = logits.max()
+        logits[next_token_id] = max_logit + 1
+        return logits
+        
 class GenerationContext:
-    def __init__(self, max_op_bracket, relations, last_unused_tokens, skip_text):
+    def __init__(self, max_op_bracket, relations, last_unused_tokens, skip_text, prev_sent_logits):
         self.generated_bytes = b""
         self.op_amount = 0
         self.end_amount = 0
@@ -377,6 +395,7 @@ class GenerationContext:
         self.re_before_right_open = b""
         self.relations = relations
         self.skip_text = skip_text
+        self.prev_sent_logits = prev_sent_logits
 
     def snapshot(self):
         return  { 'generated_bytes': self.generated_bytes
@@ -390,7 +409,7 @@ class GenerationContext:
                 , 'skip_text': self.skip_text
                 }
 
-    def update_context(self, last_token_bytes):
+    def update_context(self, last_token_bytes, last_token_id):
         self.generated_bytes += last_token_bytes
 
         self.op_amount += last_token_bytes.count(OPEN_BYTE)
@@ -404,6 +423,12 @@ class GenerationContext:
                 self.relations, self.last_unused_tokens, True)
         else:
             self.re_before_right_open = fold_bracket_seq(re_s, self.bytes_after_right_open)
+
+        if last_token_id is not None and self.prev_sent_logits is not None and self.prev_sent_logits:
+            if self.prev_sent_logits[0] == last_token_id:
+                self.prev_sent_logits.pop(0) # Все еще идем по цепочке "старых логитов"
+            else:
+                self.prev_sent_logits = None # Не можем идти по цепочке "старых логитов"
 
     def check_all_open(self):
         return self.op_amount == self.max_op_bracket
@@ -440,6 +465,8 @@ class TextBracketLogitsProcessor:
             applying_max_amount, soft_max_amount)
         self.force_end_constraints = ForceEndConstraint(self.id_to_bytes, applying_max_amount)
 
+        self.upgrade_constraint = UpgradeLogitValues() # Если есть старая цепочка логитов, по возможности идем по ней
+
         eos_ids = [tokenizer.old_eos_token_id, tokenizer.eos_token_id]
         #print(f"eos_ids: {eos_ids}")
         self.prefix_constraints = PrefixConstraint(bytes_to_id, eos_ids, self.relations)
@@ -463,14 +490,33 @@ class TextBracketLogitsProcessor:
         self.debug_flag = debug_flag
         self.debug_flag = True # TODO
 
+
+        previous_result_filename = logit_params.get('previous_result_filename', '')
+        if previous_result_filename:
+            self.text_logits = {}
+            with open(previous_result_filename, 'r', encoding='utf-8') as f:
+                for line in f:         
+                    item = json.loads(line)
+                    tokens = tuple(t['form'] for t in item['gold_tree'])
+                    logits = item.get('extra_info', [])
+                    self.text_logits[tokens] = [] if logits is None else logits
+        else:
+            self.text_logits = None
+        
+
     def create_new_context(self, input_tokens):
         if self.debug_flag and self.current_contexts:
             print(*self.current_contexts, sep='\n')
             self.current_contexts = []
         max_op_bracket = (self.mul_coeff * len(input_tokens) + \
             self.add_coeff) * 2
+        if self.text_logits is not None:
+            prev_sent_logits = self.text_logits.get(tuple(input_tokens), None)
+            # В файле с результатами предыдущей работы LLM может не быть этого предложения
+        else:
+            prev_sent_logits = None
         self.prev_context =  GenerationContext(max_op_bracket,
-                    self.relations, input_tokens, self.skip_text)
+                    self.relations, input_tokens, self.skip_text, prev_sent_logits)
 
     def set_tokenizer(self, tokenizer):
         self.tokenizer = tokenizer
@@ -489,8 +535,10 @@ class TextBracketLogitsProcessor:
         #torch.cuda.synchronize()
         #ts = time.perf_counter()
         if len(token_ids) > 0:
-            last_token_bytes = self.id_to_bytes[token_ids[-1]]
+            last_token_id = token_ids[-1]
+            last_token_bytes = self.id_to_bytes[last_token_id]
         else:
+            last_token_id = None
             last_token_bytes = b""
 
         #torch.cuda.synchronize()
@@ -500,7 +548,7 @@ class TextBracketLogitsProcessor:
 
         #torch.cuda.synchronize()
         #ts = time.perf_counter()
-        self.prev_context.update_context(last_token_bytes)
+        self.prev_context.update_context(last_token_bytes, last_token_id)
         context = self.prev_context
         #print(f"{context.__dict__=}")
         if self.debug_flag:
@@ -520,6 +568,9 @@ class TextBracketLogitsProcessor:
         else:
             #torch.cuda.synchronize()
             #ts = time.perf_counter()
+            if self.upgrade_constraint.check(context):
+                logits = self.upgrade_constraint(logits, context)
+
             if not self.skip_text and self.prefix_constraints.check(context):
                 logits = self.prefix_constraints(logits, context)
             #torch.cuda.synchronize()
